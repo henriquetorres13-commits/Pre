@@ -463,7 +463,7 @@ html.dark header{background:#0D0F13;color:#ECE7DA;}
   <section class="view" id="view-exportar">
     <button class="btn btn-outline btn-sm" id="btnVoltarMaisExportar" type="button" style="margin-bottom:12px">← Voltar</button>
     <h2 class="section-title">Exportar para Excel</h2>
-    <p class="hint">Gera um arquivo .csv com todos os preços registrados e seus campos associados (item, categoria, data, local, comprou, observações). Abre normalmente no Excel / Google Sheets.</p>
+    <p class="hint">Gera um arquivo .csv com todos os preços registrados e seus campos associados (item, categoria, data, local, comprou, quantidade de referência, observações). Abre normalmente no Excel / Google Sheets.</p>
     <button class="btn btn-accent btn-block" id="btnExport">Exportar preços (.csv)</button>
     <p class="hint">Formato de planilha, fácil de abrir e analisar no Excel. <b>Não inclui as fotos.</b></p>
 
@@ -1122,7 +1122,7 @@ document.getElementById('cfg-tela-acesa').addEventListener('click', ()=>{
    fecha o modal do topo; se não houver modal aberto, pergunta se
    quer mesmo sair antes de deixar o navegador voltar/fechar. */
 let uiHistoryDepth = 0;
-let suppressNextPopstate = false;
+let suppressPopstateCount = 0;   // quantos popstate gerados por history.back() do próprio app ainda vão chegar
 function pushModalHistory(){
   uiHistoryDepth++;
   history.pushState({modalDepth:uiHistoryDepth}, '');
@@ -1130,12 +1130,12 @@ function pushModalHistory(){
 function consumeModalHistory(){
   if(uiHistoryDepth>0){
     uiHistoryDepth--;
-    suppressNextPopstate = true;
+    suppressPopstateCount++;
     history.back();
   }
 }
 window.addEventListener('popstate', ()=>{
-  if(suppressNextPopstate){ suppressNextPopstate = false; return; }
+  if(suppressPopstateCount>0){ suppressPopstateCount--; return; }
   if(uiHistoryDepth>0){
     uiHistoryDepth--;
     if(lightbox.classList.contains('active')) closeLightboxDom();
@@ -1156,12 +1156,13 @@ history.pushState({guard:true}, '');
 const overlay = document.getElementById('overlay');
 const sheet = document.getElementById('sheet');
 function openSheet(html, opts){
+  const jaAberto = overlay.classList.contains('active');
   sheet.innerHTML = html;
   overlay.classList.add('active');
   overlay.classList.toggle('top-anchored', !!(opts && opts.topAnchored));
   overlay.scrollTop = 0;
   sheet.scrollTop = 0;
-  pushModalHistory();
+  if(!jaAberto) pushModalHistory();   // reabrir por cima de um sheet já aberto não empilha outra entrada
 }
 function closeSheetDom(){ overlay.classList.remove('active'); overlay.classList.remove('top-anchored'); sheet.innerHTML=''; }
 function closeSheet(){
@@ -1176,12 +1177,13 @@ overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeSheet(); })
 const subOverlay = document.getElementById('subOverlay');
 const subSheet = document.getElementById('subSheet');
 function openSubSheet(html, opts){
+  const jaAberto = subOverlay.classList.contains('active');
   subSheet.innerHTML = html;
   subOverlay.classList.add('active');
   subOverlay.classList.toggle('top-anchored', !!(opts && opts.topAnchored));
   subOverlay.scrollTop = 0;
   subSheet.scrollTop = 0;
-  pushModalHistory();
+  if(!jaAberto) pushModalHistory();
 }
 function closeSubSheetDom(){ subOverlay.classList.remove('active'); subOverlay.classList.remove('top-anchored'); subSheet.innerHTML=''; }
 function closeSubSheet(){
@@ -1196,12 +1198,13 @@ subOverlay.addEventListener('click', (e)=>{ if(e.target===subOverlay) closeSubSh
 const sub2Overlay = document.getElementById('sub2Overlay');
 const sub2Sheet = document.getElementById('sub2Sheet');
 function openSub2Sheet(html, opts){
+  const jaAberto = sub2Overlay.classList.contains('active');
   sub2Sheet.innerHTML = html;
   sub2Overlay.classList.add('active');
   sub2Overlay.classList.toggle('top-anchored', !!(opts && opts.topAnchored));
   sub2Overlay.scrollTop = 0;
   sub2Sheet.scrollTop = 0;
-  pushModalHistory();
+  if(!jaAberto) pushModalHistory();
 }
 function closeSub2SheetDom(){ sub2Overlay.classList.remove('active'); sub2Overlay.classList.remove('top-anchored'); sub2Sheet.innerHTML=''; }
 function closeSub2Sheet(){
@@ -1273,9 +1276,10 @@ function openIngredientePicker({excluirReceitaId, onSelect, apenasItens}){
     <div id="ip-lista-wrap"><div id="ip-lista"></div></div>
     <div class="sheet-actions"><button class="btn btn-outline btn-block" id="ip-cancelar">Cancelar</button></div>
   `;
+  const jaAberto = ingPickerOverlay.classList.contains('active');
   ingPickerOverlay.classList.add('active');
   document.getElementById('ip-lista-wrap').scrollTop = 0;
-  pushModalHistory();
+  if(!jaAberto) pushModalHistory();
 
   function refreshSubcatOptions(){
     const sel = document.getElementById('ip-subcat');
@@ -1415,7 +1419,7 @@ function showToast(msg){
 /* ---- Foto ampliada (lightbox) ---- */
 const lightbox = document.getElementById('lightbox');
 const lightboxImg = document.getElementById('lightboxImg');
-function openLightbox(src){ lightboxImg.src = src; lightbox.classList.add('active'); pushModalHistory(); }
+function openLightbox(src){ const jaAberto = lightbox.classList.contains('active'); lightboxImg.src = src; lightbox.classList.add('active'); if(!jaAberto) pushModalHistory(); }
 function closeLightboxDom(){ lightbox.classList.remove('active'); lightboxImg.src=''; }
 function closeLightbox(){
   const wasActive = lightbox.classList.contains('active');
@@ -1706,7 +1710,19 @@ function openItemForm(item){
   if(editing){
     document.getElementById('i-del').addEventListener('click', async ()=>{
       const nPrecos = PRICES.filter(p=>p.itemId===item.id).length;
-      if(!confirm(`Excluir este item? ${nPrecos} registro(s) de preço ligados a ele também serão excluídos.`)) return;
+      // onde mais o item é usado (esses registros NÃO são apagados: ficam com "(item removido)" e custo indisponível)
+      const usos = [];
+      const nRec = new Set(RECEITA_INGREDIENTES.filter(i=>i.itemId===item.id).map(i=>i.receitaId)).size;
+      const nPrep = new Set(PREPARO_INGREDIENTES.filter(i=>i.itemId===item.id).map(i=>i.preparoId)).size;
+      const nGrp = new Set(GRUPO_ITENS_MEMBROS.filter(m=>m.itemId===item.id).map(m=>m.grupoId)).size;
+      const nTr = TRANSFORMACOES.filter(t=>t.itemOrigemId===item.id).length;
+      if(nRec) usos.push(`${nRec} receita(s)`);
+      if(nPrep) usos.push(`${nPrep} preparo(s)`);
+      if(nGrp) usos.push(`${nGrp} grupo(s) de itens`);
+      if(nTr) usos.push(`${nTr} transformação(ões)`);
+      let msg = `Excluir este item? ${nPrecos} registro(s) de preço ligados a ele também serão excluídos.`;
+      if(usos.length) msg += `\n\n⚠️ Ele é usado em: ${usos.join(', ')}. Esses registros não serão apagados, mas ficarão com "(item removido)" e sem custo calculável.`;
+      if(!confirm(msg)) return;
       await deleteRecord('itens', item.id);
       for(const p of PRICES.filter(p=>p.itemId===item.id)) await deleteRecord('precos', p.id);
       for(const li of LISTA_ITENS.filter(x=>x.itemId===item.id)) await deleteRecord('lista_compras_itens', li.id);
@@ -3547,7 +3563,7 @@ function openPreparosSheet(receita){
       const nIng = PREPARO_INGREDIENTES.filter(i=>i.preparoId===p.id).length;
       return `<div class="card" data-id="${p.id}">
         <div class="body">
-          <div class="title">${p.data} — escala ${p.escala}×</div>
+          <div class="title">${fmtDateBR(p.data)} — escala ${p.escala}×</div>
           <div class="meta">${nIng} ingrediente${nIng===1?'':'s'}${p.custoRealizado!=null?' · '+fmtMoney(p.custoRealizado):''}</div>
           ${p.obs?`<div class="obs">${escapeHtml(p.obs)}</div>`:''}
         </div>
@@ -3689,7 +3705,7 @@ function pesosDaRodada(linhas, porcoes){
    e etapas copiados da receita, escalados) e cai direto na leitura pra completar o resto peça
    por peça, no mesmo padrão dos sub-sheets granulares. ---- */
 function openPreparoNovoMini(receita){
-  const hoje = new Date().toISOString().slice(0,10);
+  const hoje = todayLocal();
   const rendUnidade = receita.rendimentoUnidadeId ? unidadeById(receita.rendimentoUnidadeId) : null;
   const html = `
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
@@ -4587,6 +4603,15 @@ function openPreparoForm(receita, preparo){
     ? PREPARO_INGREDIENTES.filter(i=>i.preparoId===preparo.id).sort((a,b)=>a.ordem-b.ordem).map(i=>({...i}))
     : ingredientesEscalados(1);
 
+  // mudar a escala reescala as quantidades por proporção (não recria os ingredientes: preserva transformação, comentários e g por porção)
+  let escalaPrev = editing ? preparo.escala : 1;
+  function reescalarIngState(novaEscala){
+    if(!(escalaPrev>0) || !(novaEscala>0)) return;
+    const ratio = novaEscala/escalaPrev;
+    ingState.forEach(ing=>{ if(ing.quantidade!=null) ing.quantidade = Math.round(ing.quantidade*ratio*1000)/1000; });
+    escalaPrev = novaEscala;
+  }
+
   /* ---- Planejamento de porções (só aparece se a receita tem "máx. de porções por rodada") ---- */
   const usaPorcoes = receita.maxPorcoesRodada>0;
   let porcoesFinais = (editing && preparo.porcoesFinais>0) ? preparo.porcoesFinais : null;
@@ -4606,32 +4631,6 @@ function openPreparoForm(receita, preparo){
   function pzG(ing){ return ing.gPorcao!=null ? ing.gPorcao : pzPadrao(ing); }
   function pzLinhasItens(){
     return ingState.map((ing,idx)=>({ing,idx})).filter(x=> x.ing.itemId && x.ing.quantidade!=null && pzPadrao(x.ing)>0);
-  }
-  // porções finais × g por porção → "quantidade usada" de cada ingrediente
-  function pzAplicar(){
-    return; // a quantidade do ingrediente vem da transformação (cozido); o planejamento de porções não a sobrescreve
-    const N = pzN();
-    if(!(N>0)) return;
-    ingState.forEach((ing,idx)=>{
-      if(ing.quantidade==null) return;
-      const pad = pzPadrao(ing);
-      if(!(pad>0)) return;
-      const g = (ing.itemId && ing.gPorcao!=null) ? ing.gPorcao : pad;
-      ing.quantidadeReal = Math.round(g*N*1000)/1000;
-      const inp = document.querySelector(`.pi-qtd-real[data-idx="${idx}"]`);
-      if(inp) setQtyValue(inp, ing.quantidadeReal);
-    });
-  }
-  // se a "quantidade usada" for editada direto na linha do ingrediente, o g por porção acompanha
-  function pzAoEditarQtdReal(idx){
-    return;
-    if(!usaPorcoes) return;
-    const ing = ingState[idx];
-    if(!ing || !ing.itemId) return;
-    const N = pzN();
-    ing.gPorcao = (ing.quantidadeReal!=null && N>0) ? Math.round(ing.quantidadeReal/N*1000)/1000 : null;
-    const gInp = document.querySelector(`.pz-g[data-idx="${idx}"]`);
-    if(gInp) setQtyValue(gInp, ing.gPorcao);
   }
   function pzLinhaHTML(ing, idx){
     const u = ing.unidadeId ? unidadeById(ing.unidadeId) : null;
@@ -4666,7 +4665,6 @@ function openPreparoForm(receita, preparo){
     document.getElementById('pp-porcoes-finais').addEventListener('input', e=>{
       const v = Number(e.target.value);
       porcoesFinais = v>0 ? Math.floor(v) : null;
-      if(porcoesFinais){ pzAplicar(); }
       ppRefreshCustos();
     });
     linhas.forEach(({ing,idx})=>{
@@ -4675,7 +4673,7 @@ function openPreparoForm(receita, preparo){
       disp.addEventListener('input', e=>{ ing.pureDisponivel = getQtyValue(e.target); ppRefreshCustos(); });
       const g = box.querySelector(`.pz-g[data-idx="${idx}"]`);
       attachQtyMask(g, ing.gPorcao);
-      g.addEventListener('input', e=>{ ing.gPorcao = getQtyValue(e.target); pzAplicar(); ppRefreshCustos(); });
+      g.addEventListener('input', e=>{ ing.gPorcao = getQtyValue(e.target); ppRefreshCustos(); });
     });
     const btn = document.getElementById('pp-porcoes-sugerir');
     if(btn) btn.addEventListener('click', ()=>{
@@ -4687,7 +4685,6 @@ function openPreparoForm(receita, preparo){
         const gInp = box.querySelector(`.pz-g[data-idx="${x.idx}"]`);
         if(gInp) setQtyValue(gInp, x.ing.gPorcao);
       });
-      pzAplicar();
       ppRefreshCustos();
       if(r.faltaResidual>0.005) showToast('Não fecha o padrão total: faltam '+r.faltaResidual.toFixed(2).replace('.',',')+' por porção.');
     });
@@ -5021,7 +5018,6 @@ function openPreparoForm(receita, preparo){
       inp.addEventListener('input', e=>{
         const idx = Number(e.target.dataset.idx);
         ingState[idx].quantidadeReal = getQtyValue(e.target);
-        pzAoEditarQtdReal(idx);
         ppRefreshCustos();
       });
     });
@@ -5075,8 +5071,7 @@ function openPreparoForm(receita, preparo){
   document.getElementById('pp-escala').addEventListener('input', (e)=>{
     const escala = Number(e.target.value)||0;
     if(escala>0){
-      ingState = ingredientesEscalados(escala); ppRenderIngList();
-      if(porcoesFinais>0){ pzAplicar(); ppRefreshCustos(); }
+      reescalarIngState(escala); ppRenderIngList();
       if(receita.rendimentoQtd!=null){
         const desejadoEl = document.getElementById('pp-desejado');
         if(desejadoEl) setQtyValue(desejadoEl, receita.rendimentoQtd*escala);
@@ -5089,9 +5084,8 @@ function openPreparoForm(receita, preparo){
       if(desejado>0 && receita.rendimentoQtd>0){
         const escala = desejado/receita.rendimentoQtd;
         document.getElementById('pp-escala').value = Number(escala.toFixed(4));
-        ingState = ingredientesEscalados(escala);
+        reescalarIngState(escala);
         ppRenderIngList();
-        if(porcoesFinais>0){ pzAplicar(); ppRefreshCustos(); }
       }
     });
   }
@@ -5565,7 +5559,7 @@ function renderChart(){
    ============================================================ */
 document.getElementById('btnExport').addEventListener('click', ()=>{
   if(!PRICES.length){ alert('Não há preços registrados para exportar.'); return; }
-  const headers = ['Categoria','Subcategoria','Item','Preco','Data','Local','Comprou','Observacao_Preco','Observacao_Item','Observacao_Categoria'];
+  const headers = ['Categoria','Subcategoria','Item','Preco','Data','Local','Comprou','Observacao_Preco','Observacao_Item','Observacao_Categoria','Quantidade_Ref','Unidade_Ref'];
   const rows = [headers];
   PRICES.slice().sort((a,b)=>a.data.localeCompare(b.data)).forEach(p=>{
     const item = itemById(p.itemId);
@@ -5582,7 +5576,9 @@ document.getElementById('btnExport').addEventListener('click', ()=>{
       p.comprou?'Sim':'Nao',
       p.obs||'',
       item?item.obs||'':'',
-      cat?cat.obs||'':''
+      cat?cat.obs||'':'',
+      p.quantidadeRef!=null ? String(p.quantidadeRef).replace('.',',') : '',
+      (p.quantidadeRef!=null && p.unidadeRefId && unidadeById(p.unidadeRefId)) ? unidadeById(p.unidadeRefId).nome : ''
     ]);
   });
   const csv = rows.map(r=> r.map(cell=>{
@@ -5667,12 +5663,13 @@ document.getElementById('btnImport').addEventListener('click', async ()=>{
   const headers = parseCSVLine(lines[0], delim).map(h=>h.trim());
   const idx = (name)=> headers.indexOf(name);
   const iCat=idx('Categoria'), iSubcat=idx('Subcategoria'), iItem=idx('Item'), iPreco=idx('Preco'), iData=idx('Data'),
-        iLocal=idx('Local'), iComprou=idx('Comprou'), iObsPreco=idx('Observacao_Preco');
+        iLocal=idx('Local'), iComprou=idx('Comprou'), iObsPreco=idx('Observacao_Preco'),
+        iQtdRef=idx('Quantidade_Ref'), iUnRef=idx('Unidade_Ref');
   if(iItem===-1 || iPreco===-1 || iData===-1){
     resultEl.textContent='Cabeçalho do CSV não reconhecido. Use um arquivo exportado por este app.';
     return;
   }
-  let importados=0, duplicados=0, ignorados=0;
+  let importados=0, duplicados=0, ignorados=0, atualizados=0;
   for(let li=1; li<lines.length; li++){
     const cols = parseCSVLine(lines[li], delim);
     const nomeItem = (cols[iItem]||'').trim();
@@ -5690,16 +5687,41 @@ document.getElementById('btnImport').addEventListener('click', async ()=>{
     const comprou = iComprou>=0 ? /^sim$/i.test((cols[iComprou]||'').trim()) : false;
     const obsPreco = iObsPreco>=0 ? (cols[iObsPreco]||'').trim() : '';
 
-    const jaExiste = PRICES.some(p=> p.itemId===itemId && p.data===dataIso &&
-      Math.abs(p.preco-precoNum)<0.001 && (p.localId||null)===(localId||null));
-    if(jaExiste){ duplicados++; continue; }
+    // quantidade/unidade de referência (colunas novas; CSVs antigos não têm)
+    let quantidadeRef = null, unidadeRefId = null;
+    const qtdTxt = iQtdRef>=0 ? (cols[iQtdRef]||'').trim() : '';
+    const unTxt = iUnRef>=0 ? (cols[iUnRef]||'').trim() : '';
+    if(qtdTxt && unTxt){
+      const q = parseFloat(qtdTxt.replace(',','.'));
+      const un = UNIDADES.find(u=>semAcento(u.nome)===semAcento(unTxt));
+      if(!isNaN(q) && q>0 && un){ quantidadeRef = q; unidadeRefId = un.id; }
+    }
 
-    const novoId = await putRecord('precos', {itemId, preco:precoNum, data:dataIso, localId, comprou, obs:obsPreco});
-    PRICES.push({id:novoId, itemId, preco:precoNum, data:dataIso, localId, comprou, obs:obsPreco});
+    const existente = PRICES.find(p=> p.itemId===itemId && p.data===dataIso &&
+      Math.abs(p.preco-precoNum)<0.001 && (p.localId||null)===(localId||null));
+    if(existente){
+      // preço já existe: se ele ainda não tem a quantidade de referência e o CSV traz, completa
+      if(quantidadeRef!=null && existente.quantidadeRef==null){
+        existente.quantidadeRef = quantidadeRef; existente.unidadeRefId = unidadeRefId;
+        await putRecord('precos', existente);
+        atualizados++;
+      } else duplicados++;
+      continue;
+    }
+
+    const novoPreco = {itemId, preco:precoNum, data:dataIso, localId, comprou, obs:obsPreco};
+    if(quantidadeRef!=null){ novoPreco.quantidadeRef = quantidadeRef; novoPreco.unidadeRefId = unidadeRefId; }
+    const novoId = await putRecord('precos', novoPreco);
+    PRICES.push({id:novoId, ...novoPreco});
     importados++;
+    // item sem dimensão de referência passa a ter a da unidade importada (senão a tela de preço esconde a quantidade)
+    if(unidadeRefId){
+      const itemReg = ITEMS.find(i=>i.id===itemId), uRef = unidadeById(unidadeRefId);
+      if(itemReg && !itemReg.dimensaoReferencia && uRef){ itemReg.dimensaoReferencia = uRef.dimensao; await putRecord('itens', itemReg); }
+    }
   }
   await reloadAll();
-  resultEl.textContent = `Importação concluída: ${importados} novo(s) preço(s), ${duplicados} já existiam (ignorados), ${ignorados} linha(s) inválida(s).`;
+  resultEl.textContent = `Importação concluída: ${importados} novo(s) preço(s), ${atualizados} completado(s) com a quantidade de referência, ${duplicados} já existiam (ignorados), ${ignorados} linha(s) inválida(s).`;
   fileInput.value='';
   renderCurrent();
 });
@@ -6609,7 +6631,7 @@ applyDefaultsToUI();
 fillConfiguracoesForm();
 ativarTelaAcesa();
 /* ---- PWA: versão, armazenamento persistente e service worker ---- */
-const APP_VERSION = 'v1_57';
+const APP_VERSION = 'v1_58';
 document.getElementById('appVersaoTxt').textContent = APP_VERSION;
 if(navigator.storage && navigator.storage.persist){
   navigator.storage.persist().then(ok=>{
