@@ -1,5 +1,5 @@
 /* Service worker do Preços — mude CACHE a cada versão nova do app */
-const CACHE = 'precos-v1_55';
+const CACHE = 'precos-v1_57';
 const ARQUIVOS = ['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./icon-maskable-512.png'];
 
 self.addEventListener('install', e=>{
