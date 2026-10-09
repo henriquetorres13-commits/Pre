@@ -837,35 +837,24 @@ function todayLocal(){
   const day = String(d.getDate()).padStart(2,'0');
   return `${y}-${m}-${day}`;
 }
-function periodCutoffDate(periodo){
-  if(periodo==='tudo') return null;
+/* Data ISO (AAAA-MM-DD) de hoje menos dias/meses/anos — base única de todos os cortes por período */
+function cutoffAtras({dias=0, meses=0, anos=0}){
   const d = new Date();
-  if(periodo==='30d') d.setDate(d.getDate()-30);
-  else if(periodo==='3m') d.setMonth(d.getMonth()-3);
-  else if(periodo==='6m') d.setMonth(d.getMonth()-6);
-  else if(periodo==='1a') d.setFullYear(d.getFullYear()-1);
-  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
-  return `${y}-${m}-${day}`;
+  if(dias) d.setDate(d.getDate()-dias);
+  if(meses) d.setMonth(d.getMonth()-meses);
+  if(anos) d.setFullYear(d.getFullYear()-anos);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
+const PERIODO_CORTE = {'30d':{dias:30}, '3m':{meses:3}, '6m':{meses:6}, '1a':{anos:1}};
+const ATUALIZACAO_CORTE = {'15d':{dias:15}, '1m':{meses:1}, '3m':{meses:3}, '6m':{meses:6}, '1a':{anos:1}};
+function periodCutoffDate(periodo){ return PERIODO_CORTE[periodo] ? cutoffAtras(PERIODO_CORTE[periodo]) : (periodo==='tudo' ? null : cutoffAtras({})); }
 /* Data de corte do filtro "Atualização do preço" (itens): último preço anterior a esta data = "há mais de X" */
 function cutoffAtualizacao(v){
   if(!v || v==='sem') return null;
-  const d = new Date();
-  if(v==='15d') d.setDate(d.getDate()-15);
-  else if(v==='1m') d.setMonth(d.getMonth()-1);
-  else if(v==='3m') d.setMonth(d.getMonth()-3);
-  else if(v==='6m') d.setMonth(d.getMonth()-6);
-  else if(v==='1a') d.setFullYear(d.getFullYear()-1);
-  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
-  return `${y}-${m}-${day}`;
+  return cutoffAtras(ATUALIZACAO_CORTE[v] || {});
 }
 function metricaLabel(m){ return m==='min'?'mínimo':(m==='max'?'máximo':'médio'); }
-function cutoffDaysAgo(n){
-  const d = new Date();
-  d.setDate(d.getDate()-n);
-  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
-  return `${y}-${m}-${day}`;
-}
+function cutoffDaysAgo(n){ return cutoffAtras({dias:n}); }
 function diasDesde(dataIso){
   const d1 = new Date(dataIso+'T00:00:00');
   const d0 = new Date(todayLocal()+'T00:00:00');
@@ -1845,8 +1834,9 @@ function renderItens(){
     return true;
   });
 
+  const precosDoItem = precosPorItem();
   function metricaDoItem(i){
-    const precos = PRICES.filter(p=>p.itemId===i.id && (!cutoff || p.data>=cutoff)).map(p=>p.preco);
+    const precos = (precosDoItem.get(i.id) || []).filter(p=>!cutoff || p.data>=cutoff).map(p=>p.preco);
     if(!precos.length) return null;
     if(metrica==='min') return Math.min(...precos);
     if(metrica==='max') return Math.max(...precos);
@@ -1864,7 +1854,7 @@ function renderItens(){
     list = withMetric.map(x=>x.item);
   } else if(sortMode==='data_asc'){
     const withDate = list.map(i=>{
-      const precosItem = PRICES.filter(p=>p.itemId===i.id); // PRICES já vem ordenado por data desc
+      const precosItem = precosDoItem.get(i.id) || []; // já vem ordenado por data desc
       const ultima = precosItem.length ? precosItem[0].data : null;
       return {item:i, data: ultima};
     });
@@ -1887,8 +1877,7 @@ function renderItens(){
   el.innerHTML = list.map(i=>{
     const cat = catById(i.categoriaId);
     const subcat = subcatById(i.subcategoriaId);
-    const precosItem = PRICES.filter(p=>p.itemId===i.id).sort((a,b)=>b.data.localeCompare(a.data) || b.id-a.id);
-    const ultimo = precosItem[0];
+    const ultimo = (precosDoItem.get(i.id) || [])[0];
     let metaExtra = ultimo? ` · último: ${fmtMoney(ultimo.preco)} (${fmtDateBR(ultimo.data)})` : '';
     if(sortMode==='preco_asc' || sortMode==='preco_desc'){
       const valor = metricaDoItem(i);
@@ -2211,7 +2200,7 @@ function renderPrecos(){
     const item = itemById(p.itemId);
     const cat = item ? catById(item.categoriaId) : null;
     const subcat = item ? subcatById(item.subcategoriaId) : null;
-    const localNome = p.localId ? (localById(p.localId)?.nome||'') : (p.local||'');
+    const localNome = localNomeDoPreco(p);
     const sel = precoSelecionadoId===p.id;
     return `<div class="card ${sel?'selecionado':''}" data-id="${p.id}" data-type="preco">
       <button type="button" class="select-toggle-zone ${sel?'on':''}" data-select><span class="select-dot"></span></button>
@@ -2463,36 +2452,48 @@ function goToChart(itemId){
    OPORTUNIDADES (preços recentes bons vs. histórico)
    ============================================================ */
 /* Usado no alerta imediato ao salvar um preço (percentil configurável em Configurações) */
-function isPrecoBom(itemId, novoPreco, novoRecordId){
-  const recentCutoff = cutoffDaysAgo(CONFIG.opJanelaDias);
-  const histCutoff = periodCutoffDate(CONFIG.opHistoricoPeriodo);
-  const historico = PRICES
-    .filter(p=>p.itemId===itemId && p.id!==novoRecordId && (!histCutoff || p.data>=histCutoff) && p.data<recentCutoff)
+/* Percentil (0–100) de um preço dentro do histórico ordenado: % de registros que custam <= ele (menor = mais barato) */
+/* Preços agrupados por item (cada lista mantém a ordem de PRICES: data desc) — evita filtrar PRICES uma vez por item */
+function precosPorItem(){
+  const m = new Map();
+  PRICES.forEach(p=>{ const arr = m.get(p.itemId); if(arr) arr.push(p); else m.set(p.itemId,[p]); });
+  return m;
+}
+function pctHistorico(historico, preco){
+  if(!historico.length) return null;
+  return (historico.filter(h=>h<=preco).length/historico.length)*100;
+}
+/* Janela das oportunidades: "recente" = últimos opJanelaDias; histórico = período configurado, fora da janela recente */
+function janelaOportunidades(){
+  return {recentCutoff: cutoffDaysAgo(CONFIG.opJanelaDias), histCutoff: periodCutoffDate(CONFIG.opHistoricoPeriodo)};
+}
+function historicoOrdenado(precosItem, janela){
+  return precosItem
+    .filter(p=>(!janela.histCutoff || p.data>=janela.histCutoff) && p.data<janela.recentCutoff)
     .map(p=>p.preco).sort((a,b)=>a-b);
+}
+function isPrecoBom(itemId, novoPreco, novoRecordId){
+  const historico = historicoOrdenado(PRICES.filter(p=>p.itemId===itemId && p.id!==novoRecordId), janelaOportunidades());
   if(historico.length<CONFIG.opMinHistorico) return null;
-  const countLE = historico.filter(h=>h<=novoPreco).length;
-  const pct = (countLE/historico.length)*100;
+  const pct = pctHistorico(historico, novoPreco);
   if(pct<=CONFIG.alertaPercentil) return {pct: Math.round(pct), mediana: median(historico)};
   return null;
 }
 
 function computeOportunidades(percentil){
-  const recentCutoff = cutoffDaysAgo(CONFIG.opJanelaDias);
-  const histCutoff = periodCutoffDate(CONFIG.opHistoricoPeriodo);
+  const janela = janelaOportunidades();
   const results = [];
+  const porItem = precosPorItem();
   ITEMS.forEach(item=>{
-    const precosItem = PRICES.filter(p=>p.itemId===item.id);
-    const recentes = precosItem.filter(p=>p.data>=recentCutoff);
+    const precosItem = porItem.get(item.id) || [];
+    const recentes = precosItem.filter(p=>p.data>=janela.recentCutoff);
     if(!recentes.length) return;
-    const historico = precosItem
-      .filter(p=>(!histCutoff || p.data>=histCutoff) && p.data<recentCutoff)
-      .map(p=>p.preco).sort((a,b)=>a-b);
+    const historico = historicoOrdenado(precosItem, janela);
     if(historico.length<CONFIG.opMinHistorico) return;
 
     let melhor=null, melhorPct=101;
     recentes.forEach(p=>{
-      const countLE = historico.filter(h=>h<=p.preco).length;
-      const pct = (countLE/historico.length)*100;
+      const pct = pctHistorico(historico, p.preco);
       if(pct<melhorPct){ melhorPct=pct; melhor=p; }
     });
     if(melhorPct<=percentil){
@@ -2555,20 +2556,16 @@ function renderOportunidades(){
 function openOportunidadeDetail(itemId, percentil){
   const item = itemById(itemId);
   if(!item) return;
-  const recentCutoff = cutoffDaysAgo(CONFIG.opJanelaDias);
-  const histCutoff = periodCutoffDate(CONFIG.opHistoricoPeriodo);
-  const precosItem = PRICES.filter(p=>p.itemId===itemId).sort((a,b)=>b.data.localeCompare(a.data) || b.id-a.id);
-  const historico = precosItem
-    .filter(p=>(!histCutoff || p.data>=histCutoff) && p.data<recentCutoff)
-    .map(p=>p.preco).sort((a,b)=>a-b);
+  const recentCutoff = janelaOportunidades().recentCutoff;
+  const precosItem = PRICES.filter(p=>p.itemId===itemId); // PRICES já vem ordenado (data desc, id desc)
+  const historico = historicoOrdenado(precosItem, janelaOportunidades());
   const med = median(historico);
   const min = historico.length ? historico[0] : null;
   const max = historico.length ? historico[historico.length-1] : null;
 
   function pctOf(preco){
-    if(!historico.length) return null;
-    const countLE = historico.filter(h=>h<=preco).length;
-    return Math.round((countLE/historico.length)*100);
+    const pct = pctHistorico(historico, preco);
+    return pct==null ? null : Math.round(pct);
   }
 
   openSheet(`
@@ -2585,7 +2582,7 @@ function openOportunidadeDetail(itemId, percentil){
     const isRecent = p.data>=recentCutoff;
     const pct = isRecent ? pctOf(p.preco) : null;
     const good = isRecent && pct!=null && pct<=percentil;
-    const localNome = p.localId ? (localById(p.localId)?.nome||'') : '';
+    const localNome = localNomeDoPreco(p);
     let statusHtml = '';
     if(isRecent && pct!=null){
       statusHtml = good
@@ -2624,7 +2621,7 @@ function receitaCatOptionsHTML(selectedId){ return optionsHTML(RECEITA_CATS, sel
 async function findOrCreateTag(nome){
   nome = nome.trim();
   if(!nome) return null;
-  const existente = TAGS.find(t=>t.nome.toLowerCase()===nome.toLowerCase());
+  const existente = TAGS.find(t=>semAcento(t.nome)===semAcento(nome));
   if(existente) return existente.id;
   const id = await putRecord('tags', {nome});
   TAGS.push({id, nome});
@@ -2636,7 +2633,7 @@ function tagNomesFromIds(ids){
 async function findOrCreateEquipamento(nome){
   nome = nome.trim();
   if(!nome) return null;
-  const existente = EQUIPAMENTOS.find(e=>e.nome.toLowerCase()===nome.toLowerCase());
+  const existente = EQUIPAMENTOS.find(e=>semAcento(e.nome)===semAcento(nome));
   if(existente) return existente.id;
   const id = await putRecord('equipamentos', {nome});
   EQUIPAMENTOS.push({id, nome});
@@ -5311,6 +5308,8 @@ function renderLocais(){
 function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
 const CHART_PALETTE = ['#C1440E','#3F7D58','#2563EB','#9333EA','#D97706','#DB2777','#0891B2','#65A30D'];
 
+/* Nome do local de um preço ('' se não houver); aceita o campo antigo p.local de bancos legados */
+function localNomeDoPreco(p){ return p.localId ? ((localById(p.localId)||{}).nome||'') : (p.local||''); }
 function localLabelForPrice(p){
   if(p.localId) return localById(p.localId)?.nome || 'Local removido';
   if(p.local) return p.local;
@@ -5572,7 +5571,7 @@ document.getElementById('btnExport').addEventListener('click', ()=>{
     const item = itemById(p.itemId);
     const cat = item ? catById(item.categoriaId) : null;
     const subcat = item ? subcatById(item.subcategoriaId) : null;
-    const localNome = p.localId ? (localById(p.localId)?.nome||'') : (p.local||'');
+    const localNome = localNomeDoPreco(p);
     rows.push([
       cat?cat.nome:'',
       subcat?subcat.nome:'',
@@ -5627,7 +5626,7 @@ function parseDateBR(s){
 }
 async function findOrCreateCategoria(nome){
   if(!nome) return null;
-  let c = CATS.find(c=>c.nome.toLowerCase()===nome.toLowerCase());
+  let c = CATS.find(c=>semAcento(c.nome)===semAcento(nome));
   if(c) return c.id;
   const id = await putRecord('categorias', {nome, obs:'', foto:null});
   CATS.push({id, nome, obs:'', foto:null});
@@ -5635,7 +5634,7 @@ async function findOrCreateCategoria(nome){
 }
 async function findOrCreateSubcategoria(nome, categoriaId){
   if(!nome || !categoriaId) return null;
-  let s = SUBCATS.find(s=>s.categoriaId===categoriaId && s.nome.toLowerCase()===nome.toLowerCase());
+  let s = SUBCATS.find(s=>s.categoriaId===categoriaId && semAcento(s.nome)===semAcento(nome));
   if(s) return s.id;
   const id = await putRecord('subcategorias', {categoriaId, nome, obs:''});
   SUBCATS.push({id, categoriaId, nome, obs:''});
@@ -5643,7 +5642,7 @@ async function findOrCreateSubcategoria(nome, categoriaId){
 }
 async function findOrCreateItem(nome, categoriaId, subcategoriaId){
   if(!nome) return null;
-  let it = ITEMS.find(i=>i.nome.toLowerCase()===nome.toLowerCase());
+  let it = ITEMS.find(i=>semAcento(i.nome)===semAcento(nome));
   if(it) return it.id;
   const id = await putRecord('itens', {nome, categoriaId: categoriaId||null, subcategoriaId: subcategoriaId||null, obs:'', foto:null});
   ITEMS.push({id, nome, categoriaId: categoriaId||null, subcategoriaId: subcategoriaId||null, obs:'', foto:null});
@@ -5651,7 +5650,7 @@ async function findOrCreateItem(nome, categoriaId, subcategoriaId){
 }
 async function findOrCreateLocal(nome){
   if(!nome) return null;
-  let l = LOCAIS.find(l=>l.nome.toLowerCase()===nome.toLowerCase());
+  let l = LOCAIS.find(l=>semAcento(l.nome)===semAcento(nome));
   if(l) return l.id;
   const id = await putRecord('locais', {nome, obs:''});
   LOCAIS.push({id, nome, obs:''});
@@ -5886,7 +5885,6 @@ function statsPrecosItem(itemId, n){
     menor
   };
 }
-function localNomeDoPreco(p){ return p.localId ? ((localById(p.localId)||{}).nome||'') : (p.local||''); }
 
 async function addItemNaLista(listaId, itemId, quantidade, unidadeId){
   if(LISTA_ITENS.some(li=>li.listaId===listaId && li.itemId===itemId)) return {dup:true};
@@ -6638,7 +6636,7 @@ applyDefaultsToUI();
 fillConfiguracoesForm();
 ativarTelaAcesa();
 /* ---- PWA: versão, armazenamento persistente e service worker ---- */
-const APP_VERSION = 'v1_60';
+const APP_VERSION = 'v1_61';
 document.getElementById('appVersaoTxt').textContent = APP_VERSION;
 if(navigator.storage && navigator.storage.persist){
   navigator.storage.persist().then(ok=>{
