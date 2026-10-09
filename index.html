@@ -3729,6 +3729,11 @@ function gpRodLinhas(ings, escala){
     return {ing:i, nome: alvoLabelDoIngrediente(i)||'', g: gpG(i, escala), fator: gpFatorCaldo(i), unidade:u};
   });
 }
+/* Caldo extra planejado (g) de uma rodada: % do grupo × porções × soma dos g por porção (sem caldo). null se o grupo não tem %. */
+function gpCaldoPlanejado(caldoPct, porcoes, linhasRod){
+  if(!(caldoPct>0)) return null;
+  return Math.round(caldoPct/100*porcoes*linhasRod.reduce((x,l)=>x+l.g,0)*100)/100;
+}
 function rodadaPesarHTML(linhasRod, porcoes, caldoExtra){
   const itens = pesosDaRodada(linhasRod, porcoes);
   if(!itens.length) return '';
@@ -3914,7 +3919,7 @@ function openPreparoView(receita, preparo, opts){
         : `a pesar${d?` (carregado ≈ ${fmt2(d.carregado)} g)`:''}`;
       const caldoTxt = r.caldoExtra>0 ? ` · caldo extra ${fmt2(r.caldoExtra)} g` : '';
       const g0 = (preparo.rodadaGrupos||[])[r.grupo];
-      const caldoPlanV = (g0 && g0.caldoPct>0) ? Math.round(g0.caldoPct/100*r.porcoes*linhasRod.reduce((x,l)=>x+l.g,0)*100)/100 : 0;
+      const caldoPlanV = gpCaldoPlanejado(g0 && g0.caldoPct, r.porcoes, linhasRod) || 0;
       return `<div class="view-ing-linha pv-rodada-linha" data-i="${i}">Rodada ${i+1} · ${r.porcoes} porções — ${pesoTxt}${caldoTxt}${rodadaPesarHTML(linhasRod, r.porcoes, r.caldoExtra>0 ? r.caldoExtra : caldoPlanV)}</div>`;
     }).join('') : '<p class="hint">Nenhuma rodada definida ainda.</p>';
     const resumoLinhas = [];
@@ -4404,7 +4409,7 @@ function openPreparoRodadaEdit(receita, preparo, idx){
   const linhasRod = gpRodLinhas(ings, preparo.escala);
   const grupo = (preparo.rodadaGrupos||[])[r.grupo];
   const porPorcao = linhasRod.reduce((x,l)=>x+l.g*l.fator,0);
-  const caldoPlan = (grupo && grupo.caldoPct>0) ? Math.round(grupo.caldoPct/100*r.porcoes*linhasRod.reduce((x,l)=>x+l.g,0)*100)/100 : null;
+  const caldoPlan = gpCaldoPlanejado(grupo && grupo.caldoPct, r.porcoes, linhasRod);
   function carregado(){ const c = r.caldoExtra!=null ? r.caldoExtra : (caldoPlan||0); return r.porcoes*porPorcao + c; }
   const html = `
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
@@ -4619,20 +4624,12 @@ function openPreparoForm(receita, preparo){
   /* ---- Planejamento de porções (só aparece se a receita tem "máx. de porções por rodada") ---- */
   const usaPorcoes = receita.maxPorcoesRodada>0;
   let porcoesFinais = (editing && preparo.porcoesFinais>0) ? preparo.porcoesFinais : null;
+  // matemática de porções/rodadas é a mesma das telas granulares (helpers gp*), só que lendo a escala do campo do form
   function pzEscalaAtual(){ return Number(document.getElementById('pp-escala').value)||1; }
   function pzN(){ return porcoesFinais>0 ? porcoesFinais : pzEscalaAtual(); }
-  function pzPadrao(ing){ return ing.quantidade!=null ? ing.quantidade/pzEscalaAtual() : null; }
-  // purê sem caldo da transformação vinculada, convertido pra unidade do ingrediente
-  function pzDisponivelPadrao(ing){
-    if(!ing.transformacaoId || !ing.unidadeId) return null;
-    const t = TRANSFORMACOES.find(x=>x.id===ing.transformacaoId);
-    const pesos = t ? pesosDaTransformacao(t) : null;
-    const u = unidadeById(ing.unidadeId), uT = t ? unidadeById(t.unidadeCompradaId) : null;
-    if(!pesos || !u || !uT || u.dimensao!==uT.dimensao) return null;
-    return pesos.referencia*uT.fator/u.fator;
-  }
-  function pzDisponivel(ing){ return ing.pureDisponivel!=null ? ing.pureDisponivel : pzDisponivelPadrao(ing); }
-  function pzG(ing){ return ing.gPorcao!=null ? ing.gPorcao : pzPadrao(ing); }
+  function pzPadrao(ing){ return gpPadraoG(ing, pzEscalaAtual()); }
+  function pzDisponivel(ing){ return gpDisponivelG(ing); }
+  function pzG(ing){ return gpG(ing, pzEscalaAtual()); }
   function pzLinhasItens(){
     return ingState.map((ing,idx)=>({ing,idx})).filter(x=> x.ing.itemId && x.ing.quantidade!=null && pzPadrao(x.ing)>0);
   }
@@ -4749,28 +4746,9 @@ function openPreparoForm(receita, preparo){
     ? preparo.rodadas.map(r=>({porcoes:r.porcoes, grupo:r.grupo??0, caldoExtra:r.caldoExtra??null, massaGerada:r.massaGerada??null}))
     : [];
   // g de referência por porção e fator de caldo (purê) de cada ingrediente que entra nas rodadas
-  function rodLinhas(){
-    const linhas = [];
-    ingState.forEach((ing,idx)=>{
-      if(ing.quantidade==null) return;
-      const pad = pzPadrao(ing);
-      if(!(pad>0)) return;
-      const g = (ing.itemId && ing.gPorcao!=null) ? ing.gPorcao : pad;
-      let fator = 1;
-      if(ing.itemId && ing.transformacaoId){
-        const t = TRANSFORMACOES.find(x=>x.id===ing.transformacaoId);
-        const pesos = t ? pesosDaTransformacao(t) : null;
-        if(pesos && pesos.temPure) fator = pesos.fatorCaldo;
-      }
-      linhas.push({idx, nome: alvoLabelDoIngrediente(ing)||'', g, fator, unidade: ing.unidadeId?unidadeById(ing.unidadeId):null});
-    });
-    return linhas;
-  }
+  function rodLinhas(){ return gpRodLinhas(ingState, pzEscalaAtual()); }
   function rodCaldoPlan(r){
-    const pct = rodGrupos[r.grupo] ? rodGrupos[r.grupo].caldoPct : null;
-    if(!(pct>0)) return null;
-    const somaG = rodLinhas().reduce((x,l)=>x+l.g,0);
-    return Math.round(pct/100*r.porcoes*somaG*100)/100;
+    return gpCaldoPlanejado(rodGrupos[r.grupo] ? rodGrupos[r.grupo].caldoPct : null, r.porcoes, rodLinhas());
   }
   function rodCaldoEfetivo(r){ return r.caldoExtra!=null ? r.caldoExtra : rodCaldoPlan(r); }
   // recria a lista de rodadas a partir dos grupos, mantendo o que já foi digitado (por posição)
@@ -4884,8 +4862,7 @@ function openPreparoForm(receita, preparo){
         const peso = p*l.g*l.fator;
         return `${l.nome}: ${fmt2(peso)} g`;
       });
-      const somaG = linhas.reduce((x,l)=>x+l.g,0);
-      const caldoPlan = g.caldoPct>0 ? Math.round(g.caldoPct/100*p*somaG*100)/100 : null;
+      const caldoPlan = gpCaldoPlanejado(g.caldoPct, p, linhas);
       if(caldoPlan!=null) partes.push(`caldo extra: ${fmt2(caldoPlan)} g`);
       planoLinhas.push(`Rodada de ${p} porções (×${n}) — pesar: ` + partes.join(' · '));
     });
@@ -6636,7 +6613,7 @@ applyDefaultsToUI();
 fillConfiguracoesForm();
 ativarTelaAcesa();
 /* ---- PWA: versão, armazenamento persistente e service worker ---- */
-const APP_VERSION = 'v1_61';
+const APP_VERSION = 'v1_62';
 document.getElementById('appVersaoTxt').textContent = APP_VERSION;
 if(navigator.storage && navigator.storage.persist){
   navigator.storage.persist().then(ok=>{
