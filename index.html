@@ -250,6 +250,15 @@ html.dark header{background:#0D0F13;color:#ECE7DA;}
 .rod-pesar .rp-nome{flex:1;min-width:0;}
 .rod-pesar .rp-peso{font-weight:800;white-space:nowrap;}
 
+/* ---- Diálogos do app (substituem alert/confirm/prompt nativos, que mostram o endereço do site no título) ---- */
+.dlg-overlay{position:fixed;inset:0;background:rgba(20,20,20,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:24px;}
+.dlg-overlay.active{display:flex;}
+.dlg{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:18px 16px 14px;width:100%;max-width:420px;box-shadow:0 12px 32px rgba(0,0,0,.35);}
+.dlg-msg{font-size:15px;line-height:1.45;max-height:60vh;overflow-y:auto;}
+.dlg input{margin-top:12px;}
+.dlg-actions{display:flex;gap:8px;margin-top:16px;}
+.dlg-actions .btn{flex:1;}
+
 /* ---- Duplicatas ---- */
 .dup-pair{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-bottom:9px;}
 .dup-pair .dup-sim{font-size:11.5px;color:var(--ink-soft);margin-top:4px;}
@@ -1138,17 +1147,17 @@ window.addEventListener('popstate', ()=>{
   if(suppressPopstateCount>0){ suppressPopstateCount--; return; }
   if(uiHistoryDepth>0){
     uiHistoryDepth--;
-    if(lightbox.classList.contains('active')) closeLightboxDom();
+    if(dialogoAberto()) fecharDialogoDom();
+    else if(lightbox.classList.contains('active')) closeLightboxDom();
     else if(ingPickerOverlay.classList.contains('active')) closeIngredientePickerDom();
     else if(sub2Overlay.classList.contains('active')) closeSub2SheetDom();
     else if(subOverlay.classList.contains('active')) closeSubSheetDom();
     else if(overlay.classList.contains('active')) closeSheetDom();
   } else {
-    if(confirm('Sair do Preços?\n\nToque em OK pra fechar o app.')){
-      // deixa o back seguinte (ou o próprio navegador/WebView) sair de fato
-    } else {
-      history.pushState({guard:true}, '');
-    }
+    confirmar('Sair do Preços?\n\nToque em OK pra fechar o app.', {semHistorico:true}).then(ok=>{
+      // OK: deixa o back seguinte (ou o próprio navegador/WebView) sair de fato
+      if(!ok) history.pushState({guard:true}, '');
+    });
   }
 });
 history.pushState({guard:true}, '');
@@ -1434,6 +1443,67 @@ document.body.addEventListener('click', (e)=>{
 }, true);
 
 /* ============================================================
+   DIÁLOGOS DO APP (avisar / confirmar / perguntar)
+   Substituem alert/confirm/prompt nativos (no navegador o nativo mostra o endereço do site em destaque).
+   Todos devolvem Promise: confirmar -> true/false; perguntar -> texto ou null; avisar -> sem retorno útil
+   (não precisa de await: o código que chama costuma só dar return em seguida).
+   O botão voltar do celular fecha o diálogo como "cancelar".
+   ============================================================ */
+let _dlg = null;   // {resolve, cancelValor, historico}
+function _dlgEl(){
+  let el = document.getElementById('dlgOverlay');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'dlgOverlay'; el.className = 'dlg-overlay';
+    el.innerHTML = '<div class="dlg" role="dialog" aria-modal="true"><div class="dlg-msg pre-wrap" id="dlgMsg"></div><input type="text" id="dlgInput" style="display:none" autocomplete="off"><div class="dlg-actions" id="dlgActions"></div></div>';
+    document.body.appendChild(el);
+    el.addEventListener('click', e=>{ if(e.target===el) _dlgFechar(_dlg ? _dlg.cancelValor : undefined); });
+    document.addEventListener('keydown', e=>{ if(e.key==='Escape' && _dlg) _dlgFechar(_dlg.cancelValor); });
+  }
+  return el;
+}
+function dialogoAberto(){ return !!_dlg; }
+function _dlgFechar(resultado){
+  if(!_dlg) return;
+  const d = _dlg; _dlg = null;
+  _dlgEl().classList.remove('active');
+  if(d.historico) consumeModalHistory();
+  d.resolve(resultado);
+}
+function fecharDialogoDom(){          // chamado pelo popstate: o histórico já foi consumido pelo próprio voltar
+  if(!_dlg) return;
+  const d = _dlg; _dlg = null;
+  _dlgEl().classList.remove('active');
+  d.resolve(d.cancelValor);
+}
+function _dlgAbrir({msg, tipo, valor, semHistorico}){
+  return new Promise(resolve=>{
+    if(_dlg){ const velho = _dlg; _dlg = null; if(velho.historico) consumeModalHistory(); velho.resolve(velho.cancelValor); }
+    const el = _dlgEl();
+    const input = document.getElementById('dlgInput');
+    const acoes = document.getElementById('dlgActions');
+    document.getElementById('dlgMsg').textContent = msg;
+    const ehPergunta = tipo==='prompt';
+    input.style.display = ehPergunta ? 'block' : 'none';
+    input.value = ehPergunta && valor!=null ? valor : '';
+    const cancelValor = tipo==='confirm' ? false : (tipo==='prompt' ? null : undefined);
+    acoes.innerHTML = (tipo==='alert' ? '' : '<button type="button" class="btn btn-outline" id="dlgCancel">Cancelar</button>') +
+                      '<button type="button" class="btn btn-accent" id="dlgOk">OK</button>';
+    _dlg = {resolve, cancelValor, historico: !semHistorico};
+    document.getElementById('dlgOk').addEventListener('click', ()=> _dlgFechar(tipo==='confirm' ? true : (tipo==='prompt' ? input.value : undefined)));
+    const c = document.getElementById('dlgCancel');
+    if(c) c.addEventListener('click', ()=> _dlgFechar(cancelValor));
+    input.onkeydown = e=>{ if(e.key==='Enter'){ e.preventDefault(); _dlgFechar(input.value); } };
+    el.classList.add('active');
+    if(!semHistorico) pushModalHistory();
+    if(ehPergunta) setTimeout(()=>{ input.focus(); input.select(); }, 30);
+  });
+}
+function avisar(msg){ return _dlgAbrir({msg, tipo:'alert'}); }
+function confirmar(msg, opts){ return _dlgAbrir({msg, tipo:'confirm', semHistorico: !!(opts && opts.semHistorico)}); }
+function perguntar(msg, valor){ return _dlgAbrir({msg, tipo:'prompt', valor}); }
+
+/* ============================================================
    CATEGORIAS
    ============================================================ */
 function catOptionsHTML(selectedId){
@@ -1481,14 +1551,14 @@ function openCategoryForm(cat){
   document.getElementById('c-cancel').addEventListener('click', closeSheet);
   if(editing){
     document.getElementById('c-del').addEventListener('click', async ()=>{
-      if(!confirm('Excluir esta categoria? Subcategorias dela serão excluídas. Itens ligados a ela não serão excluídos, mas ficarão sem categoria.')) return;
+      if(!await confirmar('Excluir esta categoria? Subcategorias dela serão excluídas. Itens ligados a ela não serão excluídos, mas ficarão sem categoria.')) return;
       await deleteRecord('categorias', cat.id);
       for(const sc of SUBCATS.filter(s=>s.categoriaId===cat.id)) await deleteRecord('subcategorias', sc.id);
       for(const it of ITEMS.filter(i=>i.categoriaId===cat.id)){ it.categoriaId=null; it.subcategoriaId=null; await putRecord('itens', it); }
       await reloadAll(); closeSheet(); renderCurrent();
     });
     document.getElementById('c-subcat-add').addEventListener('click', async ()=>{
-      const nome = prompt('Nome da subcategoria:');
+      const nome = await perguntar('Nome da subcategoria:');
       if(!nome || !nome.trim()) return;
       const id = await putRecord('subcategorias', {categoriaId:cat.id, nome:nome.trim(), obs:''});
       SUBCATS.push({id, categoriaId:cat.id, nome:nome.trim(), obs:''});
@@ -1498,7 +1568,7 @@ function openCategoryForm(cat){
   }
   document.getElementById('c-save').addEventListener('click', async ()=>{
     const nome = document.getElementById('c-nome').value.trim();
-    if(!nome){ alert('Informe o nome da categoria.'); return; }
+    if(!nome){ avisar('Informe o nome da categoria.'); return; }
     const obj = editing ? {...cat} : {};
     obj.nome = nome;
     obj.obs = document.getElementById('c-obs').value.trim();
@@ -1528,7 +1598,7 @@ function renderSubcatsList(categoriaId){
     btn.addEventListener('click', async (e)=>{
       const id = Number(e.target.closest('[data-scid]').dataset.scid);
       const sc = subcatById(id);
-      const novoNome = prompt('Renomear subcategoria:', sc.nome);
+      const novoNome = await perguntar('Renomear subcategoria:', sc.nome);
       if(!novoNome || !novoNome.trim()) return;
       sc.nome = novoNome.trim();
       await putRecord('subcategorias', sc);
@@ -1539,7 +1609,7 @@ function renderSubcatsList(categoriaId){
   el.querySelectorAll('[data-sc-del]').forEach(btn=>{
     btn.addEventListener('click', async (e)=>{
       const id = Number(e.target.closest('[data-scid]').dataset.scid);
-      if(!confirm('Excluir esta subcategoria? Itens ligados a ela ficarão sem subcategoria.')) return;
+      if(!await confirmar('Excluir esta subcategoria? Itens ligados a ela ficarão sem subcategoria.')) return;
       await deleteRecord('subcategorias', id);
       for(const it of ITEMS.filter(i=>i.subcategoriaId===id)){ it.subcategoriaId=null; await putRecord('itens', it); }
       await reloadAll();
@@ -1642,7 +1712,7 @@ function openItemForm(item){
   let catAtualId = editing && item.categoriaId ? String(item.categoriaId) : '';
   document.getElementById('i-cat').addEventListener('change', async (e)=>{
     if(e.target.value==='__novo__'){
-      const nome = (window.prompt('Nome da nova categoria:')||'').trim();
+      const nome = (await perguntar('Nome da nova categoria:')||'').trim();
       if(!nome){ e.target.value = catAtualId; return; } // cancelou: volta à categoria que estava
       // se já existe categoria com esse nome (ignorando acento/caixa), usa a existente em vez de duplicar
       let cat = CATS.find(c=>semAcento(c.nome)===semAcento(nome));
@@ -1664,8 +1734,8 @@ function openItemForm(item){
   document.getElementById('i-subcat').addEventListener('change', async (e)=>{
     if(e.target.value!=='__novo__') return;
     const catId = document.getElementById('i-cat').value ? Number(document.getElementById('i-cat').value) : null;
-    if(!catId){ alert('Escolha uma categoria antes de criar a subcategoria.'); e.target.value=''; return; }
-    const nome = (window.prompt('Nome da nova subcategoria:')||'').trim();
+    if(!catId){ avisar('Escolha uma categoria antes de criar a subcategoria.'); e.target.value=''; return; }
+    const nome = (await perguntar('Nome da nova subcategoria:')||'').trim();
     if(!nome){ e.target.value=''; return; }
     const jaExiste = SUBCATS.find(sc=>sc.categoriaId===catId && semAcento(sc.nome)===semAcento(nome));
     if(jaExiste){ populateSubcatSelect(catId, jaExiste.id); return; }
@@ -1722,7 +1792,7 @@ function openItemForm(item){
       if(nTr) usos.push(`${nTr} transformação(ões)`);
       let msg = `Excluir este item? ${nPrecos} registro(s) de preço ligados a ele também serão excluídos.`;
       if(usos.length) msg += `\n\n⚠️ Ele é usado em: ${usos.join(', ')}. Esses registros não serão apagados, mas ficarão com "(item removido)" e sem custo calculável.`;
-      if(!confirm(msg)) return;
+      if(!await confirmar(msg)) return;
       await deleteRecord('itens', item.id);
       for(const p of PRICES.filter(p=>p.itemId===item.id)) await deleteRecord('precos', p.id);
       for(const li of LISTA_ITENS.filter(x=>x.itemId===item.id)) await deleteRecord('lista_compras_itens', li.id);
@@ -1731,7 +1801,7 @@ function openItemForm(item){
   }
   document.getElementById('i-save').addEventListener('click', async ()=>{
     const nome = document.getElementById('i-nome').value.trim();
-    if(!nome){ alert('Informe o nome do item.'); return; }
+    if(!nome){ avisar('Informe o nome do item.'); return; }
     const obj = editing ? {...item} : {};
     obj.nome = nome;
     const catVal = document.getElementById('i-cat').value;
@@ -1743,7 +1813,7 @@ function openItemForm(item){
     const crInd = getQtyValue(document.getElementById('i-cr-ind'));
     const crUn = document.getElementById('i-cr-un').value;
     const temRegra = crMin>0 || crInd>0;
-    if(temRegra && !crUn){ alert('Informe a unidade da regra de custo.'); return; }
+    if(temRegra && !crUn){ avisar('Informe a unidade da regra de custo.'); return; }
     obj.custoMinQtd = crMin>0 ? crMin : null;
     obj.custoIndivQtd = crInd>0 ? crInd : null;
     obj.regraUnidadeId = temRegra ? Number(crUn) : null;
@@ -1751,7 +1821,7 @@ function openItemForm(item){
     const cvQtd = getQtyValue(document.getElementById('i-cv-qtd'));
     const cvUn = document.getElementById('i-cv-un').value;
     const cvAtiva = document.getElementById('i-dim-ref').value==='unidade' && cvQtd>0;
-    if(cvAtiva && !cvUn){ alert('Informe a unidade da conversão (g ou ml).'); return; }
+    if(cvAtiva && !cvUn){ avisar('Informe a unidade da conversão (g ou ml).'); return; }
     obj.convQtd = cvAtiva ? cvQtd : null;
     obj.convUnidadeId = cvAtiva ? Number(cvUn) : null;
     obj.obs = document.getElementById('i-obs').value.trim();
@@ -2077,7 +2147,7 @@ function openPriceForm(price, presetItemId, repeatFrom, opts){
     refreshRefUnidadeOptions(e.target.value, sugerida);
   });
   document.getElementById('p-local-add').addEventListener('click', async ()=>{
-    const nome = prompt('Nome do local:');
+    const nome = await perguntar('Nome do local:');
     if(!nome || !nome.trim()) return;
     const id = await putRecord('locais', {nome:nome.trim(), obs:''});
     LOCAIS.push({id, nome:nome.trim(), obs:''});
@@ -2088,7 +2158,7 @@ function openPriceForm(price, presetItemId, repeatFrom, opts){
   document.getElementById('p-cancel').addEventListener('click', closeSheet);
   if(editing){
     document.getElementById('p-del').addEventListener('click', async ()=>{
-      if(!confirm('Excluir este registro de preço?')) return;
+      if(!await confirmar('Excluir este registro de preço?')) return;
       await deleteRecord('precos', price.id);
       await reloadAll(); closeSheet(); renderCurrent();
     });
@@ -2097,9 +2167,9 @@ function openPriceForm(price, presetItemId, repeatFrom, opts){
     const itemId = Number(document.getElementById('p-item').value);
     const preco = getMoneyValue(document.getElementById('p-preco'));
     const data = document.getElementById('p-data').value;
-    if(!itemId){ alert('Selecione um item.'); return; }
-    if(!preco || preco<=0){ alert('Informe o preço.'); return; }
-    if(!data){ alert('Informe a data.'); return; }
+    if(!itemId){ avisar('Selecione um item.'); return; }
+    if(!preco || preco<=0){ avisar('Informe o preço.'); return; }
+    if(!data){ avisar('Informe a data.'); return; }
     const obj = editing ? {...price} : {};
     obj.itemId = itemId;
     obj.preco = preco;
@@ -3241,7 +3311,7 @@ function openReceitaForm(receita){
 
   document.getElementById('r-cat').addEventListener('change', async (e)=>{
     if(e.target.value==='__novo__'){
-      const nome = (window.prompt('Nome da nova categoria de receita:')||'').trim();
+      const nome = (await perguntar('Nome da nova categoria de receita:')||'').trim();
       if(!nome){ e.target.value=''; return; }
       const id = await putRecord('receita_categorias', {nome});
       RECEITA_CATS.push({id, nome});
@@ -3256,8 +3326,8 @@ function openReceitaForm(receita){
   document.getElementById('r-subcat').addEventListener('change', async (e)=>{
     if(e.target.value==='__novo__'){
       const catId = document.getElementById('r-cat').value ? Number(document.getElementById('r-cat').value) : null;
-      if(!catId){ alert('Escolha (ou crie) uma categoria antes de criar a subcategoria.'); e.target.value=''; return; }
-      const nome = (window.prompt('Nome da nova subcategoria:')||'').trim();
+      if(!catId){ avisar('Escolha (ou crie) uma categoria antes de criar a subcategoria.'); e.target.value=''; return; }
+      const nome = (await perguntar('Nome da nova subcategoria:')||'').trim();
       if(!nome){ e.target.value=''; return; }
       const id = await putRecord('receita_subcategorias', {nome, categoriaId:catId});
       RECEITA_SUBCATS.push({id, nome, categoriaId:catId});
@@ -3461,7 +3531,7 @@ function openReceitaForm(receita){
       const usosComoSub = RECEITA_INGREDIENTES.filter(i=>i.subReceitaId===receita.id).length;
       let msg = 'Excluir esta receita? Os ingredientes, o modo de preparo e os preparos registrados dela também serão apagados.';
       if(usosComoSub) msg += ` Atenção: ela é usada como sub-receita em ${usosComoSub} outro(s) ingrediente(s), que ficarão com custo indisponível.`;
-      if(!confirm(msg)) return;
+      if(!await confirmar(msg)) return;
       for(const old of RECEITA_INGREDIENTES.filter(i=>i.receitaId===receita.id)) await deleteRecord('receita_ingredientes', old.id);
       for(const old of RECEITA_ETAPAS.filter(e=>e.receitaId===receita.id)) await deleteRecord('receita_etapas', old.id);
       for(const p of RECEITA_PREPAROS.filter(p=>p.receitaId===receita.id)){
@@ -3475,7 +3545,7 @@ function openReceitaForm(receita){
   }
   document.getElementById('r-save').addEventListener('click', async ()=>{
     const nome = document.getElementById('r-nome').value.trim();
-    if(!nome){ alert('Informe o nome da receita.'); return; }
+    if(!nome){ avisar('Informe o nome da receita.'); return; }
     const tagsTexto = document.getElementById('r-tags').value;
     const tagIds = [];
     for(const t of tagsTexto.split(',')){
@@ -3743,9 +3813,9 @@ function openPreparoNovoMini(receita){
   }
   document.getElementById('pn-save').addEventListener('click', async ()=>{
     const data = document.getElementById('pn-data').value;
-    if(!data){ alert('Informe a data.'); return; }
+    if(!data){ avisar('Informe a data.'); return; }
     const escala = Number(document.getElementById('pn-escala').value)||0;
-    if(!(escala>0)){ alert('Informe um fator de escala válido.'); return; }
+    if(!(escala>0)){ avisar('Informe um fator de escala válido.'); return; }
     const ingsBase = RECEITA_INGREDIENTES.filter(i=>i.receitaId===receita.id).sort((a,b)=>a.ordem-b.ordem).map(ing=>({
       itemId: ing.itemId||null, grupoId: ing.grupoId||null, subReceitaId: ing.subReceitaId||null,
       quantidade: ing.quantidade!=null ? ing.quantidade*escala : null,
@@ -4020,7 +4090,7 @@ function openPreparoEscalaEdit(receita, preparo){
   }
   document.getElementById('pe-save').addEventListener('click', async ()=>{
     const novaEscala = Number(document.getElementById('pe-escala').value)||0;
-    if(!(novaEscala>0)){ alert('Informe um fator de escala válido.'); return; }
+    if(!(novaEscala>0)){ avisar('Informe um fator de escala válido.'); return; }
     const escalaAntiga = preparo.escala || 1;
     if(novaEscala !== escalaAntiga){
       const ratio = novaEscala/escalaAntiga;
@@ -4128,7 +4198,7 @@ function openPreparoIngredienteEdit(receita, preparo, ingOriginal){
       el.textContent = c.valor!=null ? `≈ ${fmtMoney(c.valor)}${c.parcial?' (sub-receita com custo parcial)':''}${custoRegraTxt(c)}` : `Custo indisponível — ${c.motivo}`;
     }
     document.getElementById('pie-remove').addEventListener('click', async ()=>{
-      if(!confirm('Remover este ingrediente do preparo?')) return;
+      if(!await confirmar('Remover este ingrediente do preparo?')) return;
       await deleteRecord('preparo_ingredientes', ingOriginal.id);
       await reloadAll();
       closeSubSheet();
@@ -4356,9 +4426,9 @@ function openPreparoRodadasConfig(receita, preparo){
   atualizarCheck();
   document.getElementById('rc-save').addEventListener('click', async ()=>{
     const gs = gruposValidos().map(g=>({n:Math.floor(g.n), porcoes:Math.floor(g.porcoes), caldoPct:g.caldoPct>0?g.caldoPct:null}));
-    if(!gs.length){ alert('Defina ao menos um grupo de rodadas.'); return; }
+    if(!gs.length){ avisar('Defina ao menos um grupo de rodadas.'); return; }
     const haviaDadosAntigos = rodadasAntigas.some(r=>r.massaGerada>0 || r.caldoExtra>0);
-    if(haviaDadosAntigos && !confirm('Já tem peso/caldo informado em rodadas. Redefinir o nº de rodadas apaga esses valores e recria a lista do zero. Continuar?')) return;
+    if(haviaDadosAntigos && !await confirmar('Já tem peso/caldo informado em rodadas. Redefinir o nº de rodadas apaga esses valores e recria a lista do zero. Continuar?')) return;
     const novasRodadas = [];
     gs.forEach((g,gi)=>{ for(let i=0;i<g.n;i++) novasRodadas.push({porcoes:g.porcoes, grupo:gi, caldoExtra:null, massaGerada:null}); });
     await putRecord('receita_preparos', {...preparo, rodadaGrupos:gs, rodadas:novasRodadas});
@@ -4460,7 +4530,7 @@ function openPreparoDataEdit(receita, preparo){
   document.getElementById('pd-cancel').addEventListener('click', closeSubSheet);
   document.getElementById('pd-save').addEventListener('click', async ()=>{
     const data = document.getElementById('pd-data').value;
-    if(!data){ alert('Informe a data.'); return; }
+    if(!data){ avisar('Informe a data.'); return; }
     await putRecord('receita_preparos', {...preparo, data});
     await reloadAll();
     closeSubSheet();
@@ -5125,7 +5195,7 @@ function openPreparoForm(receita, preparo){
   document.getElementById('pp-cancel').addEventListener('click', closeSheet);
   if(editing){
     document.getElementById('pp-del').addEventListener('click', async ()=>{
-      if(!confirm('Excluir este preparo?')) return;
+      if(!await confirmar('Excluir este preparo?')) return;
       for(const old of PREPARO_INGREDIENTES.filter(i=>i.preparoId===preparo.id)) await deleteRecord('preparo_ingredientes', old.id);
       for(const old of PREPARO_ETAPAS.filter(e=>e.preparoId===preparo.id)) await deleteRecord('preparo_etapas', old.id);
       await deleteRecord('receita_preparos', preparo.id);
@@ -5134,7 +5204,7 @@ function openPreparoForm(receita, preparo){
   }
   document.getElementById('pp-save').addEventListener('click', async ()=>{
     const data = document.getElementById('pp-data').value;
-    if(!data){ alert('Informe a data.'); return; }
+    if(!data){ avisar('Informe a data.'); return; }
     const escala = Number(document.getElementById('pp-escala').value)||1;
     const ingStateEfetivo = ingState.map(i=>({...i, quantidade: qtdEfetivaIng(i)}));
     const {total} = custoReceitaState(ingStateEfetivo, new Set([receita.id]));
@@ -5257,7 +5327,7 @@ function openLocalForm(local){
   if(editing){
     document.getElementById('l-del').addEventListener('click', async ()=>{
       const nUsos = PRICES.filter(p=>p.localId===local.id).length;
-      if(!confirm(`Excluir este local? ${nUsos} registro(s) de preço ligados a ele ficarão sem local.`)) return;
+      if(!await confirmar(`Excluir este local? ${nUsos} registro(s) de preço ligados a ele ficarão sem local.`)) return;
       await deleteRecord('locais', local.id);
       for(const p of PRICES.filter(p=>p.localId===local.id)){ p.localId=null; await putRecord('precos', p); }
       await reloadAll(); closeSheet(); renderCurrent();
@@ -5265,7 +5335,7 @@ function openLocalForm(local){
   }
   document.getElementById('l-save').addEventListener('click', async ()=>{
     const nome = document.getElementById('l-nome').value.trim();
-    if(!nome){ alert('Informe o nome do local.'); return; }
+    if(!nome){ avisar('Informe o nome do local.'); return; }
     const obj = editing ? {...local} : {};
     obj.nome = nome;
     obj.obs = document.getElementById('l-obs').value.trim();
@@ -5558,7 +5628,7 @@ function renderChart(){
    EXPORTAR CSV (compatível com Excel)
    ============================================================ */
 document.getElementById('btnExport').addEventListener('click', ()=>{
-  if(!PRICES.length){ alert('Não há preços registrados para exportar.'); return; }
+  if(!PRICES.length){ avisar('Não há preços registrados para exportar.'); return; }
   const headers = ['Categoria','Subcategoria','Item','Preco','Data','Local','Comprou','Observacao_Preco','Observacao_Item','Observacao_Categoria','Quantidade_Ref','Unidade_Ref'];
   const rows = [headers];
   PRICES.slice().sort((a,b)=>a.data.localeCompare(b.data)).forEach(p=>{
@@ -5654,7 +5724,7 @@ document.getElementById('btnImport').addEventListener('click', async ()=>{
   const fileInput = document.getElementById('fileImport');
   const resultEl = document.getElementById('import-result');
   const file = fileInput.files[0];
-  if(!file){ alert('Selecione um arquivo .csv primeiro.'); return; }
+  if(!file){ avisar('Selecione um arquivo .csv primeiro.'); return; }
   const text = await file.text();
   const clean = text.replace(/^\uFEFF/, '');
   const lines = clean.split(/\r?\n/).filter(l=>l.trim().length);
@@ -5768,7 +5838,7 @@ document.getElementById('btnImportJson').addEventListener('click', async ()=>{
   const fileInput = document.getElementById('fileImportJson');
   const resultEl = document.getElementById('import-json-result');
   const file = fileInput.files[0];
-  if(!file){ alert('Selecione um arquivo .json primeiro.'); return; }
+  if(!file){ avisar('Selecione um arquivo .json primeiro.'); return; }
 
   let backup;
   try{
@@ -5803,7 +5873,7 @@ document.getElementById('btnImportJson').addEventListener('click', async ()=>{
   const aviso = antigo
     ? '\n\nEste backup é de uma versão antiga: só contém categorias, itens, locais e preços. Receitas, preparos e transformações atuais serão MANTIDOS.'
     : '';
-  if(!confirm(`Isso vai APAGAR os dados atuais e substituir tudo pelo backup (${resumo}).${aviso}\n\nContinuar?`)) return;
+  if(!await confirmar(`Isso vai APAGAR os dados atuais e substituir tudo pelo backup (${resumo}).${aviso}\n\nContinuar?`)) return;
 
   // restauração atômica: numa única transação — se algo falhar, nada é alterado
   try{
@@ -5935,7 +6005,7 @@ function openListaForm(lista){
   if(editing){
     document.getElementById('l-del').addEventListener('click', async ()=>{
       const n = itensDaLista(lista.id).length;
-      if(!confirm(`Excluir a lista "${lista.nome}"${n?` e seus ${n} item(ns)`:''}? Os itens e preços cadastrados no app não são afetados.`)) return;
+      if(!await confirmar(`Excluir a lista "${lista.nome}"${n?` e seus ${n} item(ns)`:''}? Os itens e preços cadastrados no app não são afetados.`)) return;
       for(const li of itensDaLista(lista.id)) await deleteRecord('lista_compras_itens', li.id);
       await deleteRecord('listas_compras', lista.id);
       await reloadListas();
@@ -5945,7 +6015,7 @@ function openListaForm(lista){
   }
   document.getElementById('l-save').addEventListener('click', async ()=>{
     const nome = document.getElementById('l-nome').value.trim();
-    if(!nome){ alert('Informe o nome da lista.'); return; }
+    if(!nome){ avisar('Informe o nome da lista.'); return; }
     const obj = editing ? {...lista} : {criadaEm:new Date().toISOString()};
     obj.nome = nome;
     obj.descricao = document.getElementById('l-desc').value.trim();
@@ -5994,7 +6064,7 @@ function openAdicionarALista(itemId){
     let listaId;
     if(sel.value==='__nova__'){
       const nome = document.getElementById('al-nome').value.trim();
-      if(!nome){ alert('Informe o nome da nova lista.'); return; }
+      if(!nome){ avisar('Informe o nome da nova lista.'); return; }
       listaId = await putRecord('listas_compras', {nome, descricao:document.getElementById('al-desc').value.trim(), criadaEm:new Date().toISOString()});
       await reloadListas();
     } else listaId = Number(sel.value);
@@ -6045,7 +6115,7 @@ function openListaItemForm(li){
   attachQtyMask(document.getElementById('li-qtd'), li.quantidade!=null ? li.quantidade : null);
   document.getElementById('li-cancel').addEventListener('click', closeSheet);
   document.getElementById('li-del').addEventListener('click', async ()=>{
-    if(!confirm('Remover este item da lista?')) return;
+    if(!await confirmar('Remover este item da lista?')) return;
     await deleteRecord('lista_compras_itens', li.id);
     await reloadListas(); closeSheet(); renderCurrent();
   });
@@ -6102,7 +6172,7 @@ function renderListaDetalhe(){
   document.getElementById('listad-add').addEventListener('click', abrirPickerItemLista);
   document.getElementById('listad-desmarcar').addEventListener('click', async ()=>{
     if(!comp){ showToast('Nenhum item marcado como comprado.'); return; }
-    if(!confirm('Desmarcar todos os itens comprados desta lista?')) return;
+    if(!await confirmar('Desmarcar todos os itens comprados desta lista?')) return;
     for(const li of itens.filter(i=>i.comprado)){ li.comprado = false; await putRecord('lista_compras_itens', li); }
     await reloadListas(); renderCurrent();
   });
@@ -6480,7 +6550,7 @@ function openTransformacaoForm(t, opts){
     document.getElementById('tr-del').addEventListener('click', async ()=>{
       const nUsos = PREPARO_INGREDIENTES.filter(i=>i.transformacaoId===t.id).length;
       const msg = nUsos ? `Esta transformação está usada em ${nUsos} ingrediente(s) de preparo. Excluir mesmo assim? Esses ingredientes voltam a usar o preço médio do item.` : 'Excluir esta transformação?';
-      if(!confirm(msg)) return;
+      if(!await confirmar(msg)) return;
       await deleteRecord('transformacoes', t.id);
       await reloadAll();
       if(embedded){ closeLayer(embedded); opts.onDone && opts.onDone(); }
@@ -6490,16 +6560,16 @@ function openTransformacaoForm(t, opts){
   document.getElementById('tr-cancel').addEventListener('click', ()=>{ closeLayer(embedded); });
   document.getElementById('tr-save').addEventListener('click', async ()=>{
     const itemOrigemId = trItemId;
-    if(!itemOrigemId){ alert('Escolha o item de origem.'); return; }
+    if(!itemOrigemId){ avisar('Escolha o item de origem.'); return; }
     const unidadeCompradaId = document.getElementById('tr-unidade').value ? Number(document.getElementById('tr-unidade').value) : null;
     const quantidadeComprada = getQtyValue(document.getElementById('tr-qtd-comprada'));
-    if(!unidadeCompradaId || !quantidadeComprada){ alert('Informe a quantidade comprada e a unidade.'); return; }
+    if(!unidadeCompradaId || !quantidadeComprada){ avisar('Informe a quantidade comprada e a unidade.'); return; }
     const rodadasSalvar = [];
     for(let i=0;i<rod.length;i++){
       const r = rod[i];
       if(!(r.cozido>0) && !(r.caldo>0) && !(r.pure>0)) continue; // linha vazia, ignora
-      if(r.caldo>0 && !(r.pure>0)){ alert(`Rodada #${i+1}: informe o purê (com caldo) ou deixe o caldo em branco.`); return; }
-      if(r.pure>0 && r.caldo>0 && r.caldo>=r.pure){ alert(`Rodada #${i+1}: o caldo precisa ser menor que o purê (que já inclui o caldo).`); return; }
+      if(r.caldo>0 && !(r.pure>0)){ avisar(`Rodada #${i+1}: informe o purê (com caldo) ou deixe o caldo em branco.`); return; }
+      if(r.pure>0 && r.caldo>0 && r.caldo>=r.pure){ avisar(`Rodada #${i+1}: o caldo precisa ser menor que o purê (que já inclui o caldo).`); return; }
       rodadasSalvar.push({cozido: r.cozido>0?r.cozido:null, caldo: r.caldo>0?r.caldo:null, pure: r.pure>0?r.pure:null});
     }
     const custo = getMoneyValue(document.getElementById('tr-custo'));
@@ -6631,7 +6701,7 @@ applyDefaultsToUI();
 fillConfiguracoesForm();
 ativarTelaAcesa();
 /* ---- PWA: versão, armazenamento persistente e service worker ---- */
-const APP_VERSION = 'v1_58';
+const APP_VERSION = 'v1_59';
 document.getElementById('appVersaoTxt').textContent = APP_VERSION;
 if(navigator.storage && navigator.storage.persist){
   navigator.storage.persist().then(ok=>{
