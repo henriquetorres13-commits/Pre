@@ -1162,66 +1162,43 @@ window.addEventListener('popstate', ()=>{
 });
 history.pushState({guard:true}, '');
 
-const overlay = document.getElementById('overlay');
-const sheet = document.getElementById('sheet');
-function openSheet(html, opts){
-  const jaAberto = overlay.classList.contains('active');
-  sheet.innerHTML = html;
-  overlay.classList.add('active');
-  overlay.classList.toggle('top-anchored', !!(opts && opts.topAnchored));
-  overlay.scrollTop = 0;
-  sheet.scrollTop = 0;
-  if(!jaAberto) pushModalHistory();   // reabrir por cima de um sheet já aberto não empilha outra entrada
+/* ---- Camadas de sheet (principal, sub nível 1, sub nível 2): mesma mecânica, criada por uma fábrica.
+   Sub-sheet empilha sobre o sheet principal sem fechá-lo (ex: ver/editar uma transformação a partir
+   do formulário de preparo); sub2 empilha sobre o sub (ex: editor granular de ingrediente). ---- */
+function criarCamada(overlayId, sheetId){
+  const ov = document.getElementById(overlayId);
+  const sh = document.getElementById(sheetId);
+  const c = {
+    overlay: ov, sheet: sh,
+    ativa(){ return ov.classList.contains('active'); },
+    abrir(html, opts){
+      const jaAberto = c.ativa();
+      sh.innerHTML = html;
+      ov.classList.add('active');
+      ov.classList.toggle('top-anchored', !!(opts && opts.topAnchored));
+      ov.scrollTop = 0;
+      sh.scrollTop = 0;
+      if(!jaAberto) pushModalHistory();   // reabrir por cima de uma camada já aberta não empilha outra entrada
+    },
+    fecharDom(){ ov.classList.remove('active'); ov.classList.remove('top-anchored'); sh.innerHTML=''; },
+    fechar(){
+      const wasActive = c.ativa();
+      c.fecharDom();
+      if(wasActive) consumeModalHistory();
+    }
+  };
+  ov.addEventListener('click', (e)=>{ if(e.target===ov) c.fechar(); });
+  return c;
 }
-function closeSheetDom(){ overlay.classList.remove('active'); overlay.classList.remove('top-anchored'); sheet.innerHTML=''; }
-function closeSheet(){
-  const wasActive = overlay.classList.contains('active');
-  closeSheetDom();
-  if(wasActive) consumeModalHistory();
-}
-overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeSheet(); });
-
-/* ---- Sub-sheet: empilha sobre o sheet principal sem fechá-lo (ex: ver/editar uma
-   transformação a partir de dentro do formulário de preparo) ---- */
-const subOverlay = document.getElementById('subOverlay');
-const subSheet = document.getElementById('subSheet');
-function openSubSheet(html, opts){
-  const jaAberto = subOverlay.classList.contains('active');
-  subSheet.innerHTML = html;
-  subOverlay.classList.add('active');
-  subOverlay.classList.toggle('top-anchored', !!(opts && opts.topAnchored));
-  subOverlay.scrollTop = 0;
-  subSheet.scrollTop = 0;
-  if(!jaAberto) pushModalHistory();
-}
-function closeSubSheetDom(){ subOverlay.classList.remove('active'); subOverlay.classList.remove('top-anchored'); subSheet.innerHTML=''; }
-function closeSubSheet(){
-  const wasActive = subOverlay.classList.contains('active');
-  closeSubSheetDom();
-  if(wasActive) consumeModalHistory();
-}
-subOverlay.addEventListener('click', (e)=>{ if(e.target===subOverlay) closeSubSheet(); });
-
-/* ---- Sub-sheet nível 2: empilha sobre o sub-sheet (ex: ver/criar uma transformação de dentro
-   do editor granular de ingrediente do preparo, que já ocupa o nível 1) ---- */
-const sub2Overlay = document.getElementById('sub2Overlay');
-const sub2Sheet = document.getElementById('sub2Sheet');
-function openSub2Sheet(html, opts){
-  const jaAberto = sub2Overlay.classList.contains('active');
-  sub2Sheet.innerHTML = html;
-  sub2Overlay.classList.add('active');
-  sub2Overlay.classList.toggle('top-anchored', !!(opts && opts.topAnchored));
-  sub2Overlay.scrollTop = 0;
-  sub2Sheet.scrollTop = 0;
-  if(!jaAberto) pushModalHistory();
-}
-function closeSub2SheetDom(){ sub2Overlay.classList.remove('active'); sub2Overlay.classList.remove('top-anchored'); sub2Sheet.innerHTML=''; }
-function closeSub2Sheet(){
-  const wasActive = sub2Overlay.classList.contains('active');
-  closeSub2SheetDom();
-  if(wasActive) consumeModalHistory();
-}
-sub2Overlay.addEventListener('click', (e)=>{ if(e.target===sub2Overlay) closeSub2Sheet(); });
+const camadaMain = criarCamada('overlay','sheet');
+const camadaSub  = criarCamada('subOverlay','subSheet');
+const camadaSub2 = criarCamada('sub2Overlay','sub2Sheet');
+const overlay = camadaMain.overlay, sheet = camadaMain.sheet;
+const subOverlay = camadaSub.overlay, subSheet = camadaSub.sheet;
+const sub2Overlay = camadaSub2.overlay, sub2Sheet = camadaSub2.sheet;
+const openSheet = camadaMain.abrir, closeSheetDom = camadaMain.fecharDom, closeSheet = camadaMain.fechar;
+const openSubSheet = camadaSub.abrir, closeSubSheetDom = camadaSub.fecharDom, closeSubSheet = camadaSub.fechar;
+const openSub2Sheet = camadaSub2.abrir, closeSub2SheetDom = camadaSub2.fecharDom, closeSub2Sheet = camadaSub2.fechar;
 /* Abre/fecha no nível certo da pilha: level pode ser falsy (sheet principal), true (sub-sheet nível 1)
    ou 'sub2' (nível 2) — usado por telas que podem ser chamadas em qualquer um dos 3 níveis (ex: transformação). */
 function openLayer(html, level, opts){
@@ -1233,6 +1210,17 @@ function closeLayer(level){
   if(level==='sub2') closeSub2Sheet();
   else if(level) closeSubSheet();
   else closeSheet();
+}
+
+/* Depois de gravar algo de um preparo: recarrega os dados, atualiza a lista de receitas e reabre a
+   visão do preparo já com os valores novos. fechaSub=true fecha antes o sub-sheet de edição. */
+async function recarregarPreparoAberto(receita, preparo, opts){
+  await reloadAll();
+  if(opts && opts.fechaSub) closeSubSheet();
+  renderReceitas();
+  const preparoAtualizado = RECEITA_PREPAROS.find(p=>p.id===preparo.id);
+  openPreparoView(receita, preparoAtualizado, {refresh:true});
+  return preparoAtualizado;
 }
 
 /* ---- Botão "x" de limpar nos campos de busca (delegado: cobre também campos gerados dentro de sheets/modais) ---- */
@@ -1506,14 +1494,14 @@ function perguntar(msg, valor){ return _dlgAbrir({msg, tipo:'prompt', valor}); }
 /* ============================================================
    CATEGORIAS
    ============================================================ */
-function catOptionsHTML(selectedId){
-  return CATS.map(c=>`<option value="${c.id}" ${c.id===selectedId?'selected':''}>${escapeHtml(c.nome)}</option>`).join('');
-}
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-/* Lista de <option> simples (sem marcar "selected") — usada nos filtros, onde o valor é restaurado depois via .value */
-function plainOptionsHTML(list){
-  return list.map(x=>`<option value="${x.id}">${escapeHtml(x.nome)}</option>`).join('');
+/* Gerador único de <option>: list = registros com id; selectedId marca "selected" (omitido nos filtros,
+   onde o valor é restaurado depois via .value); rotulo = função opcional (padrão: nome). */
+function optionsHTML(list, selectedId, rotulo){
+  return list.map(x=>`<option value="${x.id}" ${selectedId!==undefined && x.id===selectedId?'selected':''}>${escapeHtml(rotulo?rotulo(x):x.nome)}</option>`).join('');
 }
+function plainOptionsHTML(list){ return optionsHTML(list); }
+function catOptionsHTML(selectedId){ return optionsHTML(CATS, selectedId); }
 
 function openCategoryForm(cat){
   const editing = !!cat;
@@ -1645,9 +1633,7 @@ function renderCategorias(){
 /* ============================================================
    ITENS
    ============================================================ */
-function itemOptionsHTML(selectedId){
-  return ITEMS.map(i=>`<option value="${i.id}" ${i.id===selectedId?'selected':''}>${escapeHtml(i.nome)}</option>`).join('');
-}
+function itemOptionsHTML(selectedId){ return optionsHTML(ITEMS, selectedId); }
 
 function openItemForm(item){
   const editing = !!item;
@@ -2192,9 +2178,7 @@ function openPriceForm(price, presetItemId, repeatFrom, opts){
     }
   });
 }
-function localOptionsHTML(selectedId){
-  return LOCAIS.map(l=>`<option value="${l.id}" ${l.id===selectedId?'selected':''}>${escapeHtml(l.nome)}</option>`).join('');
-}
+function localOptionsHTML(selectedId){ return optionsHTML(LOCAIS, selectedId); }
 
 function renderPrecos(){
   const q = semAcento(document.getElementById('pf-texto').value.trim());
@@ -2635,9 +2619,7 @@ function receitaCatById(id){ return RECEITA_CATS.find(c=>c.id===id); }
 function receitaSubcatById(id){ return RECEITA_SUBCATS.find(s=>s.id===id); }
 function receitaSubcatsOf(categoriaId){ return RECEITA_SUBCATS.filter(s=>s.categoriaId===categoriaId); }
 
-function receitaCatOptionsHTML(selectedId){
-  return RECEITA_CATS.map(c=>`<option value="${c.id}" ${c.id===selectedId?'selected':''}>${escapeHtml(c.nome)}</option>`).join('');
-}
+function receitaCatOptionsHTML(selectedId){ return optionsHTML(RECEITA_CATS, selectedId); }
 
 async function findOrCreateTag(nome){
   nome = nome.trim();
@@ -2663,9 +2645,7 @@ async function findOrCreateEquipamento(nome){
 function equipNomesFromIds(ids){
   return (ids||[]).map(id=>EQUIPAMENTOS.find(e=>e.id===id)?.nome).filter(Boolean);
 }
-function unidadesOptionsHTML(selectedId){
-  return UNIDADES.map(u=>`<option value="${u.id}" ${u.id===selectedId?'selected':''}>${escapeHtml(u.nome)} (${escapeHtml(u.simbolo)})</option>`).join('');
-}
+function unidadesOptionsHTML(selectedId){ return optionsHTML(UNIDADES, selectedId, u=>`${u.nome} (${u.simbolo})`); }
 
 /* ============================================================
    CUSTO PREVISTO (simples) — converte a quantidade do ingrediente
@@ -4013,10 +3993,7 @@ function openPreparoView(receita, preparo, opts){
           ordem: ings.length
         };
         const novoId = await putRecord('preparo_ingredientes', novo);
-        await reloadAll();
-        renderReceitas();
-        const preparoAtualizado = RECEITA_PREPAROS.find(p=>p.id===preparo.id);
-        openPreparoView(receita, preparoAtualizado, {refresh:true});
+        const preparoAtualizado = await recarregarPreparoAberto(receita, preparo);
         const ingCriado = PREPARO_INGREDIENTES.find(i=>i.id===novoId);
         if(ingCriado) openPreparoIngredienteEdit(receita, preparoAtualizado, ingCriado);
       }
@@ -4100,11 +4077,7 @@ function openPreparoEscalaEdit(receita, preparo){
       }
     }
     await putRecord('receita_preparos', {...preparo, escala: novaEscala});
-    await reloadAll();
-    closeSubSheet();
-    renderReceitas();
-    const preparoAtualizado = RECEITA_PREPAROS.find(p=>p.id===preparo.id);
-    openPreparoView(receita, preparoAtualizado, {refresh:true});
+    await recarregarPreparoAberto(receita, preparo, {fechaSub:true});
   });
 }
 function openPreparoIngredienteEdit(receita, preparo, ingOriginal){
@@ -4200,11 +4173,7 @@ function openPreparoIngredienteEdit(receita, preparo, ingOriginal){
     document.getElementById('pie-remove').addEventListener('click', async ()=>{
       if(!await confirmar('Remover este ingrediente do preparo?')) return;
       await deleteRecord('preparo_ingredientes', ingOriginal.id);
-      await reloadAll();
-      closeSubSheet();
-      renderReceitas();
-      const preparoAtualizado = RECEITA_PREPAROS.find(p=>p.id===preparo.id);
-      openPreparoView(receita, preparoAtualizado, {refresh:true});
+      await recarregarPreparoAberto(receita, preparo, {fechaSub:true});
     });
     document.getElementById('pie-save').addEventListener('click', async ()=>{
       state.unidadeId = document.getElementById('pie-unidade').value ? Number(document.getElementById('pie-unidade').value) : null;
@@ -4212,11 +4181,7 @@ function openPreparoIngredienteEdit(receita, preparo, ingOriginal){
       if(!state.itemId){ state.rendimentoPercent = null; state.transformacaoId = null; }
       else if(state.transformacaoId){ state.rendimentoPercent = null; }
       await putRecord('preparo_ingredientes', {...state});
-      await reloadAll();
-      closeSubSheet();
-      renderReceitas();
-      const preparoAtualizado = RECEITA_PREPAROS.find(p=>p.id===preparo.id);
-      openPreparoView(receita, preparoAtualizado, {refresh:true});
+      await recarregarPreparoAberto(receita, preparo, {fechaSub:true});
     });
   }
   render();
@@ -4350,11 +4315,7 @@ function openPreparoPorcoesEdit(receita, preparo){
       await putRecord('preparo_ingredientes', {...ing});
     }
     await putRecord('receita_preparos', {...preparo, porcoesFinais});
-    await reloadAll();
-    closeSubSheet();
-    renderReceitas();
-    const preparoAtualizado = RECEITA_PREPAROS.find(p=>p.id===preparo.id);
-    openPreparoView(receita, preparoAtualizado, {refresh:true});
+    await recarregarPreparoAberto(receita, preparo, {fechaSub:true});
   });
 }
 
@@ -4432,11 +4393,7 @@ function openPreparoRodadasConfig(receita, preparo){
     const novasRodadas = [];
     gs.forEach((g,gi)=>{ for(let i=0;i<g.n;i++) novasRodadas.push({porcoes:g.porcoes, grupo:gi, caldoExtra:null, massaGerada:null}); });
     await putRecord('receita_preparos', {...preparo, rodadaGrupos:gs, rodadas:novasRodadas});
-    await reloadAll();
-    closeSubSheet();
-    renderReceitas();
-    const preparoAtualizado = RECEITA_PREPAROS.find(p=>p.id===preparo.id);
-    openPreparoView(receita, preparoAtualizado, {refresh:true});
+    await recarregarPreparoAberto(receita, preparo, {fechaSub:true});
   });
 }
 
@@ -4502,11 +4459,7 @@ function openPreparoRodadaEdit(receita, preparo, idx){
       }
     }
     await putRecord('receita_preparos', {...preparo, ...atualizacao});
-    await reloadAll();
-    closeSubSheet();
-    renderReceitas();
-    const preparoAtualizado = RECEITA_PREPAROS.find(p=>p.id===preparo.id);
-    openPreparoView(receita, preparoAtualizado, {refresh:true});
+    await recarregarPreparoAberto(receita, preparo, {fechaSub:true});
   });
 }
 
@@ -4532,11 +4485,7 @@ function openPreparoDataEdit(receita, preparo){
     const data = document.getElementById('pd-data').value;
     if(!data){ avisar('Informe a data.'); return; }
     await putRecord('receita_preparos', {...preparo, data});
-    await reloadAll();
-    closeSubSheet();
-    renderReceitas();
-    const preparoAtualizado = RECEITA_PREPAROS.find(p=>p.id===preparo.id);
-    openPreparoView(receita, preparoAtualizado, {refresh:true});
+    await recarregarPreparoAberto(receita, preparo, {fechaSub:true});
   });
 }
 function openPreparoPesoFinalEdit(receita, preparo){
@@ -4560,11 +4509,7 @@ function openPreparoPesoFinalEdit(receita, preparo){
   document.getElementById('pf-save').addEventListener('click', async ()=>{
     const v = getQtyValue(document.getElementById('pf-peso'));
     await putRecord('receita_preparos', {...preparo, pesoFinalReal: v>0?v:null});
-    await reloadAll();
-    closeSubSheet();
-    renderReceitas();
-    const preparoAtualizado = RECEITA_PREPAROS.find(p=>p.id===preparo.id);
-    openPreparoView(receita, preparoAtualizado, {refresh:true});
+    await recarregarPreparoAberto(receita, preparo, {fechaSub:true});
   });
 }
 function openPreparoObsEdit(receita, preparo){
@@ -4585,11 +4530,7 @@ function openPreparoObsEdit(receita, preparo){
   document.getElementById('po-save').addEventListener('click', async ()=>{
     const obs = document.getElementById('po-obs').value.trim();
     await putRecord('receita_preparos', {...preparo, obs});
-    await reloadAll();
-    closeSubSheet();
-    renderReceitas();
-    const preparoAtualizado = RECEITA_PREPAROS.find(p=>p.id===preparo.id);
-    openPreparoView(receita, preparoAtualizado, {refresh:true});
+    await recarregarPreparoAberto(receita, preparo, {fechaSub:true});
   });
 }
 function openPreparoEtapaEdit(receita, preparo, idx){
@@ -4616,11 +4557,7 @@ function openPreparoEtapaEdit(receita, preparo, idx){
   document.getElementById('pea-save').addEventListener('click', async ()=>{
     const comentario = document.getElementById('pea-comentario').value.trim();
     await putRecord('preparo_etapas', {...et, comentario});
-    await reloadAll();
-    closeSubSheet();
-    renderReceitas();
-    const preparoAtualizado = RECEITA_PREPAROS.find(p=>p.id===preparo.id);
-    openPreparoView(receita, preparoAtualizado, {refresh:true});
+    await recarregarPreparoAberto(receita, preparo, {fechaSub:true});
   });
 }
 
@@ -6701,7 +6638,7 @@ applyDefaultsToUI();
 fillConfiguracoesForm();
 ativarTelaAcesa();
 /* ---- PWA: versão, armazenamento persistente e service worker ---- */
-const APP_VERSION = 'v1_59';
+const APP_VERSION = 'v1_60';
 document.getElementById('appVersaoTxt').textContent = APP_VERSION;
 if(navigator.storage && navigator.storage.persist){
   navigator.storage.persist().then(ok=>{
