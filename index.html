@@ -151,8 +151,14 @@ button{font-family:inherit;cursor:pointer;border:none;}
 .view-etapa{padding:5px 0;border-bottom:1px dashed var(--line);}
 .view-etapa:last-child{border-bottom:none;}
 .view-etapa .num{color:var(--accent);font-weight:700;}
-/* Blocos de texto da leitura da receita: mesma fonte do bloco de ingredientes (14px, cor padrão) */
-.view-bloco{font-size:14px;color:var(--ink);}
+/* ---- Tipografia dos modos leitura (receita, preparo, transformação): 3 estilos ----
+   Título        = .view-heading (12px, negrito, maiúsculas, cinza) — títulos de bloco
+   Texto normal  = 14px, cor padrão — tudo que está dentro de .leitura
+   Nota rodapé   = .view-nota / .hint / .obs dentro de .leitura (12px, cinza) — custo, observações de item/etapa, avisos
+   Todo modo leitura embrulha o conteúdo em <div class="leitura"> e usa só esses três. */
+.leitura{font-size:14px;line-height:1.4;}
+.view-nota,.leitura .hint,.leitura .obs{font-size:12px;line-height:1.35;color:var(--ink-soft);}
+.leitura .tr-read,.leitura .tr-resumo{font-size:inherit;}
 
 /* ---- Modal de seleção de ingrediente: ancorado no topo, título/busca fixos, lista rola por baixo ---- */
 #subOverlay{align-items:stretch;background:var(--paper);}
@@ -1058,14 +1064,29 @@ function setQtyValue(inputEl, value){
    NAVEGAÇÃO ENTRE ABAS
    ============================================================ */
 document.querySelectorAll('.tab-btn').forEach(btn=>{
-  btn.addEventListener('click', ()=> switchView(btn.dataset.view));
+  btn.addEventListener('click', ()=> switchView(btn.dataset.view, {raiz:true}));
 });
 let viewAtual = null;
-/* opts.semHistorico: não empilha (usado pelo voltar do celular); opts.restoreY: rolagem a restaurar. */
+/* Menu (barra inferior, itens do Mais, "← Voltar" do Mais) = tela raiz: zera a pilha de telas.
+   As entradas de tela já empilhadas são devolvidas ao histórico do navegador (history.go) pra não sobrar entrada fantasma. */
+function zerarPilhaTelas(){
+  if(navStack.some(e=>e.k==='modal')) return;   // com modal aberto não mexe (não deveria ocorrer num toque de menu)
+  const n = navStack.filter(e=>e.k==='view').length;
+  if(!n) return;
+  const pendentes = aposHistorico.length;       // empilhamentos ainda não feitos no histórico físico
+  aposHistorico = [];
+  navStack = [];
+  const fisicas = n - pendentes;
+  if(fisicas>0){ suppressPopstateCount++; history.go(-fisicas); }
+}
+/* opts.raiz: tela de menu (zera a pilha); opts.semHistorico: não empilha (usado pelo voltar do celular);
+   opts.restoreY: rolagem a restaurar. Sem opts, entrar por atalho da tela empilha (e ir pra tela de origem desempilha). */
 function switchView(name, opts){
   opts = opts || {};
   const anterior = viewAtual;
-  if(!opts.semHistorico && anterior && anterior!==name){
+  if(opts.raiz){
+    zerarPilhaTelas();
+  } else if(!opts.semHistorico && anterior && anterior!==name){
     const topo = navStack[navStack.length-1];
     if(topo && topo.k==='view' && topo.from===name){
       // ir pra tela de onde viemos = voltar: desempilha em vez de empilhar mais uma
@@ -1104,15 +1125,15 @@ document.getElementById('fabAdd').addEventListener('click', ()=>{
 });
 
 /* ---- Mais / Configurações ---- */
-document.getElementById('btnGoCategorias').addEventListener('click', ()=> switchView('categorias'));
-document.getElementById('btnGoLocais').addEventListener('click', ()=> switchView('locais'));
-document.getElementById('btnGoListas').addEventListener('click', ()=> switchView('listas'));
-document.getElementById('btnGoExportar').addEventListener('click', ()=> switchView('exportar'));
-document.getElementById('btnGoConfiguracoes').addEventListener('click', ()=> switchView('configuracoes'));
-document.getElementById('btnVoltarMaisCategorias').addEventListener('click', ()=> switchView('mais'));
-document.getElementById('btnVoltarMaisLocais').addEventListener('click', ()=> switchView('mais'));
-document.getElementById('btnVoltarMaisExportar').addEventListener('click', ()=> switchView('mais'));
-document.getElementById('btnVoltarMaisConfig').addEventListener('click', ()=> switchView('mais'));
+document.getElementById('btnGoCategorias').addEventListener('click', ()=> switchView('categorias', {raiz:true}));
+document.getElementById('btnGoLocais').addEventListener('click', ()=> switchView('locais', {raiz:true}));
+document.getElementById('btnGoListas').addEventListener('click', ()=> switchView('listas', {raiz:true}));
+document.getElementById('btnGoExportar').addEventListener('click', ()=> switchView('exportar', {raiz:true}));
+document.getElementById('btnGoConfiguracoes').addEventListener('click', ()=> switchView('configuracoes', {raiz:true}));
+document.getElementById('btnVoltarMaisCategorias').addEventListener('click', ()=> switchView('mais', {raiz:true}));
+document.getElementById('btnVoltarMaisLocais').addEventListener('click', ()=> switchView('mais', {raiz:true}));
+document.getElementById('btnVoltarMaisExportar').addEventListener('click', ()=> switchView('mais', {raiz:true}));
+document.getElementById('btnVoltarMaisConfig').addEventListener('click', ()=> switchView('mais', {raiz:true}));
 
 document.getElementById('cfg-tela-inicial').addEventListener('change', e=> setConfigValue('telaInicial', e.target.value));
 document.getElementById('cfg-op-janela').addEventListener('change', e=> setConfigValue('opJanelaDias', Number(e.target.value)));
@@ -3157,6 +3178,11 @@ function rendimentoPadraoReceita(receitaId, itemId){
    - rendimentoPadrao: % padrão da receita pra esse item (pra comparar com o informado/real)
    - rendimentoReal: % real observado (de uma transformação vinculada) — quando presente, mostra
      padrão x real; senão, se rendimentoPadrao divergir do informado no preparo, mostra padrão x informado. */
+/* Observações do ingrediente (a da receita e, no preparo, o comentário do preparo): sempre nota de rodapé, uma linha abaixo. */
+function ingredienteNotasHTML(ing){
+  return [ing.observacao, ing.comentarioPreparo].filter(Boolean)
+    .map(t=>`<div class="view-nota pre-wrap" style="margin-top:2px">${escapeHtml(t)}</div>`).join('');
+}
 function ingredienteLinhaTexto(ing, extra){
   extra = extra || {};
   const label = alvoLabelDoIngrediente(ing) || '(sem item/grupo/receita selecionado)';
@@ -3186,10 +3212,7 @@ function ingredienteLinhaTexto(ing, extra){
   } else if(temRendimento){
     linha += ` [rendimento ${ing.rendimentoPercent}%]`;
   }
-  // extra.obsCinza (visualização do preparo): observação em fonte menor e cinza, igual ao custo do ingrediente
-  if(ing.observacao && !extra.obsCinza) linha += ` — ${ing.observacao}`;
   let html = escapeHtml(linha);
-  if(ing.observacao && extra.obsCinza) html += ` <span class="hint">— ${escapeHtml(ing.observacao)}</span>`;
   if(usaReal){
     html += ` <span class="hint">(previsto: ${escapeHtml(fmtQtd(ing.quantidade,unidade)+simb)})</span>`;
   }
@@ -3211,12 +3234,12 @@ function openReceitaView(receita){
   for(const ing of ings){
     const secao = ing.secao || '';
     if(secao !== secaoAtual){ secaoAtual = secao; if(secao) ingredientesHtml += `<div class="view-secao">${escapeHtml(secao)}</div>`; }
-    ingredientesHtml += `<div class="view-ing-linha">${ingredienteLinhaTexto(ing)}</div>`;
+    ingredientesHtml += `<div class="view-ing-linha">${ingredienteLinhaTexto(ing)}${ingredienteNotasHTML(ing)}</div>`;
   }
   if(!ings.length) ingredientesHtml = '<p class="hint">Nenhum ingrediente cadastrado.</p>';
 
   const etapasHtml = etapas.length
-    ? etapas.map((et,i)=>`<div class="view-etapa view-bloco"><span class="num">${i+1}.</span> ${escapeHtml(et.texto||'')}${et.tempoMin!=null?' <span class="hint">('+et.tempoMin+' min)</span>':''}</div>`).join('')
+    ? etapas.map((et,i)=>`<div class="view-etapa"><span class="num">${i+1}.</span> ${escapeHtml(et.texto||'')}${et.tempoMin!=null?' <span class="hint">('+et.tempoMin+' min)</span>':''}</div>`).join('')
     : '<p class="hint">Nenhuma etapa cadastrada.</p>';
 
   let custoTxt = '';
@@ -3236,7 +3259,7 @@ function openReceitaView(receita){
   if(receita.tempoMin!=null) detalhesLinhas.push(`Tempo total: ${receita.tempoMin} min`);
   if(equipNomes.length) detalhesLinhas.push(`Equipamentos: ${escapeHtml(equipNomes.join(', '))}`);
 
-  openSheet(`
+  openSheet(`<div class="leitura">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
       <h3 style="margin:0;flex:1">${receita.favorita?'★ ':''}${escapeHtml(receita.nome)}</h3>
       <div style="display:flex;gap:6px;flex:none">
@@ -3251,7 +3274,7 @@ function openReceitaView(receita){
     </div>
     ${catLabel?`<p class="hint" style="margin-top:6px">${escapeHtml(catLabel)}</p>`:''}
     ${receita.foto?`<img src="${receita.foto}" style="width:100%;max-height:220px;object-fit:cover;border-radius:12px;margin-top:10px">`:''}
-    ${receita.descricao?`<p class="pre-wrap view-bloco" style="margin-top:10px">${escapeHtml(receita.descricao)}</p>`:''}
+    ${receita.descricao?`<p class="pre-wrap" style="margin-top:10px">${escapeHtml(receita.descricao)}</p>`:''}
 
     <div class="view-heading">Ingredientes</div>
     ${ingredientesHtml}
@@ -3260,10 +3283,10 @@ function openReceitaView(receita){
     <div class="view-heading">Modo de preparo</div>
     ${etapasHtml}
 
-    ${detalhesLinhas.length?`<div class="view-heading">Detalhes</div><p class="view-bloco" style="margin-top:6px">${detalhesLinhas.join('<br>')}</p>`:''}
-    ${receita.fontes&&receita.fontes.length?`<div class="view-heading">Fontes</div><p class="view-bloco" style="margin-top:6px">${receita.fontes.map(f=>escapeHtml(f)).join('<br>')}</p>`:''}
-    ${receita.obs?`<div class="view-heading">Observações</div><p class="pre-wrap view-bloco" style="margin-top:6px">${escapeHtml(receita.obs)}</p>`:''}
-  `, {topAnchored:true});
+    ${detalhesLinhas.length?`<div class="view-heading">Detalhes</div><p style="margin-top:6px">${detalhesLinhas.join('<br>')}</p>`:''}
+    ${receita.fontes&&receita.fontes.length?`<div class="view-heading">Fontes</div><p style="margin-top:6px">${receita.fontes.map(f=>escapeHtml(f)).join('<br>')}</p>`:''}
+    ${receita.obs?`<div class="view-heading">Observações</div><p class="pre-wrap" style="margin-top:6px">${escapeHtml(receita.obs)}</p>`:''}
+  </div>`, {topAnchored:true});
   document.getElementById('rv-editar').addEventListener('click', ()=> openReceitaForm(receita));
   document.getElementById('rv-preparos').addEventListener('click', ()=> openPreparosSheet(receita));
   document.getElementById('rv-fechar').addEventListener('click', closeSheet);
@@ -3925,7 +3948,7 @@ function openPreparoView(receita, preparo, opts){
     const secao = ing.secao || '';
     if(secao !== secaoAtual){ secaoAtual = secao; if(secao) ingredientesHtml += `<div class="view-secao">${escapeHtml(secao)}</div>`; }
     const padrao = ing.itemId ? rendimentoPadraoReceita(receita.id, ing.itemId) : null;
-    let extra = {obsCinza:true};
+    let extra = {};
     if(ing.transformacaoId){
       const t = TRANSFORMACOES.find(x=>x.id===ing.transformacaoId);
       if(t){ extra.rendimentoReal = rendimentoRealDaTransformacao(t); extra.rendimentoPadrao = padrao; }
@@ -3950,8 +3973,7 @@ function openPreparoView(receita, preparo, opts){
       }
       if(partes.length) porcaoTxt = ` <span class="hint">· ${escapeHtml(partes.join(' · '))}</span>`;
     }
-    const comentarioPreparoTxt = ing.comentarioPreparo ? `<div class="obs" style="margin-top:2px">${escapeHtml(ing.comentarioPreparo)}</div>` : '';
-    ingredientesHtml += `<div class="view-ing-linha" data-id="${ing.id}">${ingredienteLinhaTexto(ing, extra)}${custoItemTxt}${porcaoTxt}${comentarioPreparoTxt}</div>`;
+    ingredientesHtml += `<div class="view-ing-linha" data-id="${ing.id}">${ingredienteLinhaTexto(ing, extra)}${custoItemTxt}${porcaoTxt}${ingredienteNotasHTML(ing)}</div>`;
   }
   if(!ings.length) ingredientesHtml = '<p class="hint">Nenhum ingrediente registrado.</p>';
 
@@ -3960,7 +3982,7 @@ function openPreparoView(receita, preparo, opts){
         <input type="checkbox" class="pv-etapa-check" data-idx="${i}" ${et.concluida?'checked':''} style="width:13px;height:13px;margin-top:3px;flex:none">
         <div class="pv-etapa-edit" data-idx="${i}" style="flex:1;cursor:pointer">
           <span class="num">${i+1}.</span> ${escapeHtml(et.texto||'')}${et.tempoMin!=null?' <span class="hint">('+et.tempoMin+' min)</span>':''}
-          ${et.comentario?`<div class="obs" style="margin-top:2px">${escapeHtml(et.comentario)}</div>`:''}
+          ${et.comentario?`<div class="view-nota pre-wrap" style="margin-top:2px">${escapeHtml(et.comentario)}</div>`:''}
         </div>
       </div>`).join('')
     : '<p class="hint">Nenhuma etapa registrada.</p>';
@@ -4030,7 +4052,7 @@ function openPreparoView(receita, preparo, opts){
     </div>
   ` : '';
 
-  const html = `
+  const html = `<div class="leitura">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
       <h3 style="margin:0;flex:1">${escapeHtml(receita.nome)}</h3>
       <div style="display:flex;gap:6px;flex:none">
@@ -4053,7 +4075,7 @@ function openPreparoView(receita, preparo, opts){
     ${custoBlocoHtml}
     <div class="view-heading">Observações</div>
     <p class="view-clicavel-bloco pre-wrap" id="pv-obs-edit">${preparo.obs?escapeHtml(preparo.obs):'Adicionar observações...'}</p>
-  `;
+  </div>`;
   if(opts.refresh){ sheet.innerHTML = html; sheet.scrollTop = 0; }
   else openSheet(html, {topAnchored:true});
   document.getElementById('pv-editar').addEventListener('click', ()=> openPreparoForm(receita, preparo));
@@ -5979,7 +6001,7 @@ function renderListas(){
   el.querySelectorAll('.card').forEach(card=> card.addEventListener('click', ()=> abrirLista(Number(card.dataset.id))));
 }
 function abrirLista(id){ listaAbertaId = id; switchView('lista-detalhe'); window.scrollTo(0,0); }
-document.getElementById('btnVoltarMaisListas').addEventListener('click', ()=> switchView('mais'));
+document.getElementById('btnVoltarMaisListas').addEventListener('click', ()=> switchView('mais', {raiz:true}));
 document.getElementById('btnVoltarListas').addEventListener('click', ()=> switchView('listas'));
 
 /* ---- Formulário da lista (nome + descrição) ---- */
@@ -6409,7 +6431,7 @@ function openTransformacaoView(t, opts){
   const nUsos = PREPARO_INGREDIENTES.filter(i=>i.transformacaoId===t.id).length;
   const kv = (rot, val) => `<div class="tr-kv"><span>${rot}</span><b>${val}</b></div>`;
   const precoPago = transfPrecoPagoTxt(t);
-  const html = `
+  const html = `<div class="leitura">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
       <h3 style="margin:0;flex:1;font-size:16px">${escapeHtml(item?item.nome:'(item não encontrado)')}</h3>
       <div style="display:flex;gap:6px;flex:none">
@@ -6432,7 +6454,7 @@ function openTransformacaoView(t, opts){
       ${nUsos?`<p class="hint" style="margin:4px 0 0">Usada em ${nUsos} ingrediente${nUsos===1?'':'s'} de preparo</p>`:''}
       ${t.observacao?`<div class="tr-kv" style="margin-top:6px"><span>Observação</span><b class="pre-wrap" style="font-weight:400">${escapeHtml(t.observacao)}</b></div>`:''}
     </div>
-  `;
+  </div>`;
   openLayer(html, embedded, {topAnchored:true});
   document.getElementById('tv-editar').addEventListener('click', ()=>{
     openTransformacaoForm(t, {embedded, onDone: opts.onDone});
@@ -6713,7 +6735,7 @@ applyDefaultsToUI();
 fillConfiguracoesForm();
 ativarTelaAcesa();
 /* ---- PWA: versão, armazenamento persistente e service worker ---- */
-const APP_VERSION = 'v1_64';
+const APP_VERSION = 'v1_65';
 document.getElementById('appVersaoTxt').textContent = APP_VERSION;
 if(navigator.storage && navigator.storage.persist){
   navigator.storage.persist().then(ok=>{
