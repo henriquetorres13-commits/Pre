@@ -151,6 +151,8 @@ button{font-family:inherit;cursor:pointer;border:none;}
 .view-etapa{padding:5px 0;border-bottom:1px dashed var(--line);}
 .view-etapa:last-child{border-bottom:none;}
 .view-etapa .num{color:var(--accent);font-weight:700;}
+/* Blocos de texto da leitura da receita: mesma fonte do bloco de ingredientes (14px, cor padrão) */
+.view-bloco{font-size:14px;color:var(--ink);}
 
 /* ---- Modal de seleção de ingrediente: ancorado no topo, título/busca fixos, lista rola por baixo ---- */
 #subOverlay{align-items:stretch;background:var(--paper);}
@@ -465,6 +467,7 @@ html.dark header{background:#0D0F13;color:#ECE7DA;}
   <section class="view" id="view-transformacoes">
     <h2 class="section-title">Transformações</h2>
     <p class="hint">Registre uma compra que rende mais de uma coisa depois de limpar/processar (ex: carne crua → carne limpa + gordura + descarte). O custo é rateado proporcionalmente ao peso útil, sem custo pro descarte. Uma transformação pode ser usada em vários preparos.</p>
+    <div class="searchbar"><div class="search-wrap"><input type="text" id="tf-texto" placeholder="Item ou receita vinculada..."><button type="button" class="search-clear" data-target="tf-texto" aria-label="Limpar">✕</button></div></div>
     <div id="lista-transformacoes"></div>
   </section>
 
@@ -2380,6 +2383,7 @@ document.getElementById('op-subcat').addEventListener('change', renderOportunida
 document.getElementById('cf-texto').addEventListener('input', renderCategorias);
 document.getElementById('lf-texto').addEventListener('input', renderLocais);
 document.getElementById('rf-texto').addEventListener('input', renderReceitas);
+document.getElementById('tf-texto').addEventListener('input', renderTransformacoes);
 document.getElementById('rf-arquivadas').addEventListener('change', renderReceitas);
 document.getElementById('gf-cat').addEventListener('change', ()=>{
   refreshGfSelects();
@@ -3104,8 +3108,10 @@ function ingredienteLinhaTexto(ing, extra){
   } else if(temRendimento){
     linha += ` [rendimento ${ing.rendimentoPercent}%]`;
   }
-  if(ing.observacao) linha += ` — ${ing.observacao}`;
+  // extra.obsCinza (visualização do preparo): observação em fonte menor e cinza, igual ao custo do ingrediente
+  if(ing.observacao && !extra.obsCinza) linha += ` — ${ing.observacao}`;
   let html = escapeHtml(linha);
+  if(ing.observacao && extra.obsCinza) html += ` <span class="hint">— ${escapeHtml(ing.observacao)}</span>`;
   if(usaReal){
     html += ` <span class="hint">(previsto: ${escapeHtml(fmtQtd(ing.quantidade,unidade)+simb)})</span>`;
   }
@@ -3132,7 +3138,7 @@ function openReceitaView(receita){
   if(!ings.length) ingredientesHtml = '<p class="hint">Nenhum ingrediente cadastrado.</p>';
 
   const etapasHtml = etapas.length
-    ? etapas.map((et,i)=>`<div class="view-etapa"><span class="num">${i+1}.</span> ${escapeHtml(et.texto||'')}${et.tempoMin!=null?' <span class="hint">('+et.tempoMin+' min)</span>':''}</div>`).join('')
+    ? etapas.map((et,i)=>`<div class="view-etapa view-bloco"><span class="num">${i+1}.</span> ${escapeHtml(et.texto||'')}${et.tempoMin!=null?' <span class="hint">('+et.tempoMin+' min)</span>':''}</div>`).join('')
     : '<p class="hint">Nenhuma etapa cadastrada.</p>';
 
   let custoTxt = '';
@@ -3167,7 +3173,7 @@ function openReceitaView(receita){
     </div>
     ${catLabel?`<p class="hint" style="margin-top:6px">${escapeHtml(catLabel)}</p>`:''}
     ${receita.foto?`<img src="${receita.foto}" style="width:100%;max-height:220px;object-fit:cover;border-radius:12px;margin-top:10px">`:''}
-    ${receita.descricao?`<p class="pre-wrap" style="margin-top:10px">${escapeHtml(receita.descricao)}</p>`:''}
+    ${receita.descricao?`<p class="pre-wrap view-bloco" style="margin-top:10px">${escapeHtml(receita.descricao)}</p>`:''}
 
     <div class="view-heading">Ingredientes</div>
     ${ingredientesHtml}
@@ -3176,9 +3182,9 @@ function openReceitaView(receita){
     <div class="view-heading">Modo de preparo</div>
     ${etapasHtml}
 
-    ${detalhesLinhas.length?`<div class="view-heading">Detalhes</div><p class="hint">${detalhesLinhas.join('<br>')}</p>`:''}
-    ${receita.fontes&&receita.fontes.length?`<div class="view-heading">Fontes</div><p class="hint">${receita.fontes.map(f=>escapeHtml(f)).join('<br>')}</p>`:''}
-    ${receita.obs?`<div class="view-heading">Observações</div><p class="pre-wrap">${escapeHtml(receita.obs)}</p>`:''}
+    ${detalhesLinhas.length?`<div class="view-heading">Detalhes</div><p class="view-bloco" style="margin-top:6px">${detalhesLinhas.join('<br>')}</p>`:''}
+    ${receita.fontes&&receita.fontes.length?`<div class="view-heading">Fontes</div><p class="view-bloco" style="margin-top:6px">${receita.fontes.map(f=>escapeHtml(f)).join('<br>')}</p>`:''}
+    ${receita.obs?`<div class="view-heading">Observações</div><p class="pre-wrap view-bloco" style="margin-top:6px">${escapeHtml(receita.obs)}</p>`:''}
   `, {topAnchored:true});
   document.getElementById('rv-editar').addEventListener('click', ()=> openReceitaForm(receita));
   document.getElementById('rv-preparos').addEventListener('click', ()=> openPreparosSheet(receita));
@@ -3841,7 +3847,7 @@ function openPreparoView(receita, preparo, opts){
     const secao = ing.secao || '';
     if(secao !== secaoAtual){ secaoAtual = secao; if(secao) ingredientesHtml += `<div class="view-secao">${escapeHtml(secao)}</div>`; }
     const padrao = ing.itemId ? rendimentoPadraoReceita(receita.id, ing.itemId) : null;
-    let extra = {};
+    let extra = {obsCinza:true};
     if(ing.transformacaoId){
       const t = TRANSFORMACOES.find(x=>x.id===ing.transformacaoId);
       if(t){ extra.rendimentoReal = rendimentoRealDaTransformacao(t); extra.rendimentoPadrao = padrao; }
@@ -6268,12 +6274,27 @@ function transformacaoResumoCurto(t){
   if(!c || !u) return 'custo indisponível';
   return `${fmtCustoPorBase(c.valorPorBase, c.dimensao)} útil`;
 }
+/* Receitas vinculadas a uma transformação: a ligação é feita pelos ingredientes dos preparos (preparo → receita). */
+function receitasVinculadasDaTransformacao(t){
+  const preparoIds = new Set(PREPARO_INGREDIENTES.filter(i=>i.transformacaoId===t.id).map(i=>i.preparoId));
+  const receitaIds = new Set(RECEITA_PREPAROS.filter(p=>preparoIds.has(p.id)).map(p=>p.receitaId));
+  return RECEITAS.filter(r=>receitaIds.has(r.id)).sort((a,b)=>a.nome.localeCompare(b.nome));
+}
 function renderTransformacoes(){
-  const list = TRANSFORMACOES.slice().sort((a,b)=> b.data.localeCompare(a.data) || b.id-a.id);
+  const q = semAcento(document.getElementById('tf-texto').value.trim());
+  const recsDe = new Map(TRANSFORMACOES.map(t=>[t.id, receitasVinculadasDaTransformacao(t)]));
+  const list = TRANSFORMACOES.slice()
+    .filter(t=>{
+      if(!q) return true;
+      const item = ITEMS.find(i=>i.id===t.itemOrigemId);
+      return (item && semAcento(item.nome).includes(q)) || recsDe.get(t.id).some(r=>semAcento(r.nome).includes(q));
+    })
+    .sort((a,b)=> b.data.localeCompare(a.data) || b.id-a.id);
   const el = document.getElementById('lista-transformacoes');
-  if(!list.length){ el.innerHTML = '<div class="empty">Nenhuma transformação cadastrada.</div>'; return; }
+  if(!list.length){ el.innerHTML = `<div class="empty">${q?'Nenhuma transformação encontrada.':'Nenhuma transformação cadastrada.'}</div>`; return; }
   el.innerHTML = list.map(t=>{
     const item = ITEMS.find(i=>i.id===t.itemOrigemId);
+    const recs = recsDe.get(t.id);
     const uComprada = unidadeById(t.unidadeCompradaId);
     const custoT = custoPorBaseUtilDaTransformacao(t);
     const pesosT = pesosDaTransformacao(t);
@@ -6285,6 +6306,7 @@ function renderTransformacoes(){
         <div class="meta">${fmtDateBR(t.data)} · ${t.quantidadeComprada} ${escapeHtml(simb)} comprado${pesosT?` → ${fmtQtd(pesosT.referencia,uComprada)} ${escapeHtml(simb)} útil (${pesosT.rendTotal.toFixed(1)}%)`:''}</div>
         <div class="meta">${custoT ? `Custo útil: ${fmtCustoPorBase(custoT.valorPorBase, custoT.dimensao)}` : 'Custo indisponível'}${t.custoTotal==null?' (pelo preço médio do item)':''}</div>
         ${nUsos?`<div class="meta">Usada em ${nUsos} ingrediente${nUsos===1?'':'s'} de preparo</div>`:''}
+        ${recs.length?`<div class="meta">Receita${recs.length===1?'':'s'}: ${recs.map(r=>escapeHtml(r.nome)).join(', ')}</div>`:''}
         ${t.observacao?`<div class="obs">${escapeHtml(t.observacao)}</div>`:''}
       </div>
     </div>`;
@@ -6613,7 +6635,7 @@ applyDefaultsToUI();
 fillConfiguracoesForm();
 ativarTelaAcesa();
 /* ---- PWA: versão, armazenamento persistente e service worker ---- */
-const APP_VERSION = 'v1_62';
+const APP_VERSION = 'v1_63';
 document.getElementById('appVersaoTxt').textContent = APP_VERSION;
 if(navigator.storage && navigator.storage.persist){
   navigator.storage.persist().then(ok=>{
