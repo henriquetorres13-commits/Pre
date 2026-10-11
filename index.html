@@ -3860,6 +3860,100 @@ function pesosDaRodada(linhas, porcoes){
     comCaldo: porcoes*l.g*l.fator
   }));
 }
+/* ---- "Calcular pelo que tenho": fator de escala a partir da quantidade disponível de UM ingrediente ----
+   Ex.: receita pede 1.000 g de alho e eu tenho 590 g → fator 0,5900 (a conta que antes era feita na calculadora).
+   Bloco reutilizado no novo preparo (prefixo 'pn') e na edição do fator (prefixo 'pe'). Só ingredientes do tipo item
+   (grupo de itens e sub-receita não entram); a unidade do "que tenho" pode ser qualquer uma da mesma dimensão. */
+function fatorPorIngredienteElegiveis(receita){
+  return RECEITA_INGREDIENTES
+    .filter(i=> i.receitaId===receita.id && i.itemId && i.quantidade>0 && i.unidadeId && unidadeById(i.unidadeId))
+    .sort((a,b)=>a.ordem-b.ordem);
+}
+const FI_TOGGLE_TXT = '🧮 Calcular pelo que tenho';
+function fatorPorIngredienteHTML(receita, pfx){
+  const el = fatorPorIngredienteElegiveis(receita);
+  if(!el.length) return '';
+  const opts = el.map(i=>{
+    const u = unidadeById(i.unidadeId);
+    return `<option value="${i.id}">${escapeHtml(alvoLabelDoIngrediente(i))} — ${escapeHtml(fmtQtd(i.quantidade,u)+' '+u.simbolo)} na receita</option>`;
+  }).join('');
+  return `
+    <button type="button" class="btn btn-outline btn-sm btn-block" id="${pfx}-fi-toggle" style="margin-top:8px">${FI_TOGGLE_TXT}</button>
+    <div id="${pfx}-fi-box" style="display:none;margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:10px">
+      <label style="margin-top:0">Ingrediente que tenho</label>
+      <select id="${pfx}-fi-ing">${opts}</select>
+      <label style="margin-top:8px">Quanto tenho</label>
+      <div class="grid2">
+        <input type="text" id="${pfx}-fi-qtd" placeholder="ex: 590">
+        <select id="${pfx}-fi-un"></select>
+      </div>
+      <div id="${pfx}-fi-res" class="hint" style="margin-top:8px"></div>
+      <button type="button" class="btn btn-accent btn-sm btn-block" id="${pfx}-fi-usar" style="margin-top:8px" disabled>Usar este fator</button>
+    </div>`;
+}
+/* aoUsar(fator, texto): quem chama aplica o fator no campo de escala e guarda o texto da base ("alho 590 g").
+   Retorna {limpar()} pra devolver o botão ao texto original quando o fator for alterado à mão. */
+function fatorPorIngredienteAttach(receita, pfx, aoUsar){
+  const toggle = document.getElementById(pfx+'-fi-toggle');
+  if(!toggle) return {limpar(){}};
+  const box = document.getElementById(pfx+'-fi-box');
+  const ingSel = document.getElementById(pfx+'-fi-ing');
+  const qtdEl = document.getElementById(pfx+'-fi-qtd');
+  const unSel = document.getElementById(pfx+'-fi-un');
+  const resEl = document.getElementById(pfx+'-fi-res');
+  const usarBtn = document.getElementById(pfx+'-fi-usar');
+  const rendUnidade = receita.rendimentoUnidadeId ? unidadeById(receita.rendimentoUnidadeId) : null;
+  const fmtFatorEscala = v => Number(v).toLocaleString('pt-BR', {maximumFractionDigits:4}) + '×';
+  attachQtyMask(qtdEl, null);
+  let atual = null;   // {fator, texto} do cálculo em tela
+  const ingAtual = ()=> RECEITA_INGREDIENTES.find(i=>i.id===Number(ingSel.value));
+  function popularUnidades(){
+    const uIng = unidadeById(ingAtual().unidadeId);
+    const lista = UNIDADES.filter(u=> u.dimensao===uIng.dimensao && (u.ativa!==false || u.id===uIng.id));
+    unSel.innerHTML = optionsHTML(lista, uIng.id, u=>`${u.nome} (${u.simbolo})`);
+    unSel.value = String(uIng.id);
+  }
+  function recalcular(){
+    atual = null; usarBtn.disabled = true;
+    const ing = ingAtual();
+    const uIng = unidadeById(ing.unidadeId);
+    const uT = unidadeById(Number(unSel.value));
+    const tenho = getQtyValue(qtdEl);
+    if(!(tenho>0) || !uT){ resEl.innerHTML = ''; return; }
+    const fator = (tenho*uT.fator) / (ing.quantidade*uIng.fator);
+    const fatorGuardado = Number(fator.toFixed(4));
+    if(!isFinite(fator) || !(fatorGuardado>0)){ resEl.textContent = 'Quantidade muito pequena pra calcular um fator.'; return; }
+    const linhas = RECEITA_INGREDIENTES
+      .filter(i=> i.receitaId===receita.id && i.quantidade>0)
+      .sort((a,b)=>a.ordem-b.ordem)
+      .map(i=>{
+        const u = i.unidadeId ? unidadeById(i.unidadeId) : null;
+        return `${escapeHtml(fmtQtd(i.quantidade*fatorGuardado,u)+(u?' '+u.simbolo:''))} — ${escapeHtml(alvoLabelDoIngrediente(i)||'')}`;
+      });
+    const rend = receita.rendimentoQtd>0
+      ? `<br>Rendimento previsto: ${escapeHtml(fmtQtd(receita.rendimentoQtd*fatorGuardado,rendUnidade)+(rendUnidade?' '+rendUnidade.simbolo:''))}` : '';
+    resEl.innerHTML = `Fator: <b>${fmtFatorEscala(fatorGuardado)}</b> (tenho ${escapeHtml(fmtQtd(tenho,uT)+' '+uT.simbolo)} de ${escapeHtml(fmtQtd(ing.quantidade,uIng)+' '+uIng.simbolo)})`
+      + rend + `<div style="margin-top:6px">Como fica a receita:<br>${linhas.join('<br>')}</div>`;
+    atual = {fator: fatorGuardado, texto: `${alvoLabelDoIngrediente(ing)} ${fmtQtd(tenho,uT)} ${uT.simbolo}`};
+    usarBtn.disabled = false;
+  }
+  toggle.addEventListener('click', ()=>{
+    const abrir = box.style.display==='none';
+    box.style.display = abrir ? 'block' : 'none';
+    if(abrir && !unSel.options.length) popularUnidades();
+    if(abrir) recalcular();
+  });
+  ingSel.addEventListener('change', ()=>{ popularUnidades(); recalcular(); });
+  unSel.addEventListener('change', recalcular);
+  qtdEl.addEventListener('input', recalcular);
+  usarBtn.addEventListener('click', ()=>{
+    if(!atual) return;
+    aoUsar(atual.fator, atual.texto);
+    box.style.display = 'none';
+    toggle.textContent = `🧮 Base: ${atual.texto} — alterar`;
+  });
+  return {limpar(){ toggle.textContent = FI_TOGGLE_TXT; }};
+}
 /* ---- Novo preparo: mini-formulário (data + escala), cria os registros básicos (ingredientes
    e etapas copiados da receita, escalados) e cai direto na leitura pra completar o resto peça
    por peça, no mesmo padrão dos sub-sheets granulares. ---- */
@@ -3875,6 +3969,7 @@ function openPreparoNovoMini(receita){
     <input type="date" id="pn-data" value="${hoje}">
     <label style="margin-top:10px">Fator de escala</label>
     <input type="number" id="pn-escala" step="any" min="0.1" value="1">
+    ${fatorPorIngredienteHTML(receita, 'pn')}
     ${receita.rendimentoQtd!=null ? `
     <p class="hint" style="margin-top:8px">Rendimento padrão da receita: ${receita.rendimentoQtd}${rendUnidade?' '+escapeHtml(rendUnidade.simbolo):''}.
     Quer produzir quanto? <input type="text" id="pn-desejado" style="width:100px;display:inline-block"></p>
@@ -3888,8 +3983,19 @@ function openPreparoNovoMini(receita){
   openSheet(html, {topAnchored:true});
   document.getElementById('pn-fechar').addEventListener('click', closeSheet);
   document.getElementById('pn-cancel').addEventListener('click', closeSheet);
+  // base do fator ("alho 590 g"): só vale enquanto o fator não for mexido à mão
+  let fatorBase = null;
+  const escalaEl = document.getElementById('pn-escala');
+  const fi = fatorPorIngredienteAttach(receita, 'pn', (fator, texto)=>{
+    escalaEl.value = String(fator);
+    escalaEl.dispatchEvent(new Event('input', {bubbles:true}));   // atualiza o "quer produzir quanto"
+    fatorBase = texto;
+  });
+  const limparBase = (e)=>{ if(e.isTrusted){ fatorBase = null; fi.limpar(); } };
+  escalaEl.addEventListener('input', limparBase);
   if(receita.rendimentoQtd!=null){
     attachQtyMask(document.getElementById('pn-desejado'), receita.rendimentoQtd);
+    document.getElementById('pn-desejado').addEventListener('input', limparBase);
     document.getElementById('pn-escala').addEventListener('input', e=>{
       const escala = Number(e.target.value)||0;
       const d = document.getElementById('pn-desejado');
@@ -3907,7 +4013,7 @@ function openPreparoNovoMini(receita){
     if(!(escala>0)){ avisar('Informe um fator de escala válido.'); return; }
     const ingsBase = RECEITA_INGREDIENTES.filter(i=>i.receitaId===receita.id).sort((a,b)=>a.ordem-b.ordem).map(ing=>({
       itemId: ing.itemId||null, grupoId: ing.grupoId||null, subReceitaId: ing.subReceitaId||null,
-      quantidade: ing.quantidade!=null ? ing.quantidade*escala : null,
+      quantidade: ing.quantidade!=null ? Math.round(ing.quantidade*escala*1000)/1000 : null,
       quantidadeReal: null,
       unidadeId: ing.unidadeId||null, estadoId: ing.estadoId||null,
       secao: ing.secao||'', observacao: ing.observacao||'', comentarioPreparo: '',
@@ -3915,7 +4021,7 @@ function openPreparoNovoMini(receita){
       pureDisponivel: null, gPorcao: null
     }));
     const {total} = custoReceitaState(ingsBase, new Set([receita.id]));
-    const preparoId = await putRecord('receita_preparos', {receitaId: receita.id, data, escala, custoRealizado: total>0?total:null, pesoFinalReal:null, porcoesFinais:null, rodadaGrupos:null, rodadas:null, obs:''});
+    const preparoId = await putRecord('receita_preparos', {receitaId: receita.id, data, escala, custoRealizado: total>0?total:null, pesoFinalReal:null, porcoesFinais:null, rodadaGrupos:null, rodadas:null, obs:'', fatorBase: fatorBase||null});
     let ordem = 0;
     for(const ing of ingsBase) await putRecord('preparo_ingredientes', {...ing, preparoId, ordem: ordem++});
     let ordemE = 0;
@@ -4060,7 +4166,7 @@ function openPreparoView(receita, preparo, opts){
         <button type="button" class="btn btn-outline btn-sm" id="pv-fechar">✕</button>
       </div>
     </div>
-    <p class="hint" style="margin-top:4px"><span class="view-clicavel" id="pv-data-edit">Preparo de ${fmtDateBR(preparo.data)}</span> · <span class="view-clicavel" id="pv-escala-edit">escala ${preparo.escala}×</span></p>
+    <p class="hint" style="margin-top:4px"><span class="view-clicavel" id="pv-data-edit">Preparo de ${fmtDateBR(preparo.data)}</span> · <span class="view-clicavel" id="pv-escala-edit">escala ${preparo.escala}×</span>${preparo.fatorBase?` (base: ${escapeHtml(preparo.fatorBase)})`:''}</p>
 
     <div class="view-heading">Ingredientes</div>
     ${ingredientesHtml}
@@ -4146,6 +4252,7 @@ function openPreparoEscalaEdit(receita, preparo){
     </div>
     <label style="margin-top:12px">Fator de escala</label>
     <input type="number" id="pe-escala" step="any" min="0.1" value="${preparo.escala}">
+    ${fatorPorIngredienteHTML(receita, 'pe')}
     ${receita.rendimentoQtd!=null ? `
     <p class="hint" style="margin-top:8px">Rendimento padrão da receita: ${receita.rendimentoQtd}${rendUnidade?' '+escapeHtml(rendUnidade.simbolo):''}.
     Quer produzir quanto? <input type="text" id="pe-desejado" style="width:100px;display:inline-block"></p>
@@ -4159,8 +4266,18 @@ function openPreparoEscalaEdit(receita, preparo){
   openSubSheet(html);
   document.getElementById('pe-fechar').addEventListener('click', closeSubSheet);
   document.getElementById('pe-cancel').addEventListener('click', closeSubSheet);
+  let fatorBase = null;   // base calculada nesta tela; se o fator for mexido à mão depois, deixa de valer
+  const escalaEl = document.getElementById('pe-escala');
+  const fi = fatorPorIngredienteAttach(receita, 'pe', (fator, texto)=>{
+    escalaEl.value = String(fator);
+    escalaEl.dispatchEvent(new Event('input', {bubbles:true}));
+    fatorBase = texto;
+  });
+  const limparBase = (e)=>{ if(e.isTrusted){ fatorBase = null; fi.limpar(); } };
+  escalaEl.addEventListener('input', limparBase);
   if(receita.rendimentoQtd!=null){
     attachQtyMask(document.getElementById('pe-desejado'), receita.rendimentoQtd*preparo.escala);
+    document.getElementById('pe-desejado').addEventListener('input', limparBase);
     document.getElementById('pe-escala').addEventListener('input', e=>{
       const escala = Number(e.target.value)||0;
       const desejadoEl = document.getElementById('pe-desejado');
@@ -4184,7 +4301,9 @@ function openPreparoEscalaEdit(receita, preparo){
         await putRecord('preparo_ingredientes', {...ing, quantidade: Math.round(ing.quantidade*ratio*1000)/1000});
       }
     }
-    await putRecord('receita_preparos', {...preparo, escala: novaEscala});
+    // base do fator: a calculada agora; se o fator mudou sem cálculo, a base antiga não vale mais
+    const base = fatorBase || (novaEscala!==escalaAntiga ? null : (preparo.fatorBase||null));
+    await putRecord('receita_preparos', {...preparo, escala: novaEscala, fatorBase: base});
     await recarregarPreparoAberto(receita, preparo, {fechaSub:true});
   });
 }
@@ -6735,7 +6854,7 @@ applyDefaultsToUI();
 fillConfiguracoesForm();
 ativarTelaAcesa();
 /* ---- PWA: versão, armazenamento persistente e service worker ---- */
-const APP_VERSION = 'v1_65';
+const APP_VERSION = 'v1_66';
 document.getElementById('appVersaoTxt').textContent = APP_VERSION;
 if(navigator.storage && navigator.storage.persist){
   navigator.storage.persist().then(ok=>{
