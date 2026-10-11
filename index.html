@@ -1060,7 +1060,24 @@ function setQtyValue(inputEl, value){
 document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click', ()=> switchView(btn.dataset.view));
 });
-function switchView(name){
+let viewAtual = null;
+/* opts.semHistorico: não empilha (usado pelo voltar do celular); opts.restoreY: rolagem a restaurar. */
+function switchView(name, opts){
+  opts = opts || {};
+  const anterior = viewAtual;
+  if(!opts.semHistorico && anterior && anterior!==name){
+    const topo = navStack[navStack.length-1];
+    if(topo && topo.k==='view' && topo.from===name){
+      // ir pra tela de onde viemos = voltar: desempilha em vez de empilhar mais uma
+      navStack.pop(); suppressPopstateCount++; history.back();
+      opts = {...opts, restoreY: topo.y};
+    } else {
+      navStack.push({k:'view', from:anterior, y:window.scrollY});
+      limitarNav();
+      executarAposHistorico(()=> history.pushState({nav:1}, ''));
+    }
+  }
+  viewAtual = name;
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+name).classList.add('active');
   const tabName = (name==='exportar'||name==='configuracoes'||name==='categorias'||name==='locais'||name==='listas'||name==='lista-detalhe') ? 'mais' : name;
@@ -1070,6 +1087,7 @@ function switchView(name){
   currentTab = name;
   if(name==='grafico') window.scrollTo(0,0);
   renderCurrent();
+  if(opts.restoreY!=null) requestAnimationFrame(()=> window.scrollTo(0, opts.restoreY));
 }
 let currentTab = 'precos';
 
@@ -1117,28 +1135,64 @@ document.getElementById('cfg-tela-acesa').addEventListener('click', ()=>{
 /* ============================================================
    MODAL (sheet)
    ============================================================ */
-/* ---- Botão voltar do celular: fecha modal em vez de sair do app ----
-   Cada modal aberto (sheet, seletor de ingrediente, lightbox) empilha
-   um estado de histórico. O voltar do celular dispara popstate, que
-   fecha o modal do topo; se não houver modal aberto, pergunta se
-   quer mesmo sair antes de deixar o navegador voltar/fechar. */
-let uiHistoryDepth = 0;
+/* ---- Botão voltar do celular: volta pelo fluxo de telas em vez de sair do app ----
+   Pilha lógica (navStack) espelhada em entradas de history (as entradas físicas são intercambiáveis;
+   só a contagem precisa bater). Dois tipos de entrada:
+   - {k:'modal'}: sheet, seletor de ingrediente, foto ampliada ou diálogo aberto;
+   - {k:'view', from, y}: troca de tela (aba/tela cheia); guarda a tela de origem e a rolagem dela.
+   O voltar do celular (popstate) desempilha a entrada do topo: fecha o modal ou volta pra tela anterior.
+   Sem nada empilhado, pergunta se quer mesmo sair antes de deixar o navegador fechar o app. */
+let navStack = [];
 let suppressPopstateCount = 0;   // quantos popstate gerados por history.back() do próprio app ainda vão chegar
+let aposHistorico = [];          // ações adiadas até os history.back() em andamento terminarem
+const NAV_MAX_VIEWS = 40;
+function limitarNav(){
+  let n = navStack.filter(e=>e.k==='view').length;
+  while(n>NAV_MAX_VIEWS){ navStack.splice(navStack.findIndex(e=>e.k==='view'),1); n--; }
+}
 function pushModalHistory(){
-  uiHistoryDepth++;
-  history.pushState({modalDepth:uiHistoryDepth}, '');
+  navStack.push({k:'modal'});
+  history.pushState({nav:1}, '');
 }
 function consumeModalHistory(){
-  if(uiHistoryDepth>0){
-    uiHistoryDepth--;
+  const i = navStack.map(e=>e.k).lastIndexOf('modal');
+  if(i>=0){
+    navStack.splice(i,1);
     suppressPopstateCount++;
     history.back();
   }
 }
+function executarAposHistorico(fn){
+  if(suppressPopstateCount>0) aposHistorico.push(fn); else fn();
+}
+/* Camada de sheet que o voltar fecharia agora (null se há diálogo/foto/seletor por cima ou nenhuma aberta). */
+function camadaTopoAtiva(){
+  if(dialogoAberto() || lightbox.classList.contains('active') || ingPickerOverlay.classList.contains('active')) return null;
+  return [camadaSub2, camadaSub, camadaMain].find(c=>c.ativa()) || null;
+}
 window.addEventListener('popstate', ()=>{
-  if(suppressPopstateCount>0){ suppressPopstateCount--; return; }
-  if(uiHistoryDepth>0){
-    uiHistoryDepth--;
+  if(suppressPopstateCount>0){
+    suppressPopstateCount--;
+    if(suppressPopstateCount===0 && aposHistorico.length){ const fns = aposHistorico; aposHistorico = []; setTimeout(()=>fns.forEach(f=>f()), 0); }
+    return;
+  }
+  const topo = navStack[navStack.length-1];
+  if(!topo){
+    confirmar('Sair do Preços?\n\nToque em OK pra fechar o app.', {semHistorico:true}).then(ok=>{
+      // OK: deixa o back seguinte (ou o próprio navegador/WebView) sair de fato
+      if(!ok) history.pushState({guard:true}, '');
+    });
+    return;
+  }
+  if(topo.k==='modal'){
+    const camada = camadaTopoAtiva();
+    if(camada && camada.precisaConfirmar()){
+      // há alterações não salvas: desfaz o voltar e pergunta antes de fechar
+      history.pushState({nav:1}, '');
+      camada.confirmarDescarte().then(ok=>{ if(ok) camada.fecharAgora(); });
+      return;
+    }
+    navStack.pop();
     if(dialogoAberto()) fecharDialogoDom();
     else if(lightbox.classList.contains('active')) closeLightboxDom();
     else if(ingPickerOverlay.classList.contains('active')) closeIngredientePickerDom();
@@ -1146,10 +1200,8 @@ window.addEventListener('popstate', ()=>{
     else if(subOverlay.classList.contains('active')) closeSubSheetDom();
     else if(overlay.classList.contains('active')) closeSheetDom();
   } else {
-    confirmar('Sair do Preços?\n\nToque em OK pra fechar o app.', {semHistorico:true}).then(ok=>{
-      // OK: deixa o back seguinte (ou o próprio navegador/WebView) sair de fato
-      if(!ok) history.pushState({guard:true}, '');
-    });
+    navStack.pop();
+    switchView(topo.from, {semHistorico:true, restoreY:topo.y});
   }
 });
 history.pushState({guard:true}, '');
@@ -1162,9 +1214,12 @@ function criarCamada(overlayId, sheetId){
   const sh = document.getElementById(sheetId);
   const c = {
     overlay: ov, sheet: sh,
+    dirty: false,      // o usuário mexeu num formulário (tem botão *-save) desta camada
+    salvando: false,   // último clique foi num botão de ação (salvar/excluir...), não em Cancelar/✕
     ativa(){ return ov.classList.contains('active'); },
     abrir(html, opts){
       const jaAberto = c.ativa();
+      c.dirty = false; c.salvando = false;
       sh.innerHTML = html;
       ov.classList.add('active');
       ov.classList.toggle('top-anchored', !!(opts && opts.topAnchored));
@@ -1172,14 +1227,37 @@ function criarCamada(overlayId, sheetId){
       sh.scrollTop = 0;
       if(!jaAberto) pushModalHistory();   // reabrir por cima de uma camada já aberta não empilha outra entrada
     },
-    fecharDom(){ ov.classList.remove('active'); ov.classList.remove('top-anchored'); sh.innerHTML=''; },
-    fechar(){
+    fecharDom(){ ov.classList.remove('active'); ov.classList.remove('top-anchored'); sh.innerHTML=''; c.dirty=false; c.salvando=false; },
+    fecharAgora(){
       const wasActive = c.ativa();
       c.fecharDom();
       if(wasActive) consumeModalHistory();
+    },
+    precisaConfirmar(){ return c.ativa() && c.dirty; },
+    confirmarDescarte(){
+      return confirmar('Há alterações não salvas.\n\nOK = sair e descartar\nCancelar = continuar editando');
+    },
+    /* Fechamento pedido pelo código: Cancelar/✕ perguntam se houver alterações; salvar/excluir (salvando=true) fecham direto. */
+    fechar(){
+      if(c.precisaConfirmar() && !c.salvando){
+        c.confirmarDescarte().then(ok=>{ if(ok) c.fecharAgora(); });
+        return;
+      }
+      c.fecharAgora();
     }
   };
-  ov.addEventListener('click', (e)=>{ if(e.target===ov) c.fechar(); });
+  const marcarAlterado = (e)=>{ if(e.isTrusted && sh.querySelector('[id$="-save"]')){ c.dirty = true; c.salvando = false; } };
+  sh.addEventListener('input', marcarAlterado, true);
+  sh.addEventListener('change', marcarAlterado, true);
+  sh.addEventListener('click', (e)=>{
+    const b = e.target.closest('button');
+    if(b) c.salvando = !/-(cancel|fechar|close)$/.test(b.id);
+  }, true);
+  ov.addEventListener('click', (e)=>{
+    if(e.target!==ov) return;
+    if(c.precisaConfirmar()) c.confirmarDescarte().then(ok=>{ if(ok) c.fecharAgora(); });
+    else c.fecharAgora();
+  });
   return c;
 }
 const camadaMain = criarCamada('overlay','sheet');
@@ -6635,7 +6713,7 @@ applyDefaultsToUI();
 fillConfiguracoesForm();
 ativarTelaAcesa();
 /* ---- PWA: versão, armazenamento persistente e service worker ---- */
-const APP_VERSION = 'v1_63';
+const APP_VERSION = 'v1_64';
 document.getElementById('appVersaoTxt').textContent = APP_VERSION;
 if(navigator.storage && navigator.storage.persist){
   navigator.storage.persist().then(ok=>{
