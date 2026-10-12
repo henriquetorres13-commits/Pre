@@ -274,6 +274,10 @@ html.dark header{background:#0D0F13;color:#ECE7DA;}
 /* ---- Duplicatas ---- */
 .dup-pair{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-bottom:9px;}
 .dup-pair .dup-sim{font-size:11.5px;color:var(--ink-soft);margin-top:4px;}
+
+.ajuda-p{margin:2px 0 4px!important;display:flex;align-items:flex-start;gap:6px}
+.ajuda-btn{flex:none;width:18px;height:18px;padding:0;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink-soft);font-size:11px;font-weight:700;line-height:16px;cursor:pointer}
+.ajuda-txt{flex:1;min-width:0}
 </style>
 </head>
 <body>
@@ -395,7 +399,7 @@ html.dark header{background:#0D0F13;color:#ECE7DA;}
     <h2 class="section-title">Buscar categorias de receita</h2>
     <div class="searchbar"><div class="search-wrap"><input type="text" id="crf-texto" placeholder="Nome da categoria..."><button type="button" class="search-clear" data-target="crf-texto" aria-label="Limpar">✕</button></div></div>
     <h2 class="section-title" style="margin-top:16px">Categorias de receitas</h2>
-    <p class="hint">O layout define como as transformações das receitas dessa categoria são registradas.</p>
+    <p class="hint ajuda-p"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>O layout define como as transformações das receitas dessa categoria são registradas.</span></p>
     <div id="lista-categorias-receita"></div>
   </section>
 
@@ -486,7 +490,7 @@ html.dark header{background:#0D0F13;color:#ECE7DA;}
   <!-- ================= TRANSFORMAÇÕES ================= -->
   <section class="view" id="view-transformacoes">
     <h2 class="section-title">Transformações</h2>
-    <p class="hint">Registre uma compra que rende mais de uma coisa depois de limpar/processar (ex: carne crua → carne limpa + gordura + descarte). O custo é rateado proporcionalmente ao peso útil, sem custo pro descarte. Uma transformação pode ser usada em vários preparos.</p>
+    <p class="hint ajuda-p"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Registre uma compra que rende mais de uma coisa depois de limpar/processar (ex: carne crua → carne limpa + gordura + descarte). O custo é rateado proporcionalmente ao peso útil, sem custo pro descarte. Uma transformação pode ser usada em vários preparos.</span></p>
     <div class="searchbar"><div class="search-wrap"><input type="text" id="tf-texto" placeholder="Item ou receita vinculada..."><button type="button" class="search-clear" data-target="tf-texto" aria-label="Limpar">✕</button></div></div>
     <div id="lista-transformacoes"></div>
   </section>
@@ -495,27 +499,27 @@ html.dark header{background:#0D0F13;color:#ECE7DA;}
   <section class="view" id="view-exportar">
     <button class="btn btn-outline btn-sm" id="btnVoltarMaisExportar" type="button" style="margin-bottom:12px">← Voltar</button>
     <h2 class="section-title">Exportar para Excel</h2>
-    <p class="hint">Gera um arquivo .csv com todos os preços registrados e seus campos associados (item, categoria, data, local, comprou, quantidade de referência, observações). Abre normalmente no Excel / Google Sheets.</p>
+    <p class="hint ajuda-p"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Gera um arquivo .csv com todos os preços registrados e seus campos associados (item, categoria, data, local, comprou, quantidade de referência, observações). Abre normalmente no Excel / Google Sheets.</span></p>
     <button class="btn btn-accent btn-block" id="btnExport">Exportar preços (.csv)</button>
-    <p class="hint">Formato de planilha, fácil de abrir e analisar no Excel. <b>Não inclui as fotos.</b></p>
+    <p class="hint ajuda-p"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Formato de planilha, fácil de abrir e analisar no Excel. <b>Não inclui as fotos.</b></span></p>
 
     <h2 class="section-title" style="margin-top:22px">Importar preços (.csv)</h2>
-    <p class="hint">Restaura preços a partir de um .csv exportado por este app. Categorias e itens que não existirem serão criados automaticamente (sem foto). Preços já importados antes não são duplicados.</p>
+    <p class="hint ajuda-p"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Restaura preços a partir de um .csv exportado por este app. Categorias e itens que não existirem serão criados automaticamente (sem foto). Preços já importados antes não são duplicados.</span></p>
     <input type="file" accept=".csv,text/csv" id="fileImport" style="margin-bottom:8px">
     <button class="btn btn-outline btn-block" id="btnImport">Importar preços (.csv)</button>
     <div id="import-result" class="hint"></div>
 
     <h2 class="section-title" style="margin-top:22px">Backup completo (.json)</h2>
-    <p class="hint">Guarda <b>tudo</b> que está no app: preços, itens, categorias, locais, receitas, preparos, transformações, unidades, configurações e fotos. Use para fazer uma cópia de segurança completa ou transferir os dados para outro celular.</p>
+    <p class="hint ajuda-p"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Guarda <b>tudo</b> que está no app: preços, itens, categorias, locais, receitas, preparos, transformações, unidades, configurações e fotos. Use para fazer uma cópia de segurança completa ou transferir os dados para outro celular.</span></p>
     <button class="btn btn-accent btn-block" id="btnExportJson">Exportar backup completo (.json)</button>
-    <p class="hint" style="margin-top:14px"><b>Atenção:</b> importar um backup .json substitui TODOS os dados atuais do app pelos dados do arquivo.</p>
+    <p class="hint ajuda-p" style="margin-top:14px"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden><b>Atenção:</b> importar um backup .json substitui TODOS os dados atuais do app pelos dados do arquivo.</span></p>
     <input type="file" accept=".json,application/json" id="fileImportJson" style="margin-bottom:8px">
     <button class="btn btn-danger btn-block" id="btnImportJson">Restaurar backup completo (.json)</button>
     <div id="import-json-result" class="hint"></div>
 
     <h2 class="section-title" style="margin-top:22px">Sobre</h2>
     <p class="hint"><b>Versão do app:</b> <span id="appVersaoTxt"></span><br><span id="appStorageTxt"></span></p>
-    <p class="hint">Este app funciona 100% offline. Os dados ficam salvos apenas neste aparelho, dentro do armazenamento do app instalado (Chrome). Se desinstalar o app ou limpar os dados do Chrome/do site, o histórico é perdido. Por isso, faça backups periódicos (.csv para preços, .json para tudo incluindo fotos).</p>
+    <p class="hint ajuda-p"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Este app funciona 100% offline. Os dados ficam salvos apenas neste aparelho, dentro do armazenamento do app instalado (Chrome). Se desinstalar o app ou limpar os dados do Chrome/do site, o histórico é perdido. Por isso, faça backups periódicos (.csv para preços, .json para tudo incluindo fotos).</span></p>
   </section>
 
   <!-- ================= CONFIGURAÇÕES ================= -->
@@ -626,14 +630,14 @@ html.dark header{background:#0D0F13;color:#ECE7DA;}
     <button class="btn btn-outline btn-sm btn-block" id="cfg-tela-acesa" type="button">Manter a tela acesa</button>
     <p class="hint" id="cfg-tela-acesa-info" style="margin-top:4px"></p>
 
-    <p class="hint" style="margin-top:16px">As mudanças são aplicadas na hora. Os "padrões" valem a partir da próxima vez que você abrir aquela tela (ou o app) — não mudam o que já está sendo exibido agora.</p>
+    <p class="hint ajuda-p" style="margin-top:16px"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>As mudanças são aplicadas na hora. Os "padrões" valem a partir da próxima vez que você abrir aquela tela (ou o app) — não mudam o que já está sendo exibido agora.</span></p>
   </section>
 
   <!-- ================= LISTAS DE COMPRAS ================= -->
   <section class="view" id="view-listas">
     <button class="btn btn-outline btn-sm" id="btnVoltarMaisListas" type="button" style="margin-bottom:12px">← Voltar</button>
     <h2 class="section-title">Listas de compras</h2>
-    <p class="hint">Crie listas (ex.: "Mercado do mês", "Feira") e marque itens da tela Itens com 🛒 pra incluí-los. Dentro da lista você marca o que comprou e registra o preço na hora.</p>
+    <p class="hint ajuda-p"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Crie listas (ex.: "Mercado do mês", "Feira") e marque itens da tela Itens com 🛒 pra incluí-los. Dentro da lista você marca o que comprou e registra o preço na hora.</span></p>
     <div id="lista-listas"></div>
   </section>
   <section class="view" id="view-lista-detalhe">
@@ -1778,7 +1782,7 @@ function openReceitaCategoriaForm(cat){
     <select id="rcat-layout">
       ${Object.keys(LAYOUTS_TRANSF).map(k=>`<option value="${k}" ${k===layoutAtual?'selected':''}>${escapeHtml(LAYOUTS_TRANSF[k])}</option>`).join('')}
     </select>
-    <p class="hint">Padrão: etapas com peso e estado inicial e final (ex.: cru → limpo → cozido). Cachorros: cozido e purê com caldo, em rodadas. Vale como sugestão ao criar uma transformação a partir de um preparo desta categoria; transformações já criadas não mudam.</p>
+    <p class="hint ajuda-p"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Padrão: etapas com peso e estado inicial e final (ex.: cru → limpo → cozido). Cachorros: cozido e purê com caldo, em rodadas. Vale como sugestão ao criar uma transformação a partir de um preparo desta categoria; transformações já criadas não mudam.</span></p>
     ${editing?`
     <label>Subcategorias</label>
     <div id="rcat-subcats-list"></div>
@@ -1866,7 +1870,7 @@ function openItemForm(item){
       <option value="volume" ${editing&&item.dimensaoReferencia==='volume'?'selected':''}>Volume (ml, xícara...)</option>
       <option value="unidade" ${editing&&item.dimensaoReferencia==='unidade'?'selected':''}>Contagem (unidades)</option>
     </select>
-    <p class="hint" style="margin-top:2px">Define em que tipo de medida os preços deste item podem ser lançados (evita misturar peso com volume, por exemplo). A quantidade exata do pacote (ex: 200g) é informada em cada preço lançado, não aqui.</p>
+    <p class="hint ajuda-p" style="margin-top:2px"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Define em que tipo de medida os preços deste item podem ser lançados (evita misturar peso com volume, por exemplo). A quantidade exata do pacote (ex: 200g) é informada em cada preço lançado, não aqui.</span></p>
     <div id="i-cv-box" style="display:none">
       <label>Conversão para peso/volume <span style="font-weight:400;text-transform:none">(opcional)</span></label>
       <div style="display:flex;gap:8px;align-items:center">
@@ -1874,7 +1878,18 @@ function openItemForm(item){
         <input type="text" id="i-cv-qtd" placeholder="Ex: 300" style="flex:1">
         <select id="i-cv-un" style="flex:1"></select>
       </div>
-      <p class="hint" style="margin-top:2px">Peso (ou volume) médio de 1 unidade, bruto — com casca, cabinho etc. Permite usar este item em receitas em g ou ml; o rendimento % da receita cuida da parte aproveitável.</p>
+      <p class="hint ajuda-p" style="margin-top:2px"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Peso (ou volume) médio de 1 unidade, bruto — com casca, cabinho etc. Permite usar este item em receitas em g ou ml; o rendimento % da receita cuida da parte aproveitável.</span></p>
+    </div>
+    <div id="i-dn-box" style="display:none">
+      <label>Densidade <span style="font-weight:400;text-transform:none">(opcional)</span></label>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input type="text" id="i-dn-vol" placeholder="100" style="flex:1;min-width:0">
+        <select id="i-dn-vol-un" style="flex:1;min-width:0"></select>
+        <span>=</span>
+        <input type="text" id="i-dn-peso" placeholder="92" style="flex:1;min-width:0">
+        <select id="i-dn-peso-un" style="flex:1;min-width:0"></select>
+      </div>
+      <p class="hint ajuda-p" style="margin-top:2px"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Quanto pesa um certo volume deste item (ex.: 100 ml de azeite = 92 g). Permite usar o item em receitas em g mesmo com o preço lançado em ml (ou o contrário) e calcular o custo.</span></p>
     </div>
     <label>Regra de custo <span style="font-weight:400;text-transform:none">(opcional — só afeta receitas e preparos)</span></label>
     <div style="display:flex;gap:8px">
@@ -1889,7 +1904,7 @@ function openItemForm(item){
       <option value="minimo" ${editing&&item.regraPrioridade==='minimo'?'selected':''}>Só o mínimo</option>
       <option value="indivisivel" ${editing&&item.regraPrioridade==='indivisivel'?'selected':''}>Só o indivisível</option>
     </select>
-    <p class="hint" style="margin-top:2px">Mínimo: usar menos que isso custa como se fosse isso (ex: 50 g de um ovo). Indivisível: só se usa em múltiplos inteiros (ex: 1 ovo = 50 g). O custo é calculado sobre a quantidade bruta usada.</p>
+    <p class="hint ajuda-p" style="margin-top:2px"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Mínimo: usar menos que isso custa como se fosse isso (ex: 50 g de um ovo). Indivisível: só se usa em múltiplos inteiros (ex: 1 ovo = 50 g). O custo é calculado sobre a quantidade bruta usada.</span></p>
     <label>Foto</label>
     <div class="photo-pick">
       ${item && item.foto ? `<img id="i-foto-preview" src="${item.foto}">` : `<div class="ph" id="i-foto-preview">📦</div>`}
@@ -1968,6 +1983,21 @@ function openItemForm(item){
   }
   refreshConv();
   document.getElementById('i-dim-ref').addEventListener('change', refreshConv);
+  attachQtyMask(document.getElementById('i-dn-vol'), editing&&item.densVolQtd!=null?item.densVolQtd:null);
+  attachQtyMask(document.getElementById('i-dn-peso'), editing&&item.densPesoQtd!=null?item.densPesoQtd:null);
+  function refreshDens(){
+    const dim = document.getElementById('i-dim-ref').value;
+    document.getElementById('i-dn-box').style.display = (dim==='peso'||dim==='volume') ? '' : 'none';
+    const fill = (id, dimU, salvo, padrao)=>{
+      const sel = document.getElementById(id);
+      const keep = sel.value || (editing&&salvo?String(salvo):(padrao?String(padrao.id):''));
+      sel.innerHTML = UNIDADES.filter(u=>u.dimensao===dimU).map(u=>`<option value="${u.id}" ${String(u.id)===keep?'selected':''}>${escapeHtml(u.simbolo)}</option>`).join('');
+    };
+    fill('i-dn-vol-un','volume', item&&item.densVolUnId, unidadePadraoDaDimensao('volume'));
+    fill('i-dn-peso-un','peso', item&&item.densPesoUnId, unidadePadraoDaDimensao('peso'));
+  }
+  refreshDens();
+  document.getElementById('i-dim-ref').addEventListener('change', refreshDens);
   let fotoData = editing ? (item.foto||null) : null;
   document.getElementById('i-foto-input').addEventListener('change', async (e)=>{
     const f = e.target.files[0]; if(!f) return;
@@ -2024,6 +2054,14 @@ function openItemForm(item){
     if(cvAtiva && !cvUn){ avisar('Informe a unidade da conversão (g ou ml).'); return; }
     obj.convQtd = cvAtiva ? cvQtd : null;
     obj.convUnidadeId = cvAtiva ? Number(cvUn) : null;
+    const dnV = getQtyValue(document.getElementById('i-dn-vol')), dnP = getQtyValue(document.getElementById('i-dn-peso'));
+    const dnDim = document.getElementById('i-dim-ref').value;
+    const dnAtiva = (dnDim==='peso'||dnDim==='volume') && dnV>0 && dnP>0;
+    if((dnDim==='peso'||dnDim==='volume') && ((dnV>0)!==(dnP>0))){ avisar('Informe o volume e o peso da densidade (ou deixe os dois em branco).'); return; }
+    obj.densVolQtd = dnAtiva ? dnV : null;
+    obj.densVolUnId = dnAtiva ? Number(document.getElementById('i-dn-vol-un').value) : null;
+    obj.densPesoQtd = dnAtiva ? dnP : null;
+    obj.densPesoUnId = dnAtiva ? Number(document.getElementById('i-dn-peso-un').value) : null;
     obj.obs = document.getElementById('i-obs').value.trim();
     obj.foto = fotoData;
     await putRecord('itens', obj);
@@ -2256,7 +2294,7 @@ function openDuplicatesSheet(){
   }
   openSheet(`
     <h3>Possíveis duplicatas</h3>
-    <p class="hint">Compara os nomes de todos os itens cadastrados e mostra pares com nomes parecidos, que podem ser o mesmo produto cadastrado duas vezes.</p>
+    <p class="hint ajuda-p"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Compara os nomes de todos os itens cadastrados e mostra pares com nomes parecidos, que podem ser o mesmo produto cadastrado duas vezes.</span></p>
     <label>Sensibilidade</label>
     <select id="dup-threshold">
       <option value="0.85">Mais rígido (só nomes muito parecidos)</option>
@@ -3212,6 +3250,21 @@ function conversaoDoItem(itemOrId){
   if(!u) return null;
   return {dimensao: u.dimensao, porUn: it.convQtd*u.fator, unidade: u, qtd: it.convQtd};
 }
+/* Densidade cadastrada no item (ex.: 100 ml = 92 g). Retorna g por ml (unidades-base) ou null. */
+function densidadeDoItem(itemOrId){
+  const it = (itemOrId && typeof itemOrId==='object') ? itemOrId : ITEMS.find(i=>i.id===itemOrId);
+  if(!it || !(it.densVolQtd>0) || !(it.densPesoQtd>0)) return null;
+  const uv = unidadeById(it.densVolUnId), up = unidadeById(it.densPesoUnId);
+  if(!uv || !up || uv.dimensao!=='volume' || up.dimensao!=='peso') return null;
+  return (it.densPesoQtd*up.fator)/(it.densVolQtd*uv.fator);
+}
+/* Converte uma quantidade em unidade-base entre peso e volume usando a densidade do item; null se não der. */
+function converterPesoVolumeDoItem(itemId, qtdBase, dimDe, dimPara){
+  const d = densidadeDoItem(itemId); if(!d) return null;
+  if(dimDe==='peso' && dimPara==='volume') return qtdBase/d;
+  if(dimDe==='volume' && dimPara==='peso') return qtdBase*d;
+  return null;
+}
 /* Soma, por item com regra de custo, a quantidade bruta usada em TODAS as linhas da lista (receita ou preparo)
    e aplica a regra sobre o total. Retorna Map itemId -> {total, cobrada, aplicada, descricao, nLinhas} | {erro}. */
 function montarCtxRegras(lista){
@@ -3228,7 +3281,8 @@ function montarCtxRegras(lista){
     const bruta = paraBase(efetiva/(rend/100), ing.unidadeId);
     let qb = null;
     if(u.dimensao===base.dimensao) qb = bruta;
-    else { const cv = conversaoDoItem(item); if(cv && base.dimensao==='unidade' && cv.dimensao===u.dimensao) qb = bruta/cv.porUn; }
+    else { const cv = conversaoDoItem(item); if(cv && base.dimensao==='unidade' && cv.dimensao===u.dimensao) qb = bruta/cv.porUn;
+           else qb = converterPesoVolumeDoItem(item.id, bruta, u.dimensao, base.dimensao); }
     if(qb==null) continue;
     const a = acc.get(ing.itemId) || {total:0, n:0, dim: base.dimensao};
     a.total += qb; a.n++; acc.set(ing.itemId, a);
@@ -3284,11 +3338,13 @@ function custoIngrediente(ing, path, ctx){
     const cv = conversaoDoItem(ing.itemId);
     if(cv && base.dimensao==='unidade' && cv.dimensao===ingUnidade.dimensao){
       qtdEmBase = paraBase(qtdBruta, ing.unidadeId)/cv.porUn; convertido = true;
+    } else {
+      qtdEmBase = converterPesoVolumeDoItem(ing.itemId, paraBase(qtdBruta, ing.unidadeId), ingUnidade.dimensao, base.dimensao);
     }
   }
   if(qtdEmBase==null){
     return {valor:null, motivo: ing.itemId
-      ? 'unidade da receita e do item são de dimensões diferentes (cadastre a conversão no item, ex.: 1 un = X g)'
+      ? 'unidade da receita e do item são de dimensões diferentes (cadastre no item a conversão: 1 un = X g ou a densidade, ex.: 100 ml = 92 g)'
       : 'unidade da receita e do rendimento da sub-receita são de dimensões diferentes (sem conversão cadastrada)'};
   }
   if(!ing.itemId) return {valor: qtdEmBase*base.valorPorBase, motivo:null, parcial: base.parcial||false};
@@ -3496,7 +3552,7 @@ function openReceitaForm(receita){
     </div>
     <label>Máx. de porções por rodada de processamento <span style="font-weight:400;text-transform:none">(opcional)</span></label>
     <input type="number" id="r-max-porcoes-rodada" min="1" step="1" value="${editing&&receita.maxPorcoesRodada!=null?receita.maxPorcoesRodada:''}" placeholder="Ex: 10 (capacidade do liquidificador)">
-    <p class="hint" style="margin-top:2px">Capacidade do equipamento em porções (ex.: 10). Preencher ativa o "Planejamento de porções" nos preparos desta receita (a receita deve estar cadastrada por 1 porção).</p>
+    <p class="hint ajuda-p" style="margin-top:2px"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Capacidade do equipamento em porções (ex.: 10). Preencher ativa o "Planejamento de porções" nos preparos desta receita (a receita deve estar cadastrada por 1 porção).</span></p>
     <label>Tempo total (minutos)</label>
     <input type="number" id="r-tempo" min="0" value="${editing&&receita.tempoMin!=null?receita.tempoMin:''}" placeholder="Ex: 60">
     <label>Equipamentos</label>
@@ -4131,7 +4187,7 @@ function openPreparoNovoMini(receita){
     <p class="hint" style="margin-top:8px">Rendimento padrão da receita: ${receita.rendimentoQtd}${rendUnidade?' '+escapeHtml(rendUnidade.simbolo):''}.
     Quer produzir quanto? <input type="text" id="pn-desejado" style="width:100px;display:inline-block"></p>
     ` : ''}
-    <p class="hint" style="margin-top:8px">Depois de criar, complete o resto (ingredientes, porções, rodadas...) tocando em cada bloco na leitura do preparo.</p>
+    <p class="hint ajuda-p" style="margin-top:8px"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Depois de criar, complete o resto (ingredientes, porções, rodadas...) tocando em cada bloco na leitura do preparo.</span></p>
     <div class="sheet-actions">
       <button class="btn btn-outline" id="pn-cancel">Cancelar</button>
       <button class="btn btn-accent btn-block" id="pn-save">Criar preparo</button>
@@ -4414,7 +4470,7 @@ function openPreparoEscalaEdit(receita, preparo){
     <p class="hint" style="margin-top:8px">Rendimento padrão da receita: ${receita.rendimentoQtd}${rendUnidade?' '+escapeHtml(rendUnidade.simbolo):''}.
     Quer produzir quanto? <input type="text" id="pe-desejado" style="width:100px;display:inline-block"></p>
     ` : ''}
-    <p class="hint" style="margin-top:10px">Isso recalcula a quantidade prevista de cada ingrediente proporcionalmente. Porções, rodadas e peso final já registrados não são recalculados automaticamente.</p>
+    <p class="hint ajuda-p" style="margin-top:10px"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Isso recalcula a quantidade prevista de cada ingrediente proporcionalmente. Porções, rodadas e peso final já registrados não são recalculados automaticamente.</span></p>
     <div class="sheet-actions">
       <button class="btn btn-outline" id="pe-cancel">Cancelar</button>
       <button class="btn btn-accent btn-block" id="pe-save">Salvar</button>
@@ -4487,7 +4543,7 @@ function openPreparoIngredienteEdit(receita, preparo, ingOriginal){
       ${(state.itemId && state.transformacaoId) ? `
       <label style="margin-top:8px">Quantidade (cozido da transformação)</label>
       <p style="margin:0;font-weight:700">${qtdEfetivaIng(state)!=null ? escapeHtml(fmtQtd(qtdEfetivaIng(state),unidade)+(unidade?' '+unidade.simbolo:'')) : '—'}</p>
-      <p class="hint" style="margin:2px 0 0">Vem do total cozido da transformação; para mudar, edite a transformação.</p>` : `
+      <p class="hint ajuda-p" style="margin:2px 0 0"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Vem do total cozido da transformação; para mudar, edite a transformação.</span></p>` : `
       <label style="margin-top:8px">Quantidade usada</label>
       <input type="text" id="pie-qtd-real" placeholder="Em branco = usa o previsto">`}
       <label style="margin-top:10px">Unidade</label>
@@ -4588,7 +4644,7 @@ function openPreparoPorcoesEdit(receita, preparo){
     </div>
     <label style="margin-top:10px">Porções finais</label>
     <input type="number" id="pz-porcoes" min="1" step="1" value="${porcoesFinais>0?porcoesFinais:''}" placeholder="Ex: 24">
-    <p class="hint" style="margin-top:2px">Planejadas (pela escala): ${preparo.escala}. O "real" é o que você vai usar por porção; não altera a quantidade cozida dos ingredientes.</p>
+    <p class="hint ajuda-p" style="margin-top:2px"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Planejadas (pela escala): ${preparo.escala}. O "real" é o que você vai usar por porção; não altera a quantidade cozida dos ingredientes.</span></p>
     ${linhas.length ? linhas.map(({ing,idx})=>{
       const u = ing.unidadeId ? unidadeById(ing.unidadeId) : null;
       const s = u ? ' '+escapeHtml(u.simbolo) : '';
@@ -4927,7 +4983,7 @@ function openPreparoEtapaEdit(receita, preparo, idx){
       <button type="button" class="btn btn-outline btn-sm" id="pea-fechar">✕</button>
     </div>
     <p class="hint" style="margin-top:4px;white-space:pre-wrap">${escapeHtml(et.texto||'')}${et.tempoMin!=null?' ('+et.tempoMin+' min)':''}</p>
-    <p class="hint" style="margin-top:2px">O texto e o tempo do passo vêm da receita — pra mudar isso, edite a receita.</p>
+    <p class="hint ajuda-p" style="margin-top:2px"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>O texto e o tempo do passo vêm da receita — pra mudar isso, edite a receita.</span></p>
     <label style="margin-top:10px">Comentário deste preparo</label>
     <textarea id="pea-comentario" placeholder="Opcional">${escapeHtml(et.comentario||'')}</textarea>
     <div class="sheet-actions">
@@ -5041,7 +5097,7 @@ function openPreparoForm(receita, preparo){
         <input type="number" id="pp-porcoes-finais" min="1" step="1" inputmode="numeric" placeholder="Porções finais" value="${porcoesFinais>0?porcoesFinais:''}">
         <div class="hint" style="align-self:center" id="pp-porcoes-planejadas"></div>
       </div>
-      <p class="hint" style="margin-top:2px">Ao informar as porções finais, a quantidade usada de cada ingrediente passa a ser g por porção × porções. "Disponível" vem da transformação vinculada (purê sem caldo) e pode ser corrigido.</p>
+      <p class="hint ajuda-p" style="margin-top:2px"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Ao informar as porções finais, a quantidade usada de cada ingrediente passa a ser g por porção × porções. "Disponível" vem da transformação vinculada (purê sem caldo) e pode ser corrigido.</span></p>
       ${linhas.length ? linhas.map(x=>pzLinhaHTML(x.ing,x.idx)).join('') : '<p class="hint">Vincule uma transformação aos ingredientes para planejar as porções.</p>'}
       <div class="hint" id="pp-porcoes-resumo" style="margin-top:6px"></div>
       ${linhas.length ? '<button type="button" class="btn btn-outline btn-sm btn-block" id="pp-porcoes-sugerir" style="margin-top:6px">Sugerir g por porção</button>' : ''}`;
@@ -6935,7 +6991,7 @@ function openTransformacaoForm(t, opts){
         <p class="hint" id="tr-preco-pago" style="margin:4px 0 0"></p>
         <div id="tr-etapas-wrap"></div>
         <button type="button" class="btn btn-outline btn-sm btn-block" id="tr-e-add" style="margin-top:8px">+ Etapa</button>
-        <p class="hint" style="margin:4px 0 0">O peso inicial da etapa 1 é a quantidade comprada. O peso inicial de cada etapa seguinte já vem do peso final da anterior. Peso final em branco = sem perda.</p>
+        <p class="hint ajuda-p" style="margin:4px 0 0"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>O peso inicial da etapa 1 é a quantidade comprada. O peso inicial de cada etapa seguinte já vem do peso final da anterior. Peso final em branco = sem perda.</span></p>
         <p class="tr-resumo" id="tr-resumo" style="margin:6px 0 0"></p>`;
       refreshUnidadeOptions(trItemId, memUnidade);
       renderEtapas();
@@ -6955,7 +7011,7 @@ function openTransformacaoForm(t, opts){
         <p class="hint" id="tr-preco-pago" style="margin:4px 0 0"></p>
         <div id="tr-tabela-wrap" style="margin-top:6px"></div>
         <button type="button" class="btn btn-outline btn-sm btn-block" id="tr-r-add" style="margin-top:6px">+ Adicionar</button>
-        <p class="hint" style="margin:4px 0 0">Cozido em branco = sem perda nem ganho. O caldo não tem custo e não entra no peso de referência.</p>
+        <p class="hint ajuda-p" style="margin:4px 0 0"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Cozido em branco = sem perda nem ganho. O caldo não tem custo e não entra no peso de referência.</span></p>
         <p class="tr-resumo" id="tr-resumo" style="margin:6px 0 0"></p>`;
       attachQtyMask(document.getElementById('tr-qtd-comprada'), memQtd);
       refreshUnidadeOptions(trItemId, memUnidade);
@@ -7171,7 +7227,7 @@ applyDefaultsToUI();
 fillConfiguracoesForm();
 ativarTelaAcesa();
 /* ---- PWA: versão, armazenamento persistente e service worker ---- */
-const APP_VERSION = 'v1_67';
+const APP_VERSION = 'v1_68';
 document.getElementById('appVersaoTxt').textContent = APP_VERSION;
 if(navigator.storage && navigator.storage.persist){
   navigator.storage.persist().then(ok=>{
@@ -7179,6 +7235,14 @@ if(navigator.storage && navigator.storage.persist){
     if(el) el.textContent = ok ? 'Armazenamento protegido contra limpeza automática: sim.' : 'Armazenamento protegido contra limpeza automática: não concedido (faça backup .json com frequência).';
   }).catch(()=>{});
 }
+
+/* "?" de ajuda: mostra/esconde o texto explicativo ao lado */
+document.addEventListener('click', e=>{
+  const b = e.target.closest && e.target.closest('.ajuda-btn'); if(!b) return;
+  e.preventDefault(); e.stopPropagation();
+  const t = b.parentElement.querySelector('.ajuda-txt'); if(!t) return;
+  t.hidden = !t.hidden; b.setAttribute('aria-expanded', t.hidden?'false':'true');
+});
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
   navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
