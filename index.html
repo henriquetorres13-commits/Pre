@@ -248,6 +248,10 @@ html.dark header{background:#0D0F13;color:#ECE7DA;}
 .tr-read .tr-table{margin-top:8px;}
 .tr-resumo{margin:6px 0 0;font-size:13px;line-height:1.5;}
 .tr-kv{display:flex;flex-direction:column;gap:1px;min-width:0;}
+.tr-etapa{border:1px solid var(--line);border-radius:10px;padding:8px 10px 10px;margin-top:8px;background:var(--card);}
+.tr-etapa-head{display:flex;justify-content:space-between;align-items:center;}
+.tr-etapa-head .tr-e-del{background:none;color:var(--danger);font-size:14px;padding:0 6px;}
+.tr-etapa input[type=text],.tr-etapa select{font-size:14px;}
 .tr-kv span{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);}
 .tr-kv b{font-size:14px;font-weight:700;}
 .pz-ing{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 10px;margin-top:8px;}
@@ -383,6 +387,16 @@ html.dark header{background:#0D0F13;color:#ECE7DA;}
     <div class="searchbar"><div class="search-wrap"><input type="text" id="cf-texto" placeholder="Nome da categoria..."><button type="button" class="search-clear" data-target="cf-texto" aria-label="Limpar">✕</button></div></div>
     <h2 class="section-title" style="margin-top:16px">Categorias</h2>
     <div id="lista-categorias"></div>
+  </section>
+
+  <!-- ================= CATEGORIAS DE RECEITA ================= -->
+  <section class="view" id="view-categorias-receita">
+    <button class="btn btn-outline btn-sm" id="btnVoltarMaisCatReceita" type="button" style="margin-bottom:12px">← Voltar</button>
+    <h2 class="section-title">Buscar categorias de receita</h2>
+    <div class="searchbar"><div class="search-wrap"><input type="text" id="crf-texto" placeholder="Nome da categoria..."><button type="button" class="search-clear" data-target="crf-texto" aria-label="Limpar">✕</button></div></div>
+    <h2 class="section-title" style="margin-top:16px">Categorias de receitas</h2>
+    <p class="hint">O layout define como as transformações das receitas dessa categoria são registradas.</p>
+    <div id="lista-categorias-receita"></div>
   </section>
 
   <!-- ================= LOCAIS ================= -->
@@ -633,6 +647,7 @@ html.dark header{background:#0D0F13;color:#ECE7DA;}
     <h2 class="section-title">Mais</h2>
     <button class="btn btn-outline btn-block" id="btnGoListas" type="button" style="margin-bottom:10px;text-align:left">🛒 Listas de compras</button>
     <button class="btn btn-outline btn-block" id="btnGoCategorias" type="button" style="margin-bottom:10px;text-align:left">🏷️ Categorias</button>
+    <button class="btn btn-outline btn-block" id="btnGoCatReceita" type="button" style="margin-bottom:10px;text-align:left">🍲 Categorias de receitas</button>
     <button class="btn btn-outline btn-block" id="btnGoLocais" type="button" style="margin-bottom:10px;text-align:left">📍 Locais</button>
     <button class="btn btn-outline btn-block" id="btnGoExportar" type="button" style="margin-bottom:10px;text-align:left">📤 Exportar / Importar dados</button>
     <button class="btn btn-outline btn-block" id="btnGoConfiguracoes" type="button" style="text-align:left">⚙️ Configurações</button>
@@ -909,7 +924,8 @@ const CONFIG_DEFAULTS = {
   itensPeriodoPadrao: '6m',
   graficoAgruparPadrao: 'dia',
   dupSensibilidadePadrao: 0.72,
-  telaAcesa: true
+  telaAcesa: true,
+  transfLayoutUltimo: 'padrao'
 };
 function loadConfig(){
   const cfg = {};
@@ -1101,7 +1117,7 @@ function switchView(name, opts){
   viewAtual = name;
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+name).classList.add('active');
-  const tabName = (name==='exportar'||name==='configuracoes'||name==='categorias'||name==='locais'||name==='listas'||name==='lista-detalhe') ? 'mais' : name;
+  const tabName = (name==='exportar'||name==='configuracoes'||name==='categorias'||name==='categorias-receita'||name==='locais'||name==='listas'||name==='lista-detalhe') ? 'mais' : name;
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.view===tabName));
   const semFab = (name==='exportar'||name==='oportunidades'||name==='mais'||name==='configuracoes');
   document.getElementById('fabAdd').style.display = semFab ? 'none':'flex';
@@ -1119,6 +1135,7 @@ document.getElementById('fabAdd').addEventListener('click', ()=>{
   else if(currentTab==='locais') openLocalForm();
   else if(currentTab==='receitas') openReceitaForm();
   else if(currentTab==='transformacoes') openTransformacaoForm();
+  else if(currentTab==='categorias-receita') openReceitaCategoriaForm();
   else if(currentTab==='listas') openListaForm();
   else if(currentTab==='lista-detalhe') abrirPickerItemLista();
   else if(currentTab==='grafico') switchView('precos');
@@ -1127,6 +1144,9 @@ document.getElementById('fabAdd').addEventListener('click', ()=>{
 /* ---- Mais / Configurações ---- */
 document.getElementById('btnGoCategorias').addEventListener('click', ()=> switchView('categorias', {raiz:true}));
 document.getElementById('btnGoLocais').addEventListener('click', ()=> switchView('locais', {raiz:true}));
+document.getElementById('btnGoCatReceita').addEventListener('click', ()=> switchView('categorias-receita', {raiz:true}));
+document.getElementById('btnVoltarMaisCatReceita').addEventListener('click', ()=> switchView('mais', {raiz:true}));
+document.getElementById('crf-texto').addEventListener('input', ()=> renderCategoriasReceita());
 document.getElementById('btnGoListas').addEventListener('click', ()=> switchView('listas', {raiz:true}));
 document.getElementById('btnGoExportar').addEventListener('click', ()=> switchView('exportar', {raiz:true}));
 document.getElementById('btnGoConfiguracoes').addEventListener('click', ()=> switchView('configuracoes', {raiz:true}));
@@ -1657,10 +1677,12 @@ function openCategoryForm(cat){
   });
 }
 
-function renderSubcatsList(categoriaId){
-  const el = document.getElementById('c-subcats-list');
+/* Lista de subcategorias com Renomear/Excluir, usada pelas categorias de itens e de receitas.
+   cfg: {elId, getList(), store, byId(id), ordenar(), confirmaExcluir, desvincular(id), rerender()} */
+function renderSubcatsListGen(cfg){
+  const el = document.getElementById(cfg.elId);
   if(!el) return;
-  const list = subcatsOf(categoriaId);
+  const list = cfg.getList();
   if(!list.length){ el.innerHTML = `<p class="hint" style="margin:2px 0">Nenhuma subcategoria ainda.</p>`; return; }
   el.innerHTML = list.map(s=>`
     <div class="card" style="padding:8px 10px;margin-bottom:6px;cursor:default" data-scid="${s.id}">
@@ -1676,24 +1698,125 @@ function renderSubcatsList(categoriaId){
   el.querySelectorAll('[data-sc-edit]').forEach(btn=>{
     btn.addEventListener('click', async (e)=>{
       const id = Number(e.target.closest('[data-scid]').dataset.scid);
-      const sc = subcatById(id);
+      const sc = cfg.byId(id);
       const novoNome = await perguntar('Renomear subcategoria:', sc.nome);
       if(!novoNome || !novoNome.trim()) return;
       sc.nome = novoNome.trim();
-      await putRecord('subcategorias', sc);
-      SUBCATS.sort((a,b)=>a.nome.localeCompare(b.nome));
-      renderSubcatsList(categoriaId);
+      await putRecord(cfg.store, sc);
+      cfg.ordenar();
+      cfg.rerender();
     });
   });
   el.querySelectorAll('[data-sc-del]').forEach(btn=>{
     btn.addEventListener('click', async (e)=>{
       const id = Number(e.target.closest('[data-scid]').dataset.scid);
-      if(!await confirmar('Excluir esta subcategoria? Itens ligados a ela ficarão sem subcategoria.')) return;
-      await deleteRecord('subcategorias', id);
-      for(const it of ITEMS.filter(i=>i.subcategoriaId===id)){ it.subcategoriaId=null; await putRecord('itens', it); }
+      if(!await confirmar(cfg.confirmaExcluir)) return;
+      await deleteRecord(cfg.store, id);
+      await cfg.desvincular(id);
       await reloadAll();
-      renderSubcatsList(categoriaId);
+      cfg.rerender();
     });
+  });
+}
+function renderSubcatsList(categoriaId){
+  renderSubcatsListGen({
+    elId: 'c-subcats-list',
+    getList: ()=> subcatsOf(categoriaId),
+    store: 'subcategorias',
+    byId: subcatById,
+    ordenar: ()=> SUBCATS.sort((a,b)=>a.nome.localeCompare(b.nome)),
+    confirmaExcluir: 'Excluir esta subcategoria? Itens ligados a ela ficarão sem subcategoria.',
+    desvincular: async (id)=>{ for(const it of ITEMS.filter(i=>i.subcategoriaId===id)){ it.subcategoriaId=null; await putRecord('itens', it); } },
+    rerender: ()=> renderSubcatsList(categoriaId)
+  });
+}
+function renderReceitaSubcatsList(categoriaId){
+  renderSubcatsListGen({
+    elId: 'rcat-subcats-list',
+    getList: ()=> receitaSubcatsOf(categoriaId),
+    store: 'receita_subcategorias',
+    byId: receitaSubcatById,
+    ordenar: ()=> RECEITA_SUBCATS.sort((a,b)=>a.nome.localeCompare(b.nome)),
+    confirmaExcluir: 'Excluir esta subcategoria? Receitas ligadas a ela ficarão sem subcategoria.',
+    desvincular: async (id)=>{ for(const r of RECEITAS.filter(r=>r.subcategoriaId===id)){ r.subcategoriaId=null; await putRecord('receitas', r); } },
+    rerender: ()=> renderReceitaSubcatsList(categoriaId)
+  });
+}
+
+/* ---- Categorias de receita: lista, formulário e layout das transformações ----
+   layoutTransformacao: 'padrao' (etapas: peso/estado inicial → peso/estado final) ou 'cachorros' (cozido → purê com caldo).
+   Sem valor = padrão. É o layout sugerido ao criar uma transformação a partir de um preparo dessa categoria. */
+function renderCategoriasReceita(){
+  const q = semAcento(document.getElementById('crf-texto').value.trim());
+  const list = RECEITA_CATS.filter(c=> !q || semAcento(c.nome).includes(q));
+  const el = document.getElementById('lista-categorias-receita');
+  if(!list.length){ el.innerHTML = `<div class="empty">Nenhuma categoria encontrada.<br>Toque em + para cadastrar.</div>`; return; }
+  el.innerHTML = list.map(c=>{
+    const n = RECEITAS.filter(r=>r.categoriaId===c.id).length;
+    const nSub = receitaSubcatsOf(c.id).length;
+    return `<div class="card" data-id="${c.id}">
+      <div class="thumb-ph">🍲</div>
+      <div class="body">
+        <div class="title">${escapeHtml(c.nome)}</div>
+        <div class="meta">${n} ${n===1?'receita':'receitas'}${nSub?` · ${nSub} subcategoria${nSub===1?'':'s'}`:''}</div>
+        <div class="meta">Layout de transformação: ${escapeHtml(LAYOUTS_TRANSF[c.layoutTransformacao||'padrao'])}</div>
+      </div>
+    </div>`;
+  }).join('');
+  el.querySelectorAll('.card').forEach(card=>{
+    card.addEventListener('click', ()=> openReceitaCategoriaForm(receitaCatById(Number(card.dataset.id))));
+  });
+}
+function openReceitaCategoriaForm(cat){
+  const editing = !!cat;
+  const layoutAtual = editing ? (cat.layoutTransformacao||'padrao') : 'padrao';
+  openSheet(`
+    <h3>${editing?'Editar categoria de receita':'Nova categoria de receita'}</h3>
+    <label>Nome</label>
+    <input type="text" id="rcat-nome" value="${editing?escapeHtml(cat.nome):''}" placeholder="Ex: Comida de cachorro">
+    <label>Layout das transformações</label>
+    <select id="rcat-layout">
+      ${Object.keys(LAYOUTS_TRANSF).map(k=>`<option value="${k}" ${k===layoutAtual?'selected':''}>${escapeHtml(LAYOUTS_TRANSF[k])}</option>`).join('')}
+    </select>
+    <p class="hint">Padrão: etapas com peso e estado inicial e final (ex.: cru → limpo → cozido). Cachorros: cozido e purê com caldo, em rodadas. Vale como sugestão ao criar uma transformação a partir de um preparo desta categoria; transformações já criadas não mudam.</p>
+    ${editing?`
+    <label>Subcategorias</label>
+    <div id="rcat-subcats-list"></div>
+    <button class="btn btn-outline btn-sm" id="rcat-subcat-add" type="button" style="margin-top:6px">+ Nova subcategoria</button>
+    `:`<p class="hint">Salve a categoria primeiro para poder cadastrar subcategorias nela.</p>`}
+    <div class="sheet-actions">
+      ${editing?`<button class="btn btn-danger" id="rcat-del">Excluir</button>`:''}
+      <button class="btn btn-outline" id="rcat-cancel">Cancelar</button>
+      <button class="btn btn-accent btn-block" id="rcat-save">Salvar</button>
+    </div>
+  `);
+  if(editing) renderReceitaSubcatsList(cat.id);
+  document.getElementById('rcat-cancel').addEventListener('click', closeSheet);
+  if(editing){
+    document.getElementById('rcat-del').addEventListener('click', async ()=>{
+      if(!await confirmar('Excluir esta categoria de receita? Subcategorias dela serão excluídas. Receitas ligadas a ela não serão excluídas, mas ficarão sem categoria.')) return;
+      await deleteRecord('receita_categorias', cat.id);
+      for(const sc of RECEITA_SUBCATS.filter(x=>x.categoriaId===cat.id)) await deleteRecord('receita_subcategorias', sc.id);
+      for(const r of RECEITAS.filter(r=>r.categoriaId===cat.id)){ r.categoriaId=null; r.subcategoriaId=null; await putRecord('receitas', r); }
+      await reloadAll(); closeSheet(); renderCurrent();
+    });
+    document.getElementById('rcat-subcat-add').addEventListener('click', async ()=>{
+      const nome = await perguntar('Nome da subcategoria:');
+      if(!nome || !nome.trim()) return;
+      const id = await putRecord('receita_subcategorias', {categoriaId:cat.id, nome:nome.trim()});
+      RECEITA_SUBCATS.push({id, categoriaId:cat.id, nome:nome.trim()});
+      RECEITA_SUBCATS.sort((a,b)=>a.nome.localeCompare(b.nome));
+      renderReceitaSubcatsList(cat.id);
+    });
+  }
+  document.getElementById('rcat-save').addEventListener('click', async ()=>{
+    const nome = document.getElementById('rcat-nome').value.trim();
+    if(!nome){ avisar('Informe o nome da categoria.'); return; }
+    const obj = editing ? {...cat} : {};
+    obj.nome = nome;
+    obj.layoutTransformacao = document.getElementById('rcat-layout').value;
+    await putRecord('receita_categorias', obj);
+    await reloadAll(); closeSheet(); renderCurrent();
   });
 }
 
@@ -2719,6 +2842,14 @@ function receitaCatById(id){ return RECEITA_CATS.find(c=>c.id===id); }
 function receitaSubcatById(id){ return RECEITA_SUBCATS.find(s=>s.id===id); }
 function receitaSubcatsOf(categoriaId){ return RECEITA_SUBCATS.filter(s=>s.categoriaId===categoriaId); }
 
+const LAYOUTS_TRANSF = {padrao:'Padrão (etapas)', cachorros:'Cachorros (cozido → purê com caldo)'};
+/* Layout de uma transformação: registros antigos (sem o campo) são do processo dos cachorros. */
+function layoutDaTransformacao(t){ return (t && t.layout) ? t.layout : 'cachorros'; }
+/* Layout sugerido para uma transformação nova a partir de uma receita: o da categoria dela (sem categoria = padrão). */
+function layoutDaReceita(receita){
+  const cat = receita && receita.categoriaId ? receitaCatById(receita.categoriaId) : null;
+  return (cat && cat.layoutTransformacao) || 'padrao';
+}
 function receitaCatOptionsHTML(selectedId){ return optionsHTML(RECEITA_CATS, selectedId); }
 
 async function findOrCreateTag(nome){
@@ -2911,6 +3042,19 @@ function rendimentoRealDaTransformacao(t){
 function pesosDaTransformacao(t){
   const comprado = Number(t.quantidadeComprada);
   if(!(comprado>0)) return null;
+  if(layoutDaTransformacao(t)==='padrao'){
+    // Layout padrão: o comprado é o peso inicial da etapa 1; o obtido/referência é o peso final da última etapa
+    // que tem peso final (nenhum = sem perda). Não tem purê nem caldo.
+    const etapas = Array.isArray(t.etapas) ? t.etapas : [];
+    let obtido = comprado;
+    etapas.forEach(e=>{ if(e.pesoFinal>0) obtido = e.pesoFinal; });
+    return {
+      etapas, rodadas: [], comprado, obtido, temPure:false, caldo:0, pureGerado:null,
+      pureSemCaldo:null, referencia: obtido,
+      rendCozimento: (obtido/comprado)*100, rendPure:null, fatorCaldo:1,
+      rendTotal: (obtido/comprado)*100
+    };
+  }
   const rods = rodadasDaTransformacao(t);
   let somaCozido=0, somaCaldo=0, somaPure=0, cozidoComPure=0, cozidoSemPure=0;
   rods.forEach(r=>{
@@ -2978,6 +3122,19 @@ function transfTabelaHTML(rodadas, p, u, editable){
       <tr class="pct"><td>%</td><td id="tr-pct-cozido">${pc.cozido}</td><td id="tr-pct-caldo">${pc.caldo}</td><td id="tr-pct-pure">${pc.pure}</td></tr>
     </tfoot>
   </table>`;
+}
+/* Etapas do layout padrão para a leitura: "1. 1.000 g (Cru) → 700 g (Cozido) · 70,0%" + observação em nota de rodapé. */
+function transfEtapasLeituraHTML(t, u){
+  const simb = u ? ' '+escapeHtml(u.simbolo) : '';
+  const est = id => { const e = id ? ESTADOS.find(x=>x.id===id) : null; return e ? ` (${escapeHtml(e.nome)})` : ''; };
+  const etapas = Array.isArray(t.etapas) ? t.etapas : [];
+  if(!etapas.length) return '<p class="hint">Nenhuma etapa registrada.</p>';
+  return etapas.map((e,i)=>{
+    const ini = e.pesoInicial>0 ? `${fmtQtd(e.pesoInicial,u)}${simb}${est(e.estadoInicialId)}` : '—';
+    const fim = e.pesoFinal>0 ? `${fmtQtd(e.pesoFinal,u)}${simb}${est(e.estadoFinalId)}` : (e.estadoFinalId ? `—${est(e.estadoFinalId)}` : '—');
+    const pct = (e.pesoInicial>0 && e.pesoFinal>0) ? ` · ${fmtPct1(e.pesoFinal/e.pesoInicial*100)}` : '';
+    return `<div class="view-ing-linha" style="cursor:default">${i+1}. ${ini} → ${fim}${pct}${e.obs?`<div class="view-nota pre-wrap" style="margin-top:2px">${escapeHtml(e.obs)}</div>`:''}</div>`;
+  }).join('');
 }
 /* Linhas abaixo da tabela: purê sem caldo, rendimento total e custo útil. */
 function transfResumoHTML(t){
@@ -4373,7 +4530,7 @@ function openPreparoIngredienteEdit(receita, preparo, ingOriginal){
       document.getElementById('pie-transformacao').addEventListener('change', e=>{
         if(e.target.value==='__nova__'){
           e.target.value = state.transformacaoId ? String(state.transformacaoId) : '';
-          openTransformacaoForm(null, {embedded:'sub2', itemFixoId: state.itemId, onDone: (novoId)=>{
+          openTransformacaoForm(null, {embedded:'sub2', itemFixoId: state.itemId, layout: layoutDaReceita(receita), onDone: (novoId)=>{
             if(novoId){ state.transformacaoId = novoId; state.rendimentoPercent = null; }
             render();
           }});
@@ -5244,7 +5401,7 @@ function openPreparoForm(receita, preparo){
         // atalho: abre o mesmo formulário da tela de Transformações, já vinculado ao item deste ingrediente;
         // ao salvar, a transformação criada volta selecionada neste ingrediente
         e.target.value = ingState[idx].transformacaoId ? String(ingState[idx].transformacaoId) : '';
-        openTransformacaoForm(null, {embedded:true, itemFixoId: ingState[idx].itemId, onDone: (novoId)=>{
+        openTransformacaoForm(null, {embedded:true, itemFixoId: ingState[idx].itemId, layout: layoutDaReceita(receita), onDone: (novoId)=>{
           if(novoId) ingState[idx].transformacaoId = novoId;
           ppRenderIngList();
         }});
@@ -6394,6 +6551,7 @@ function renderCurrent(){
   if(currentTab==='precos') renderPrecos();
   else if(currentTab==='itens') renderItens();
   else if(currentTab==='categorias') renderCategorias();
+  else if(currentTab==='categorias-receita') renderCategoriasReceita();
   else if(currentTab==='locais') renderLocais();
   else if(currentTab==='grafico') renderChart();
   else if(currentTab==='oportunidades') renderOportunidades();
@@ -6408,7 +6566,7 @@ function renderCurrent(){
    (com "N de M" quando algum filtro esconde registros). Telas sem lista ficam sem contador. ---- */
 const HEADER_TITULOS = {
   precos:'Preços', itens:'Itens', receitas:'Receitas', transformacoes:'Transformações',
-  grafico:'Gráfico', oportunidades:'Boas', mais:'Mais', categorias:'Categorias', locais:'Locais',
+  grafico:'Gráfico', oportunidades:'Boas', mais:'Mais', categorias:'Categorias', 'categorias-receita':'Categorias de receitas', locais:'Locais',
   exportar:'Exportar / Importar', configuracoes:'Configurações',
   listas:'Listas de compras', 'lista-detalhe':'Lista de compras'
 };
@@ -6419,6 +6577,7 @@ const HEADER_LISTAS = {
     total:()=> document.getElementById('rf-arquivadas').checked ? RECEITAS.length : RECEITAS.filter(r=>!r.arquivada).length},
   transformacoes:{lista:'lista-transformacoes', sing:'transformação', plur:'transformações', total:()=>TRANSFORMACOES.length},
   categorias:{lista:'lista-categorias', sing:'categoria', plur:'categorias', total:()=>CATS.length},
+  'categorias-receita':{lista:'lista-categorias-receita', sing:'categoria', plur:'categorias', total:()=>RECEITA_CATS.length},
   locais:{lista:'lista-locais', sing:'local', plur:'locais', total:()=>LOCAIS.length},
   listas:{lista:'lista-listas', sing:'lista', plur:'listas', total:()=>LISTAS.length},
   'lista-detalhe':{lista:'lista-compras-itens', sing:'item', plur:'itens', total:()=>itensDaLista(listaAbertaId).length},
@@ -6564,11 +6723,11 @@ function openTransformacaoView(t, opts){
         ${kv('Valor pago', t.custoTotal!=null ? fmtMoney(t.custoTotal) : 'preço médio')}
       </div>
       <div class="grid2" style="gap:6px;margin-top:4px">
-        ${kv('Quantidade comprada', fmtQtd(t.quantidadeComprada,u))}
+        ${kv(layoutDaTransformacao(t)==='padrao' ? 'Peso inicial' : 'Quantidade comprada', fmtQtd(t.quantidadeComprada,u))}
         ${kv('Unidade', u ? escapeHtml(u.nome+' ('+u.simbolo+')') : '—')}
       </div>
       ${precoPago?`<p class="hint" style="margin:6px 0 0">${precoPago}</p>`:''}
-      ${transfTabelaHTML(rodadasDaTransformacao(t), p, u, false)}
+      ${layoutDaTransformacao(t)==='padrao' ? transfEtapasLeituraHTML(t, u) : transfTabelaHTML(rodadasDaTransformacao(t), p, u, false)}
       <p class="tr-resumo">${transfResumoHTML(t)}</p>
       ${nUsos?`<p class="hint" style="margin:4px 0 0">Usada em ${nUsos} ingrediente${nUsos===1?'':'s'} de preparo</p>`:''}
       ${t.observacao?`<div class="tr-kv" style="margin-top:6px"><span>Observação</span><b class="pre-wrap" style="font-weight:400">${escapeHtml(t.observacao)}</b></div>`:''}
@@ -6587,25 +6746,24 @@ function openTransformacaoForm(t, opts){
   // itemFixoId: usado quando a transformação nasce de dentro de um preparo — o item já vem definido e não muda
   const itemFixo = (!editing && opts.itemFixoId) ? ITEMS.find(i=>i.id===opts.itemFixoId) : null;
   const itemAtual = editing ? ITEMS.find(i=>i.id===t.itemOrigemId) : null;
+  // layout: na edição é o da própria transformação (não muda); na criação vem do preparo/categoria da receita
+  // (opts.layout) ou do último usado, e pode ser trocado enquanto a transformação é nova
+  let layout = editing ? layoutDaTransformacao(t) : (opts.layout || CONFIG.transfLayoutUltimo || 'padrao');
+  if(!LAYOUTS_TRANSF[layout]) layout = 'padrao';
   const trFormHtml = `
     <div class="tr-form">
     <h3 style="margin:0 0 6px">${editing?'Editar transformação':'Nova transformação'}</h3>
+    ${editing
+      ? `<p class="hint" style="margin:0 0 6px">Layout: ${escapeHtml(LAYOUTS_TRANSF[layout])}</p>`
+      : `<label>Layout</label>
+         <select id="tr-layout">${Object.keys(LAYOUTS_TRANSF).map(k=>`<option value="${k}" ${k===layout?'selected':''}>${escapeHtml(LAYOUTS_TRANSF[k])}</option>`).join('')}</select>`}
     <label>Item de origem (o que você comprou)</label>
     <button type="button" class="btn btn-outline btn-sm" id="tr-item-btn" ${itemFixo?'disabled':''} style="width:100%;text-align:left;white-space:normal${itemFixo?';opacity:.75':''}">${itemAtual?escapeHtml(itemAtual.nome):(itemFixo?escapeHtml(itemFixo.nome):'Selecione o item...')}</button>
     <div class="grid2" style="margin-top:2px">
       <div><label>Data</label><input type="date" id="tr-data" value="${editing?t.data:todayLocal()}"></div>
       <div><label>Valor pago</label><div class="money-wrap"><span>R$</span><input type="text" id="tr-custo" class="mono" placeholder="preço médio"></div></div>
     </div>
-    <label>Quantidade comprada (bruto)</label>
-    <div class="grid2">
-      <input type="text" id="tr-qtd-comprada" placeholder="Ex: 5000">
-      <select id="tr-unidade"><option value="">Unidade</option></select>
-    </div>
-    <p class="hint" id="tr-preco-pago" style="margin:4px 0 0"></p>
-    <div id="tr-tabela-wrap" style="margin-top:6px"></div>
-    <button type="button" class="btn btn-outline btn-sm btn-block" id="tr-r-add" style="margin-top:6px">+ Adicionar</button>
-    <p class="hint" style="margin:4px 0 0">Cozido em branco = sem perda nem ganho. O caldo não tem custo e não entra no peso de referência.</p>
-    <p class="tr-resumo" id="tr-resumo" style="margin:6px 0 0"></p>
+    <div id="tr-layout-box"></div>
     <label>Observação</label>
     <textarea id="tr-obs" rows="1" placeholder="Ex: carne limpa 4.000g, gordura 500g">${editing?escapeHtml(t.observacao||''):''}</textarea>
     <div class="sheet-actions">
@@ -6617,11 +6775,22 @@ function openTransformacaoForm(t, opts){
   `;
   openLayer(trFormHtml, embedded);
   attachMoneyMask(document.getElementById('tr-custo'), editing?t.custoTotal:null);
-  attachQtyMask(document.getElementById('tr-qtd-comprada'), editing?t.quantidadeComprada:null);
 
   let trItemId = editing ? t.itemOrigemId : (itemFixo ? itemFixo.id : null);
-  let rod = editing ? rodadasDaTransformacao(t) : [{cozido:null, caldo:null, pure:null}];
+  // estado do layout "cachorros" (rodadas) e do layout "padrão" (etapas); a quantidade bruta é compartilhada
+  let rod = (editing && layout==='cachorros') ? rodadasDaTransformacao(t) : [{cozido:null, caldo:null, pure:null}];
+  const etapaVazia = (pi, ei)=>({pesoInicial: pi ?? null, estadoInicialId: ei ?? null, pesoFinal:null, estadoFinalId:null, obs:''});
+  let etapas = (editing && layout==='padrao' && Array.isArray(t.etapas) && t.etapas.length)
+    ? t.etapas.map(e=>({pesoInicial:e.pesoInicial??null, estadoInicialId:e.estadoInicialId??null, pesoFinal:e.pesoFinal??null, estadoFinalId:e.estadoFinalId??null, obs:e.obs||''}))
+    : [etapaVazia(editing ? t.quantidadeComprada : null)];
+  let memQtd = editing ? t.quantidadeComprada : null;                    // quantidade bruta, ao trocar de layout
+  let memUnidade = editing ? t.unidadeCompradaId : unidadeSugeridaParaAlvo('item', trItemId);
+  const box = document.getElementById('tr-layout-box');
 
+  function unidadeSelecionada(){
+    const v = document.getElementById('tr-unidade').value;
+    return v ? Number(v) : null;
+  }
   function refreshUnidadeOptions(itemId, selectedUnidadeId){
     const item = ITEMS.find(i=>i.id===Number(itemId));
     const sel = document.getElementById('tr-unidade');
@@ -6630,37 +6799,48 @@ function openTransformacaoForm(t, opts){
       .map(u=>`<option value="${u.id}" ${u.id===selectedUnidadeId?'selected':''}>${escapeHtml(u.nome)} (${escapeHtml(u.simbolo)})</option>`).join('');
     sel.innerHTML = '<option value="">Unidade</option>' + opts;
   }
-  const initialUnidade = editing ? t.unidadeCompradaId : unidadeSugeridaParaAlvo('item', trItemId);
-  refreshUnidadeOptions(trItemId, initialUnidade);
+  const estadoOptsHTML = (selId)=> '<option value="">Estado</option>'
+    + ESTADOS.map(e=>`<option value="${e.id}" ${selId===e.id?'selected':''}>${escapeHtml(e.nome)}</option>`).join('')
+    + '<option value="__novo__">+ Novo estado...</option>';
 
   // transformação "de rascunho" montada a partir do que está na tela (usada nos cálculos ao vivo)
   function tDraft(){
     const custo = getMoneyValue(document.getElementById('tr-custo'));
-    return {
-      itemOrigemId: trItemId,
-      quantidadeComprada: getQtyValue(document.getElementById('tr-qtd-comprada')),
-      unidadeCompradaId: document.getElementById('tr-unidade').value ? Number(document.getElementById('tr-unidade').value) : null,
-      custoTotal: custo>0 ? custo : null,
-      rodadas: rod.map(r=>({...r}))
-    };
+    const base = {itemOrigemId: trItemId, unidadeCompradaId: unidadeSelecionada(), custoTotal: custo>0 ? custo : null, layout};
+    if(layout==='padrao'){
+      const et = etapas.map(e=>({...e}));
+      return {...base, etapas: et, rodadas: [], quantidadeComprada: (et[0] && et[0].pesoInicial>0) ? et[0].pesoInicial : null};
+    }
+    return {...base, quantidadeComprada: getQtyValue(document.getElementById('tr-qtd-comprada')), rodadas: rod.map(r=>({...r}))};
   }
+  const etapaCalcTxt = (e, u)=>{
+    if(!(e.pesoInicial>0) || !(e.pesoFinal>0)) return '';
+    const dif = e.pesoFinal - e.pesoInicial;
+    return `Rendimento da etapa: ${fmtPct1(e.pesoFinal/e.pesoInicial*100)} · ${dif<=0?'perda':'ganho'} de ${fmtQtd(Math.abs(dif),u)}${u?' '+u.simbolo:''}`;
+  };
   // atualiza só os textos derivados (totais, %, resumo) sem recriar os inputs — não perde o foco ao digitar
   function refreshDerived(){
     const td = tDraft();
     const u = td.unidadeCompradaId ? unidadeById(td.unidadeCompradaId) : null;
-    const p = pesosDaTransformacao(td);
-    const f = v => v==null ? '' : fmtQtd(v,u);
-    const tot = transfTotais(td.rodadas, p);
-    const pc = transfPctCells(p);
-    document.getElementById('tr-tot-cozido').textContent = f(tot.cozido);
-    document.getElementById('tr-tot-caldo').textContent = f(tot.caldo);
-    document.getElementById('tr-tot-pure').textContent = f(tot.pure);
-    document.getElementById('tr-pct-cozido').textContent = pc.cozido;
-    document.getElementById('tr-pct-caldo').textContent = pc.caldo;
-    document.getElementById('tr-pct-pure').textContent = pc.pure;
+    if(layout==='padrao'){
+      etapas.forEach((e,i)=>{ const el = document.getElementById('tr-e-calc-'+i); if(el) el.textContent = etapaCalcTxt(e, u); });
+    } else {
+      const p = pesosDaTransformacao(td);
+      const f = v => v==null ? '' : fmtQtd(v,u);
+      const tot = transfTotais(td.rodadas, p);
+      const pc = transfPctCells(p);
+      document.getElementById('tr-tot-cozido').textContent = f(tot.cozido);
+      document.getElementById('tr-tot-caldo').textContent = f(tot.caldo);
+      document.getElementById('tr-tot-pure').textContent = f(tot.pure);
+      document.getElementById('tr-pct-cozido').textContent = pc.cozido;
+      document.getElementById('tr-pct-caldo').textContent = pc.caldo;
+      document.getElementById('tr-pct-pure').textContent = pc.pure;
+    }
     document.getElementById('tr-preco-pago').textContent = transfPrecoPagoTxt(td);
     document.getElementById('tr-resumo').innerHTML = transfResumoHTML(td);
   }
+
+  /* ---- layout cachorros: quantidade comprada + tabela de rodadas ---- */
   function renderTabela(){
     const td = tDraft();
     const u = td.unidadeCompradaId ? unidadeById(td.unidadeCompradaId) : null;
@@ -6677,10 +6857,129 @@ function openTransformacaoForm(t, opts){
     }));
     refreshDerived();
   }
-  renderTabela();
-  document.getElementById('tr-r-add').addEventListener('click', ()=>{
-    rod.push({cozido:null, caldo:null, pure:null});
-    renderTabela();
+  /* ---- layout padrão: etapas (peso/estado inicial → peso/estado final + observação), encadeadas ---- */
+  function renderEtapas(){
+    const u = unidadeSelecionada() ? unidadeById(unidadeSelecionada()) : null;
+    const simb = u ? ' ('+escapeHtml(u.simbolo)+')' : '';
+    const wrap = document.getElementById('tr-etapas-wrap');
+    wrap.innerHTML = etapas.map((e,i)=>`
+      <div class="tr-etapa">
+        <div class="tr-etapa-head"><b>Etapa ${i+1}</b>${etapas.length>1?`<button type="button" class="tr-e-del" data-i="${i}" aria-label="Remover etapa">✕</button>`:''}</div>
+        <div class="grid2">
+          <div><label>Peso inicial${simb}</label><input type="text" class="tr-e-pi" data-i="${i}" inputmode="decimal"></div>
+          <div><label>Estado inicial</label><select class="tr-e-ei" data-i="${i}">${estadoOptsHTML(e.estadoInicialId)}</select></div>
+        </div>
+        <div class="grid2">
+          <div><label>Peso final${simb}</label><input type="text" class="tr-e-pf" data-i="${i}" inputmode="decimal"></div>
+          <div><label>Estado final</label><select class="tr-e-ef" data-i="${i}">${estadoOptsHTML(e.estadoFinalId)}</select></div>
+        </div>
+        <label>Observação</label>
+        <input type="text" class="tr-e-obs" data-i="${i}" placeholder="Ex: descartei ossos e gordura" value="${escapeHtml(e.obs||'')}">
+        <p class="hint" id="tr-e-calc-${i}" style="margin:4px 0 0"></p>
+      </div>`).join('');
+    const pi = i => wrap.querySelector(`.tr-e-pi[data-i="${i}"]`);
+    const ei = i => wrap.querySelector(`.tr-e-ei[data-i="${i}"]`);
+    etapas.forEach((e,i)=>{
+      attachQtyMask(pi(i), e.pesoInicial);
+      attachQtyMask(wrap.querySelector(`.tr-e-pf[data-i="${i}"]`), e.pesoFinal);
+    });
+    wrap.querySelectorAll('.tr-e-pi').forEach(inp=> inp.addEventListener('input', ev=>{
+      etapas[Number(inp.dataset.i)].pesoInicial = getQtyValue(ev.target); refreshDerived();
+    }));
+    // peso final da etapa N vira o peso inicial da N+1 (enquanto a N+1 não foi alterada à mão)
+    wrap.querySelectorAll('.tr-e-pf').forEach(inp=> inp.addEventListener('input', ev=>{
+      const i = Number(inp.dataset.i);
+      const antigo = etapas[i].pesoFinal;
+      const novo = getQtyValue(ev.target);
+      etapas[i].pesoFinal = novo;
+      const prox = etapas[i+1];
+      if(prox && (prox.pesoInicial==null || prox.pesoInicial===antigo)){ prox.pesoInicial = novo; setQtyValue(pi(i+1), novo); }
+      refreshDerived();
+    }));
+    wrap.querySelectorAll('.tr-e-obs').forEach(inp=> inp.addEventListener('input', ev=>{ etapas[Number(inp.dataset.i)].obs = ev.target.value; }));
+    // estados: lista cadastrada + "+ Novo estado..."; o estado final da etapa N vira o inicial da N+1 (idem peso)
+    const tratarEstado = (sel, campo)=> sel.addEventListener('change', async ev=>{
+      const i = Number(sel.dataset.i);
+      if(ev.target.value==='__novo__'){
+        const nome = ((await perguntar('Nome do novo estado:'))||'').trim();
+        if(!nome){ ev.target.value = etapas[i][campo] ? String(etapas[i][campo]) : ''; return; }
+        const novoId = await putRecord('estados', {nome});
+        ESTADOS.push({id:novoId, nome}); ESTADOS.sort((a,b)=>a.nome.localeCompare(b.nome));
+        etapas[i][campo] = novoId;
+        renderEtapas();
+        return;
+      }
+      const antigo = etapas[i][campo];
+      const novo = ev.target.value ? Number(ev.target.value) : null;
+      etapas[i][campo] = novo;
+      if(campo==='estadoFinalId'){
+        const prox = etapas[i+1];
+        if(prox && (prox.estadoInicialId==null || prox.estadoInicialId===antigo)){ prox.estadoInicialId = novo; ei(i+1).value = novo ? String(novo) : ''; }
+      }
+    });
+    wrap.querySelectorAll('.tr-e-ei').forEach(sel=> tratarEstado(sel, 'estadoInicialId'));
+    wrap.querySelectorAll('.tr-e-ef').forEach(sel=> tratarEstado(sel, 'estadoFinalId'));
+    wrap.querySelectorAll('.tr-e-del').forEach(btn=> btn.addEventListener('click', ()=>{
+      etapas.splice(Number(btn.dataset.i), 1);
+      renderEtapas();
+    }));
+    refreshDerived();
+  }
+
+  /* ---- monta o bloco que depende do layout (e religa os campos dele) ---- */
+  function montarBloco(){
+    if(layout==='padrao'){
+      box.innerHTML = `
+        <label>Unidade de medida</label>
+        <select id="tr-unidade"><option value="">Unidade</option></select>
+        <p class="hint" id="tr-preco-pago" style="margin:4px 0 0"></p>
+        <div id="tr-etapas-wrap"></div>
+        <button type="button" class="btn btn-outline btn-sm btn-block" id="tr-e-add" style="margin-top:8px">+ Etapa</button>
+        <p class="hint" style="margin:4px 0 0">O peso inicial da etapa 1 é a quantidade comprada. O peso inicial de cada etapa seguinte já vem do peso final da anterior. Peso final em branco = sem perda.</p>
+        <p class="tr-resumo" id="tr-resumo" style="margin:6px 0 0"></p>`;
+      refreshUnidadeOptions(trItemId, memUnidade);
+      renderEtapas();
+      document.getElementById('tr-e-add').addEventListener('click', ()=>{
+        const ult = etapas[etapas.length-1];
+        etapas.push(etapaVazia(ult ? ult.pesoFinal : null, ult ? ult.estadoFinalId : null));
+        renderEtapas();
+      });
+      document.getElementById('tr-unidade').addEventListener('change', renderEtapas);
+    } else {
+      box.innerHTML = `
+        <label>Quantidade comprada (bruto)</label>
+        <div class="grid2">
+          <input type="text" id="tr-qtd-comprada" placeholder="Ex: 5000">
+          <select id="tr-unidade"><option value="">Unidade</option></select>
+        </div>
+        <p class="hint" id="tr-preco-pago" style="margin:4px 0 0"></p>
+        <div id="tr-tabela-wrap" style="margin-top:6px"></div>
+        <button type="button" class="btn btn-outline btn-sm btn-block" id="tr-r-add" style="margin-top:6px">+ Adicionar</button>
+        <p class="hint" style="margin:4px 0 0">Cozido em branco = sem perda nem ganho. O caldo não tem custo e não entra no peso de referência.</p>
+        <p class="tr-resumo" id="tr-resumo" style="margin:6px 0 0"></p>`;
+      attachQtyMask(document.getElementById('tr-qtd-comprada'), memQtd);
+      refreshUnidadeOptions(trItemId, memUnidade);
+      renderTabela();
+      document.getElementById('tr-r-add').addEventListener('click', ()=>{
+        rod.push({cozido:null, caldo:null, pure:null});
+        renderTabela();
+      });
+      document.getElementById('tr-qtd-comprada').addEventListener('input', refreshDerived);
+      document.getElementById('tr-unidade').addEventListener('change', renderTabela);
+    }
+  }
+  // guarda o que é compartilhado entre os layouts antes de trocar (unidade e quantidade bruta)
+  function lerMemoriaDoBloco(){
+    memUnidade = unidadeSelecionada();
+    memQtd = layout==='padrao' ? (etapas[0] ? etapas[0].pesoInicial : null) : getQtyValue(document.getElementById('tr-qtd-comprada'));
+  }
+  montarBloco();
+  const layoutSel = document.getElementById('tr-layout');
+  if(layoutSel) layoutSel.addEventListener('change', ()=>{
+    lerMemoriaDoBloco();
+    layout = layoutSel.value;
+    if(layout==='padrao' && etapas.length===1 && !(etapas[0].pesoFinal>0)) etapas[0].pesoInicial = memQtd;
+    montarBloco();
   });
 
   document.getElementById('tr-item-btn').addEventListener('click', ()=>{
@@ -6691,12 +6990,10 @@ function openTransformacaoForm(t, opts){
         const item = ITEMS.find(i=>i.id===trItemId);
         document.getElementById('tr-item-btn').textContent = item ? item.nome : 'Selecione o item...';
         refreshUnidadeOptions(trItemId, unidadeSugeridaParaAlvo('item', trItemId));
-        renderTabela();
+        if(layout==='padrao') renderEtapas(); else renderTabela();
       }
     });
   });
-  document.getElementById('tr-qtd-comprada').addEventListener('input', refreshDerived);
-  document.getElementById('tr-unidade').addEventListener('change', renderTabela);
   document.getElementById('tr-custo').addEventListener('input', refreshDerived);
 
   if(editing){
@@ -6714,29 +7011,49 @@ function openTransformacaoForm(t, opts){
   document.getElementById('tr-save').addEventListener('click', async ()=>{
     const itemOrigemId = trItemId;
     if(!itemOrigemId){ avisar('Escolha o item de origem.'); return; }
-    const unidadeCompradaId = document.getElementById('tr-unidade').value ? Number(document.getElementById('tr-unidade').value) : null;
-    const quantidadeComprada = getQtyValue(document.getElementById('tr-qtd-comprada'));
-    if(!unidadeCompradaId || !quantidadeComprada){ avisar('Informe a quantidade comprada e a unidade.'); return; }
-    const rodadasSalvar = [];
-    for(let i=0;i<rod.length;i++){
-      const r = rod[i];
-      if(!(r.cozido>0) && !(r.caldo>0) && !(r.pure>0)) continue; // linha vazia, ignora
-      if(r.caldo>0 && !(r.pure>0)){ avisar(`Rodada #${i+1}: informe o purê (com caldo) ou deixe o caldo em branco.`); return; }
-      if(r.pure>0 && r.caldo>0 && r.caldo>=r.pure){ avisar(`Rodada #${i+1}: o caldo precisa ser menor que o purê (que já inclui o caldo).`); return; }
-      rodadasSalvar.push({cozido: r.cozido>0?r.cozido:null, caldo: r.caldo>0?r.caldo:null, pure: r.pure>0?r.pure:null});
-    }
+    const unidadeCompradaId = unidadeSelecionada();
     const custo = getMoneyValue(document.getElementById('tr-custo'));
     const obj = {
-      itemOrigemId, unidadeCompradaId, quantidadeComprada,
+      itemOrigemId, unidadeCompradaId,
       data: document.getElementById('tr-data').value || todayLocal(),
       custoTotal: custo>0 ? custo : null,
-      rodadas: rodadasSalvar,
-      // campos do formato antigo: a fonte agora é "rodadas"
+      layout,
+      // campos do formato antigo: a fonte agora é "rodadas" (cachorros) ou "etapas" (padrão)
       quantidadeObtida: null, caldoAdicionado: null, pureGerado: null, pesoDescarte: null,
       observacao: document.getElementById('tr-obs').value.trim()
     };
+    if(layout==='padrao'){
+      const etapasSalvar = etapas
+        .filter(e=> e.pesoInicial>0 || e.pesoFinal>0 || (e.obs||'').trim())
+        .map(e=>({
+          pesoInicial: e.pesoInicial>0 ? e.pesoInicial : null, estadoInicialId: e.estadoInicialId||null,
+          pesoFinal: e.pesoFinal>0 ? e.pesoFinal : null, estadoFinalId: e.estadoFinalId||null,
+          obs: (e.obs||'').trim()
+        }));
+      if(!unidadeCompradaId || !etapasSalvar.length || !(etapasSalvar[0].pesoInicial>0)){ avisar('Informe o peso inicial da etapa 1 (a quantidade comprada) e a unidade.'); return; }
+      for(let i=1;i<etapasSalvar.length;i++){
+        if(!(etapasSalvar[i].pesoInicial>0)){ avisar(`Etapa ${i+1}: informe o peso inicial.`); return; }
+      }
+      obj.quantidadeComprada = etapasSalvar[0].pesoInicial;   // o peso inicial da etapa 1 é a quantidade comprada
+      obj.etapas = etapasSalvar;
+      obj.rodadas = [];
+    } else {
+      const quantidadeComprada = getQtyValue(document.getElementById('tr-qtd-comprada'));
+      if(!unidadeCompradaId || !quantidadeComprada){ avisar('Informe a quantidade comprada e a unidade.'); return; }
+      const rodadasSalvar = [];
+      for(let i=0;i<rod.length;i++){
+        const r = rod[i];
+        if(!(r.cozido>0) && !(r.caldo>0) && !(r.pure>0)) continue; // linha vazia, ignora
+        if(r.caldo>0 && !(r.pure>0)){ avisar(`Rodada #${i+1}: informe o purê (com caldo) ou deixe o caldo em branco.`); return; }
+        if(r.pure>0 && r.caldo>0 && r.caldo>=r.pure){ avisar(`Rodada #${i+1}: o caldo precisa ser menor que o purê (que já inclui o caldo).`); return; }
+        rodadasSalvar.push({cozido: r.cozido>0?r.cozido:null, caldo: r.caldo>0?r.caldo:null, pure: r.pure>0?r.pure:null});
+      }
+      obj.quantidadeComprada = quantidadeComprada;
+      obj.rodadas = rodadasSalvar;
+    }
     if(editing) obj.id = t.id;
     const savedId = await putRecord('transformacoes', obj);
+    if(!editing) setConfigValue('transfLayoutUltimo', layout);
     await reloadAll();
     if(embedded){ closeLayer(embedded); opts.onDone && opts.onDone(savedId); }
     else { closeSheet(); renderCurrent(); }
@@ -6854,7 +7171,7 @@ applyDefaultsToUI();
 fillConfiguracoesForm();
 ativarTelaAcesa();
 /* ---- PWA: versão, armazenamento persistente e service worker ---- */
-const APP_VERSION = 'v1_66';
+const APP_VERSION = 'v1_67';
 document.getElementById('appVersaoTxt').textContent = APP_VERSION;
 if(navigator.storage && navigator.storage.persist){
   navigator.storage.persist().then(ok=>{
@@ -6865,10 +7182,29 @@ if(navigator.storage && navigator.storage.persist){
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
   navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
+/* v1_67: categorias de receita cujos preparos já usam transformações (fluxo cozido→purê) ficam marcadas como 'cachorros', uma única vez */
+async function migrarLayoutCategoriasSeNecessario(){
+  try{
+    if(localStorage.getItem('precario_mig_layout_cat_v1')) return;
+    const ings = await getAll('preparo_ingredientes'), preps = await getAll('receita_preparos'), recs = await getAll('receitas');
+    const catsUsam = new Set();
+    for(const ing of ings){
+      if(!ing.transformacaoId) continue;
+      const pr = preps.find(x=>x.id===ing.preparoId); const rc = pr && recs.find(x=>x.id===pr.receitaId);
+      if(rc && rc.categoriaId) catsUsam.add(rc.categoriaId);
+    }
+    for(const c of await getAll('receita_categorias')){
+      if(catsUsam.has(c.id) && !c.layoutTransformacao) await putRecord('receita_categorias', {...c, layoutTransformacao:'cachorros'});
+    }
+    localStorage.setItem('precario_mig_layout_cat_v1','1');
+    await reloadAll();
+  }catch(e){}
+}
 openDB().then(async ()=>{
   await seedFundacaoReceitasSeNecessario();
   await removerUnidadesObsoletasSeNecessario();
   await reloadAll();
+  await migrarLayoutCategoriasSeNecessario();
   switchView(CONFIG.telaInicial || 'precos');
 }).catch(err=>{
   document.body.innerHTML = '<div style="padding:24px;font-family:sans-serif">Erro ao abrir o banco de dados local: '+err+'</div>';
