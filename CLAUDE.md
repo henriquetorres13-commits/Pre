@@ -2,6 +2,8 @@
 
 **Antes de qualquer alteração, leia o `ARQUITETURA.md` inteiro.** Ele descreve os dados, o motor de custo, a navegação, os padrões visuais e o backup. Se o código divergir do documento, o código vale: corrija o documento no mesmo commit.
 
+Se a skill `versao-app-precos` estiver disponível, **carregue-a antes de começar qualquer versão** (desenvolver, testar ou publicar): ela traz o passo a passo completo. Se não estiver, siga o resumo abaixo.
+
 ## Fluxo de versão (resumo)
 
 - Uma branch por versão (`v1_NN`). Toda versão incrementa o número, mesmo que pequena.
