@@ -509,6 +509,15 @@ html.dark header{background:#0D0F13;color:#ECE7DA;}
     <button class="btn btn-outline btn-block" id="btnImport">Importar preços (.csv)</button>
     <div id="import-result" class="hint"></div>
 
+    <h2 class="section-title" style="margin-top:22px">Importar receitas (.json)</h2>
+    <p class="hint ajuda-p"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Soma receitas novas ao app, <b>sem apagar nada</b>. Antes de gravar, abre uma tela para você conferir as receitas e ligar cada ingrediente ao item que já existe no app (evita item duplicado). Para gerar o arquivo, use "Copiar instruções para IA": cole as instruções em qualquer IA, depois cole a receita, e salve a resposta como arquivo .json.</span></p>
+    <button class="btn btn-outline btn-block" id="btnCopiarInstrIA" type="button" style="margin-bottom:8px">Copiar instruções para IA</button>
+    <input type="file" accept=".json,application/json" id="fileImportReceitas" style="margin-bottom:8px">
+    <button class="btn btn-accent btn-block" id="btnImportReceitas" type="button">Ler arquivo e conferir</button>
+    <div id="import-receitas-result" class="hint"></div>
+    <p class="hint" id="imp-equiv-info"></p>
+    <button class="btn btn-outline btn-sm" id="btnEsquecerEquiv" type="button">Esquecer equivalências memorizadas</button>
+
     <h2 class="section-title" style="margin-top:22px">Backup completo (.json)</h2>
     <p class="hint ajuda-p"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Guarda <b>tudo</b> que está no app: preços, itens, categorias, locais, receitas, preparos, transformações, unidades, configurações e fotos. Use para fazer uma cópia de segurança completa ou transferir os dados para outro celular.</span></p>
     <button class="btn btn-accent btn-block" id="btnExportJson">Exportar backup completo (.json)</button>
@@ -696,7 +705,7 @@ html.dark header{background:#0D0F13;color:#ECE7DA;}
    BANCO DE DADOS (IndexedDB) - 100% local / offline
    ============================================================ */
 const DB_NAME = 'precario_db';
-const DB_VERSION = 9;
+const DB_VERSION = 10;
 let db;
 
 /* v7: etapas dentro do preparo (modo leitura + comentário por etapa) */
@@ -731,6 +740,8 @@ function openDB(){
       // --- novo (v9): listas de compras ---
       if(!d.objectStoreNames.contains('listas_compras')) d.createObjectStore('listas_compras',{keyPath:'id',autoIncrement:true});
       if(!d.objectStoreNames.contains('lista_compras_itens')) d.createObjectStore('lista_compras_itens',{keyPath:'id',autoIncrement:true});
+      // --- novo (v10): equivalências memorizadas da importação de receitas ---
+      if(!d.objectStoreNames.contains('importacao_equivalencias')) d.createObjectStore('importacao_equivalencias',{keyPath:'id',autoIncrement:true});
     };
     req.onsuccess = (e)=>{ db = e.target.result; resolve(db); };
     req.onerror = (e)=> reject(e);
@@ -1152,7 +1163,7 @@ document.getElementById('btnGoCatReceita').addEventListener('click', ()=> switch
 document.getElementById('btnVoltarMaisCatReceita').addEventListener('click', ()=> switchView('mais', {raiz:true}));
 document.getElementById('crf-texto').addEventListener('input', ()=> renderCategoriasReceita());
 document.getElementById('btnGoListas').addEventListener('click', ()=> switchView('listas', {raiz:true}));
-document.getElementById('btnGoExportar').addEventListener('click', ()=> switchView('exportar', {raiz:true}));
+document.getElementById('btnGoExportar').addEventListener('click', ()=>{ switchView('exportar', {raiz:true}); impAtualizarEquivInfo(); });
 document.getElementById('btnGoConfiguracoes').addEventListener('click', ()=> switchView('configuracoes', {raiz:true}));
 document.getElementById('btnVoltarMaisCategorias').addEventListener('click', ()=> switchView('mais', {raiz:true}));
 document.getElementById('btnVoltarMaisLocais').addEventListener('click', ()=> switchView('mais', {raiz:true}));
@@ -6261,6 +6272,521 @@ document.getElementById('btnImportJson').addEventListener('click', async ()=>{
 });
 
 /* ============================================================
+   IMPORTAR RECEITAS (.json) — só soma, nunca apaga
+   Formato: {formato:'precario-receitas', versao:1, receitas:[{nome, descricao, categoria, subcategoria, tags[], equipamentos[],
+     rendimento:{quantidade,unidade}, tempoMin, fonte, observacoes,
+     ingredientes:[{secao,nome,quantidade,unidade,estado,observacao}], etapas:[{texto,tempoMin}|texto]}]}
+   Fluxo: ler arquivo → montar plano (entradas ÚNICAS de item/unidade/estado/categoria, com casou/sugestão/pendente)
+   → tela de conferência (nada é gravado) → com zero pendências, "Importar" grava tudo numa única transação (falhou = nada muda).
+   Regras: sugestão nunca decide sozinha; item sem correspondência só é criado se o usuário escolher "Criar novo".
+   Store importacao_equivalencias {tipo:'item'|'unidade'|'estado'|'categoria', chave, alvoId}: escolhas manuais lembradas (vão no backup).
+   ============================================================ */
+const IMP_STOP = new Set(['de','da','do','das','dos','e','em','com','a','o','as','os','para']);
+function impCap(s){ s=String(s||'').trim(); return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
+/* tokens só para COMPARAR nomes (plural e gênero neutralizados); nunca vão para a tela */
+function impTokens(s){
+  return normalizeNome(s).split(' ').filter(t=>t && !IMP_STOP.has(t)).map(t=>{
+    if(t.length>3 && t.endsWith('s')) t=t.slice(0,-1);
+    if(t.length>3 && t.endsWith('a')) t=t.slice(0,-1)+'o';
+    return t;
+  });
+}
+function impTokIguais(a,b){ return a===b || (a.length>=5 && b.length>=5 && levenshtein(a,b)<=1); }
+function impSimilaridade(a,b){
+  const ta=impTokens(a), tb=impTokens(b);
+  if(!ta.length || !tb.length) return 0;
+  let comuns=0; const usados=new Set();
+  for(const x of ta){
+    const j = tb.findIndex((y,k)=>!usados.has(k) && impTokIguais(x,y));
+    if(j>=0){ usados.add(j); comuns++; }
+  }
+  const uniao = ta.length+tb.length-comuns;
+  let s = comuns/uniao;
+  if(comuns===Math.min(ta.length,tb.length) && comuns<uniao) s = Math.max(s,0.5); // "cebola" dentro de "cebola roxa"
+  return s;
+}
+function impSugerir(nome, lista, max){
+  return lista.map(x=>({x, s:impSimilaridade(nome,x.nome)})).filter(r=>r.s>=0.5)
+    .sort((a,b)=>b.s-a.s).slice(0,max||3).map(r=>r.x.id);
+}
+function impChaveUnidade(s){
+  return normalizeNome(s).split(' ').map(t=> t==='colheres' ? 'colher' : (t.length>3 && t.endsWith('s') ? t.slice(0,-1) : t)).join(' ');
+}
+/* kg/L não existem no app (só g e ml): convertidos na importação */
+function impAcharUnidade(txt){
+  const k = impChaveUnidade(txt);
+  if(!k) return null;
+  const porSimbolo = s => UNIDADES.find(u=>impChaveUnidade(u.simbolo)===s);
+  const conv = {kg:['g',1000], quilo:['g',1000], quilograma:['g',1000], l:['ml',1000], litro:['ml',1000]};
+  if(conv[k]){ const u = porSimbolo(conv[k][0]); return u ? {id:u.id, fator:conv[k][1]} : null; }
+  const u = UNIDADES.find(u=> impChaveUnidade(u.nome)===k || impChaveUnidade(u.simbolo)===k);
+  return u ? {id:u.id, fator:1} : null;
+}
+const IMP_TIPOS = {
+  item:     {rotulo:'Ingredientes',          lista:()=>ITEMS,        chave:s=>normalizeNome(s)},
+  unidade:  {rotulo:'Unidades',              lista:()=>UNIDADES,     chave:s=>impChaveUnidade(s)},
+  estado:   {rotulo:'Estados (cru, picado...)', lista:()=>ESTADOS,   chave:s=>normalizeNome(s)},
+  categoria:{rotulo:'Categorias de receita', lista:()=>RECEITA_CATS, chave:s=>normalizeNome(s)}
+};
+function impRegPorId(tipo,id){ return IMP_TIPOS[tipo].lista().find(x=>x.id===Number(id)); }
+function impNomeReg(tipo,reg){ return tipo==='unidade' ? `${reg.nome} (${reg.simbolo})` : reg.nome; }
+function impResolverAuto(tipo, nome, chave, equivs){
+  const lista = IMP_TIPOS[tipo].lista();
+  if(tipo==='unidade'){
+    const u = impAcharUnidade(nome);
+    if(u) return {alvo:{t:'id', id:u.id, origem:'auto'}, fator:u.fator, sugestoes:[]};
+  } else {
+    const ex = lista.find(x=>normalizeNome(x.nome)===chave);
+    if(ex) return {alvo:{t:'id', id:ex.id, origem:'auto'}, fator:1, sugestoes:[]};
+  }
+  const lem = equivs.find(e=>e.tipo===tipo && e.chave===chave);
+  if(lem && lista.some(x=>x.id===lem.alvoId)) return {alvo:{t:'id', id:lem.alvoId, origem:'lembrado'}, fator:1, sugestoes:[]};
+  return {alvo:null, fator:1, sugestoes: impSugerir(nome, lista)};
+}
+function impParseQtd(v){
+  if(v==null || v==='') return null;
+  if(typeof v==='number') return (isFinite(v) && v>=0) ? v : null;
+  const s = String(v).trim().replace(',','.');
+  let m = s.match(/^(\d+)\s+(\d+)\/(\d+)$/); if(m && Number(m[3])) return Number(m[1])+Number(m[2])/Number(m[3]);
+  m = s.match(/^(\d+)\/(\d+)$/); if(m && Number(m[2])) return Number(m[1])/Number(m[2]);
+  const n = parseFloat(s); return isNaN(n) ? null : n;
+}
+function impFmtNum(n){ return String(Number(Number(n).toFixed(2))).replace('.',','); }
+function impLista(v){ return Array.isArray(v) ? v.map(x=>String(x==null?'':x).trim()).filter(Boolean) : []; }
+
+async function impMontarPlano(dados){
+  const equivs = await getAll('importacao_equivalencias');
+  const plano = {equivs, receitas:[], invalidas:0, catItensNovos:'',
+    ent:{item:new Map(), unidade:new Map(), estado:new Map(), categoria:new Map()}};
+  const ent = (tipo, nome, ri, exemplo)=>{
+    nome = String(nome==null ? '' : nome).trim();
+    if(!nome) return null;
+    const chave = IMP_TIPOS[tipo].chave(nome);
+    if(!chave) return null;
+    let e = plano.ent[tipo].get(chave);
+    if(!e){
+      e = {tipo, chave, nome, usos:new Set(), exemplo:exemplo||''};
+      Object.assign(e, impResolverAuto(tipo, nome, chave, equivs));
+      plano.ent[tipo].set(chave, e);
+    }
+    e.usos.add(ri);
+    return e;
+  };
+  for(const r of dados.receitas){
+    if(!r || typeof r!=='object' || !String(r.nome||'').trim()){ plano.invalidas++; continue; }
+    const ri = plano.receitas.length;
+    const rend = (r.rendimento && typeof r.rendimento==='object') ? r.rendimento : {};
+    const fontes = Array.isArray(r.fontes) ? impLista(r.fontes) : impLista([r.fonte]);
+    const rec = {
+      nome: String(r.nome).trim(), descricao: String(r.descricao||'').trim(),
+      subcategoria: String(r.subcategoria||'').trim(),
+      tags: impLista(r.tags), equipamentos: impLista(r.equipamentos),
+      rendQtd: impParseQtd(rend.quantidade), tempoMin: impParseQtd(r.tempoMin),
+      fontes, obs: String(r.observacoes||'').trim(),
+      ingredientes: [], etapas: [], incluir: true, duplicada: false
+    };
+    rec.duplicada = RECEITAS.some(x=>normalizeNome(x.nome)===normalizeNome(rec.nome));
+    rec.incluir = !rec.duplicada;
+    rec.cat = ent('categoria', r.categoria, ri, '');
+    rec.rendUn = rec.rendQtd!=null ? ent('unidade', rend.unidade, ri, '') : null;
+    for(const g of (Array.isArray(r.ingredientes) ? r.ingredientes : [])){
+      if(!g || typeof g!=='object' || !String(g.nome||'').trim()) continue;
+      const qtd = impParseQtd(g.quantidade);
+      const qtdTxt = (g.quantidade==null || g.quantidade==='') ? '' : String(g.quantidade).trim().replace('.',',');
+      const unTxt = String(g.unidade||'').trim();
+      const exemplo = [qtdTxt, unTxt].filter(Boolean).join(' ');
+      rec.ingredientes.push({
+        item: ent('item', g.nome, ri, exemplo),
+        un: (qtd!=null || qtdTxt) ? ent('unidade', unTxt, ri, '') : null,
+        est: ent('estado', g.estado, ri, ''),
+        quantidade: qtd, qtdTxt, unTxt,
+        secao: String(g.secao||'').trim(), observacao: String(g.observacao||'').trim()
+      });
+    }
+    for(const et of (Array.isArray(r.etapas) ? r.etapas : [])){
+      const texto = (typeof et==='string') ? et : (et && et.texto);
+      if(!texto || !String(texto).trim()) continue;
+      rec.etapas.push({texto:String(texto).trim(), tempoMin:(et && typeof et==='object') ? impParseQtd(et.tempoMin) : null});
+    }
+    plano.receitas.push(rec);
+  }
+  return plano;
+}
+function impEntradasAtivas(plano, tipo){
+  const incl = new Set(); plano.receitas.forEach((r,i)=>{ if(r.incluir) incl.add(i); });
+  return [...plano.ent[tipo].values()].filter(e=>[...e.usos].some(i=>incl.has(i)))
+    .sort((a,b)=>a.nome.localeCompare(b.nome));
+}
+function impPendentes(plano){
+  let n = 0;
+  for(const t of Object.keys(IMP_TIPOS)) n += impEntradasAtivas(plano,t).filter(e=>!e.alvo).length;
+  return n;
+}
+function impDestinoTxt(e){
+  if(!e.alvo) return '⚠ pendente';
+  if(e.alvo.t==='novo') return 'criar novo: '+impCap(e.nome);
+  if(e.alvo.t==='nenhum') return ({item:'ignorar (vai para a observação da receita)', unidade:'sem unidade (fica no texto)', estado:'sem estado', categoria:'sem categoria'})[e.tipo];
+  const reg = impRegPorId(e.tipo, e.alvo.id);
+  return reg ? impNomeReg(e.tipo, reg) : '(removido)';
+}
+function impLinhaIng(row){
+  const un = row.un, it = row.item;
+  let q = '';
+  if(row.quantidade!=null){
+    const f = (un && un.alvo && un.alvo.t==='id') ? un.fator : 1;
+    q = impFmtNum(row.quantidade*f);
+    if(un && un.alvo && un.alvo.t==='id'){ const u = impRegPorId('unidade', un.alvo.id); if(u) q += ' '+u.simbolo; }
+    else if(un && un.alvo && un.alvo.t==='nenhum') q = '';
+  }
+  let nome = it.alvo ? (it.alvo.t==='id' ? ((impRegPorId('item',it.alvo.id)||{}).nome||'?') : (it.alvo.t==='novo' ? impCap(it.nome)+' (novo)' : '(ignorado) '+it.nome)) : '⚠ '+it.nome;
+  let est = '';
+  if(row.est && row.est.alvo){
+    if(row.est.alvo.t==='id') est = (impRegPorId('estado',row.est.alvo.id)||{}).nome||'';
+    else if(row.est.alvo.t==='novo') est = impCap(row.est.nome);
+  }
+  return `${q?escapeHtml(q)+' · ':''}${escapeHtml(nome)}${est?' — '+escapeHtml(est.toLowerCase()):''}`;
+}
+function impEntradaHTML(e){
+  const sug = e.sugestoes.map(id=>impRegPorId(e.tipo,id)).filter(Boolean);
+  const dados = `data-tipo="${e.tipo}" data-chave="${escapeHtml(e.chave)}"`;
+  let acoes = '';
+  if(e.tipo==='item'){
+    acoes = sug.map(s=>`<button type="button" class="btn btn-accent btn-xs" ${dados} data-act="sug" data-id="${s.id}">Usar: ${escapeHtml(s.nome)}</button>`).join('')
+      + `<button type="button" class="btn btn-outline btn-xs" ${dados} data-act="esc">Escolher item…</button>`
+      + `<button type="button" class="btn btn-outline btn-xs" ${dados} data-act="novo">Criar novo</button>`
+      + `<button type="button" class="btn btn-outline btn-xs" ${dados} data-act="ign">Ignorar</button>`;
+  } else {
+    const lista = IMP_TIPOS[e.tipo].lista();
+    const resto = lista.filter(x=>!sug.includes(x));
+    const nenhum = ({unidade:'Sem unidade (guardar no texto)', estado:'Sem estado', categoria:'Sem categoria'})[e.tipo];
+    acoes = `<select ${dados} data-act="sel" style="max-width:100%"><option value="">Escolher…</option>`
+      + sug.map(s=>`<option value="${s.id}">${escapeHtml(impNomeReg(e.tipo,s))} (sugestão)</option>`).join('')
+      + resto.map(s=>`<option value="${s.id}">${escapeHtml(impNomeReg(e.tipo,s))}</option>`).join('')
+      + (e.tipo!=='unidade' ? `<option value="__novo__">Criar novo: ${escapeHtml(impCap(e.nome))}</option>` : '')
+      + `<option value="__nenhum__">${nenhum}</option></select>`;
+  }
+  return `<div class="card" style="display:block"><div class="title" style="font-size:14px">${escapeHtml(e.nome)}</div>
+    <div class="meta">em ${e.usos.size} receita${e.usos.size===1?'':'s'}${e.exemplo?' · ex.: '+escapeHtml(e.exemplo):''}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${acoes}</div></div>`;
+}
+function impRender(plano){
+  const el = document.getElementById('imp-conteudo');
+  if(!el) return;
+  const pend = impPendentes(plano);
+  const incl = plano.receitas.filter(r=>r.incluir).length;
+  let h = `<p class="hint">${plano.receitas.length} receita${plano.receitas.length===1?'':'s'} no arquivo${plano.invalidas?` (${plano.invalidas} sem nome, ignorada${plano.invalidas===1?'':'s'})`:''}. Nada foi gravado ainda.</p>`;
+  h += `<div class="view-heading" style="margin-top:12px">Receitas</div>`;
+  h += plano.receitas.map((r,i)=>{
+    const meta = [r.cat ? impDestinoTxt(r.cat) : null, `${r.ingredientes.length} ingrediente${r.ingredientes.length===1?'':'s'}`, `${r.etapas.length} etapa${r.etapas.length===1?'':'s'}`].filter(Boolean).join(' · ');
+    return `<div class="card" style="display:block"><label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;margin:0;text-transform:none;letter-spacing:0;font-weight:400;font-size:14px;color:inherit;text-align:left">
+      <input type="checkbox" data-act="rec" data-idx="${i}" ${r.incluir?'checked':''} style="width:auto;flex:none;margin:3px 0 0;padding:0">
+      <span><span class="title" style="font-size:14px">${escapeHtml(r.nome)}</span>${r.duplicada?' <span class="badge" style="background:var(--paper-alt)">já existe no app</span>':''}<br><span class="meta">${escapeHtml(meta)}</span></span></label>
+      <details style="margin-top:6px"><summary class="hint" style="cursor:pointer">Ver como ficará</summary>
+      <div class="leitura" style="margin-top:6px">${r.ingredientes.map(g=>`<div>${impLinhaIng(g)}</div>`).join('') || '<div class="hint">Sem ingredientes.</div>'}</div></details></div>`;
+  }).join('');
+  h += `<div class="view-heading" style="margin-top:14px">Categoria dos itens novos</div>
+    <select id="imp-catnovos"><option value="">Sem categoria</option>${catOptionsHTML(plano.catItensNovos?Number(plano.catItensNovos):undefined)}</select>
+    <p class="hint">Vale só para os ingredientes que você mandar “Criar novo”.</p>`;
+  let temBulk = {sug:0, novo:0};
+  let blocos = '', conferidos = '';
+  for(const tipo of Object.keys(IMP_TIPOS)){
+    const todas = impEntradasAtivas(plano, tipo);
+    const pendT = todas.filter(e=>!e.alvo), okT = todas.filter(e=>e.alvo);
+    temBulk.sug += pendT.filter(e=>e.sugestoes.length && !(tipo==='unidade' && false)).length;
+    temBulk.novo += pendT.filter(e=>!e.sugestoes.length && tipo!=='unidade').length;
+    if(pendT.length) blocos += `<div class="view-heading" style="margin-top:14px">${IMP_TIPOS[tipo].rotulo} a conferir (${pendT.length})</div>` + pendT.map(impEntradaHTML).join('');
+    if(okT.length) conferidos += `<div class="hint" style="margin-top:8px"><b>${IMP_TIPOS[tipo].rotulo}</b></div>` + okT.map(e=>
+      `<div class="leitura" style="display:flex;gap:6px;align-items:center;justify-content:space-between;padding:3px 0"><span>${escapeHtml(e.nome)} → ${escapeHtml(impDestinoTxt(e))}${e.alvo.origem==='lembrado'?' <span class="hint">(lembrado)</span>':''}${e.fator!==1&&e.alvo.t==='id'?' <span class="hint">(×'+e.fator+')</span>':''}</span>
+      <button type="button" class="btn btn-outline btn-xs" data-act="rev" data-tipo="${e.tipo}" data-chave="${escapeHtml(e.chave)}">Alterar</button></div>`).join('');
+  }
+  if(pend){
+    h += `<div class="view-heading" style="margin-top:16px">Pendências: ${pend}</div><p class="hint">Resolva cada pendência abaixo para liberar o botão Importar. Sugestões nunca são aplicadas sozinhas.</p>`;
+    if(temBulk.sug || temBulk.novo) h += `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">`
+      + (temBulk.sug ? `<button type="button" class="btn btn-outline btn-sm" data-act="bulk-sug">Aceitar todas as sugestões (${temBulk.sug})</button>` : '')
+      + (temBulk.novo ? `<button type="button" class="btn btn-outline btn-sm" data-act="bulk-novo">Criar novos os que não têm sugestão (${temBulk.novo})</button>` : '') + `</div>`;
+    h += blocos;
+  } else {
+    h += `<div class="view-heading" style="margin-top:16px">Tudo conferido</div><p class="hint">Nenhuma pendência. Revise “Ver como ficará” se quiser e toque em Importar.</p>`;
+  }
+  if(conferidos) h += `<details style="margin-top:14px"><summary class="hint" style="cursor:pointer">Já conferidos</summary>${conferidos}</details>`;
+  el.innerHTML = h;
+  const bt = document.getElementById('imp-save');
+  if(bt){
+    bt.disabled = pend>0 || incl===0;
+    bt.textContent = pend>0 ? `Faltam ${pend} pendência${pend===1?'':'s'}` : (incl===0 ? 'Nenhuma receita marcada' : `Importar ${incl} receita${incl===1?'':'s'}`);
+  }
+}
+function impAplicar(e, valor){
+  if(valor==='__novo__') e.alvo = {t:'novo'};
+  else if(valor==='__nenhum__') e.alvo = {t:'nenhum'};
+  else if(valor) e.alvo = {t:'id', id:Number(valor), origem:'manual'};
+}
+function impAbrirConferencia(plano){
+  openSheet(`<h3>Conferir importação</h3>
+    <div id="imp-conteudo"></div>
+    <div class="sheet-actions" style="position:sticky;bottom:0;background:var(--card);padding:8px 0">
+      <button class="btn btn-outline" id="imp-cancel" type="button">Cancelar</button>
+      <button class="btn btn-accent" id="imp-save" type="button" disabled>Importar</button>
+    </div>`);
+  const el = document.getElementById('imp-conteudo');
+  const achar = (n)=> plano.ent[n.dataset.tipo].get(n.dataset.chave);
+  el.addEventListener('click', (ev)=>{
+    const b = ev.target.closest('[data-act]'); if(!b || b.tagName==='SELECT' || b.tagName==='INPUT') return;
+    const act = b.dataset.act;
+    if(act==='bulk-sug'){
+      for(const t of Object.keys(IMP_TIPOS)) for(const e of impEntradasAtivas(plano,t)) if(!e.alvo && e.sugestoes.length) impAplicar(e, e.sugestoes[0]);
+      impRender(plano); return;
+    }
+    if(act==='bulk-novo'){
+      for(const t of ['item','estado','categoria']) for(const e of impEntradasAtivas(plano,t)) if(!e.alvo && !e.sugestoes.length) e.alvo = {t:'novo'};
+      impRender(plano); return;
+    }
+    const e = achar(b); if(!e) return;
+    if(act==='sug') impAplicar(e, b.dataset.id);
+    else if(act==='novo') impAplicar(e, '__novo__');
+    else if(act==='ign') impAplicar(e, '__nenhum__');
+    else if(act==='rev') e.alvo = null;
+    else if(act==='esc'){
+      openIngredientePicker({apenasItens:true, onSelect:(tipo,id)=>{ impAplicar(e, id); impRender(plano); }});
+      return;
+    }
+    impRender(plano);
+  });
+  el.addEventListener('change', (ev)=>{
+    const t = ev.target;
+    if(t.dataset && t.dataset.act==='rec'){ plano.receitas[Number(t.dataset.idx)].incluir = t.checked; impRender(plano); return; }
+    if(t.dataset && t.dataset.act==='sel'){ const e = achar(t); if(e){ impAplicar(e, t.value); impRender(plano); } return; }
+    if(t.id==='imp-catnovos') plano.catItensNovos = t.value;
+  });
+  document.getElementById('imp-cancel').addEventListener('click', ()=> closeSheet());
+  document.getElementById('imp-save').addEventListener('click', async ()=>{
+    if(impPendentes(plano)>0) return;
+    const incl = plano.receitas.filter(r=>r.incluir).length;
+    if(!await confirmar(`Importar ${incl} receita${incl===1?'':'s'}? Nada do que já existe será apagado.`)) return;
+    try{
+      const r = await impExecutar(plano);
+      await reloadAll();
+      impAtualizarEquivInfo();
+      closeSheet();
+      await avisar(`Importação concluída: ${r.receitas} receita${r.receitas===1?'':'s'}, ${r.ingredientes} ingrediente${r.ingredientes===1?'':'s'}.\n`
+        + `Itens novos: ${r.itensNovos} · estados novos: ${r.estadosNovos} · categorias novas: ${r.categoriasNovas}`
+        + (r.ignorados ? `\nIngredientes ignorados (anotados na observação da receita): ${r.ignorados}` : '')
+        + (r.equivalencias ? `\nEquivalências memorizadas: ${r.equivalencias}` : ''));
+      renderCurrent();
+    }catch(err){
+      await avisar('Não foi possível importar — nenhum dado foi alterado. ('+(err&&err.message?err.message:err)+')');
+    }
+  });
+  impRender(plano);
+}
+/* Grava tudo numa única transação: se qualquer passo falhar, o banco fica exatamente como estava. */
+function impExecutar(plano){
+  const incl = plano.receitas.filter(r=>r.incluir);
+  const usadas = new Set(); plano.receitas.forEach((r,i)=>{ if(r.incluir) usadas.add(i); });
+  const resumo = {receitas:0, ingredientes:0, itensNovos:0, estadosNovos:0, categoriasNovas:0, ignorados:0, equivalencias:0};
+  const stores = ['itens','receita_categorias','receita_subcategorias','estados','tags','equipamentos','receitas','receita_ingredientes','receita_etapas','importacao_equivalencias'];
+  return new Promise((resolve,reject)=>{
+    const t = db.transaction(stores, 'readwrite');
+    let falha = null;
+    t.oncomplete = ()=> resolve(resumo);
+    t.onerror = ()=>{ falha = falha || t.error; };
+    t.onabort = ()=> reject(falha || t.error || new Error('transação abortada'));
+    const put = (store,obj)=> new Promise((res,rej)=>{ const r = t.objectStore(store).put(obj); r.onsuccess = ()=>res(r.result); r.onerror = ()=>rej(r.error); });
+    (async()=>{
+      try{
+        const idDe = async (e, store, contador)=>{
+          if(!e || !e.alvo || e.alvo.t==='nenhum') return null;
+          if(e.alvo.t==='id') return e.alvo.id;
+          if(e.novoId==null){ e.novoId = await put(store, {nome: impCap(e.nome)}); resumo[contador]++; }
+          return e.novoId;
+        };
+        const subs = RECEITA_SUBCATS.map(s=>({id:s.id, categoriaId:s.categoriaId, k:normalizeNome(s.nome)}));
+        const tagsC = new Map(TAGS.map(x=>[semAcento(x.nome.trim()), x.id]));
+        const equipC = new Map(EQUIPAMENTOS.map(x=>[semAcento(x.nome.trim()), x.id]));
+        const idNome = async (mapa, store, nome)=>{
+          const k = semAcento(nome.trim()); if(!k) return null;
+          if(!mapa.has(k)) mapa.set(k, await put(store, {nome: nome.trim()}));
+          return mapa.get(k);
+        };
+        for(const rec of incl){
+          const categoriaId = await idDe(rec.cat, 'receita_categorias', 'categoriasNovas');
+          let subcategoriaId = null;
+          if(rec.subcategoria && categoriaId){
+            const k = normalizeNome(rec.subcategoria);
+            let s = subs.find(x=>x.categoriaId===categoriaId && x.k===k);
+            if(!s){ s = {id: await put('receita_subcategorias', {nome: impCap(rec.subcategoria), categoriaId}), categoriaId, k}; subs.push(s); }
+            subcategoriaId = s.id;
+          }
+          const tagIds = []; for(const n of rec.tags){ const id = await idNome(tagsC,'tags',n); if(id!=null && !tagIds.includes(id)) tagIds.push(id); }
+          const equipamentoIds = []; for(const n of rec.equipamentos){ const id = await idNome(equipC,'equipamentos',n); if(id!=null && !equipamentoIds.includes(id)) equipamentoIds.push(id); }
+          const rendUnId = (rec.rendUn && rec.rendUn.alvo && rec.rendUn.alvo.t==='id') ? rec.rendUn.alvo.id : null;
+          const naoImportados = [];
+          const ingsGravar = [];
+          let ordem = 0;
+          for(const g of rec.ingredientes){
+            const unId = (g.un && g.un.alvo && g.un.alvo.t==='id') ? g.un.alvo.id : null;
+            const fator = unId ? g.un.fator : 1;
+            let quantidade = g.quantidade!=null ? g.quantidade*fator : null;
+            let observacao = g.observacao;
+            if(g.un && g.un.alvo && g.un.alvo.t==='nenhum'){   // unidade que o app não tem: o texto original fica na observação
+              observacao = [[g.qtdTxt, g.unTxt].filter(Boolean).join(' '), g.observacao].filter(Boolean).join(' — ');
+              quantidade = null;
+            }
+            if(g.item.alvo.t==='nenhum'){
+              resumo.ignorados++;
+              naoImportados.push([[g.qtdTxt, g.unTxt].filter(Boolean).join(' '), g.item.nome, g.est ? g.est.nome : '', g.observacao].filter(Boolean).join(' '));
+              continue;
+            }
+            let itemId = g.item.alvo.t==='id' ? g.item.alvo.id : g.item.novoId;
+            if(itemId==null){   // item novo, criado na primeira vez que aparece (herda a dimensão da primeira unidade conhecida)
+              const u = unId ? unidadeById(unId) : null;
+              const obj = {nome: impCap(g.item.nome), categoriaId: plano.catItensNovos ? Number(plano.catItensNovos) : null, subcategoriaId:null, obs:'', foto:null};
+              if(u && u.dimensao) obj.dimensaoReferencia = u.dimensao;
+              itemId = g.item.novoId = await put('itens', obj);
+              resumo.itensNovos++;
+            }
+            const estadoId = g.est ? await idDe(g.est, 'estados', 'estadosNovos') : null;
+            ingsGravar.push({itemId, grupoId:null, subReceitaId:null, quantidade, unidadeId:unId, estadoId, secao:g.secao||'', observacao: observacao||'', ordem: ordem++, rendimentoPercent:null});
+          }
+          let obs = rec.obs;
+          if(naoImportados.length) obs = (obs ? obs+'\n\n' : '') + 'Ingredientes não importados:\n' + naoImportados.map(x=>'- '+x).join('\n');
+          const receitaId = await put('receitas', {
+            nome: rec.nome, descricao: rec.descricao, categoriaId, subcategoriaId, tagIds, foto:null,
+            rendimentoQtd: rec.rendQtd, rendimentoUnidadeId: rendUnId, tempoMin: rec.tempoMin, maxPorcoesRodada:null,
+            equipamentoIds, fontes: rec.fontes, obs, criadaEm: todayLocal(), atualizadaEm: todayLocal()
+          });
+          for(const ing of ingsGravar){ await put('receita_ingredientes', {receitaId, ...ing}); resumo.ingredientes++; }
+          let oe = 0;
+          for(const et of rec.etapas) await put('receita_etapas', {receitaId, texto: et.texto, tempoMin: et.tempoMin, ordem: oe++});
+          resumo.receitas++;
+        }
+        // memoriza só as escolhas manuais (ligar um nome do arquivo a um cadastro que já existia)
+        for(const tipo of Object.keys(IMP_TIPOS)){
+          for(const e of plano.ent[tipo].values()){
+            if(![...e.usos].some(i=>usadas.has(i))) continue;
+            if(!e.alvo || e.alvo.t!=='id' || e.alvo.origem!=='manual') continue;
+            const antigo = plano.equivs.find(x=>x.tipo===tipo && x.chave===e.chave);
+            await put('importacao_equivalencias', {...(antigo?{id:antigo.id}:{}), tipo, chave:e.chave, alvoId:e.alvo.id});
+            resumo.equivalencias++;
+          }
+        }
+      }catch(err){
+        falha = err;
+        try{ t.abort(); }catch(_){}
+      }
+    })();
+  });
+}
+async function impAtualizarEquivInfo(){
+  const el = document.getElementById('imp-equiv-info'); if(!el || !db) return;
+  const n = (await getAll('importacao_equivalencias')).length;
+  el.textContent = n ? `${n} equivalência${n===1?'':'s'} memorizada${n===1?'':'s'} (escolhas suas em importações anteriores).` : 'Nenhuma equivalência memorizada ainda.';
+}
+document.getElementById('btnEsquecerEquiv').addEventListener('click', async ()=>{
+  if(!await confirmar('Esquecer todas as equivalências memorizadas? Na próxima importação você terá que ligar esses ingredientes de novo.')) return;
+  await clearStore('importacao_equivalencias');
+  impAtualizarEquivInfo();
+});
+function impInstrucoesIA(){
+  const lista = arr => arr.length ? arr.map(x=>'- '+x).join('\n') : '(nenhum cadastrado ainda)';
+  const ord = a => a.slice().sort((x,y)=>x.localeCompare(y));
+  return `Converta as receitas que vou colar no final desta mensagem em um arquivo JSON, para importar no meu app de receitas.
+
+REGRAS DE SAÍDA
+- Responda SOMENTE com o JSON, dentro de um único bloco de código, sem explicações antes ou depois. Se puder gerar um arquivo .json para baixar, gere também.
+- Escreva em português do Brasil. Não invente dados: o que não estiver na receita fica null (números), "" (textos) ou [] (listas).
+- Use exatamente as chaves do exemplo abaixo e repita o objeto de receita dentro de "receitas" para cada receita.
+
+FORMATO
+{
+  "formato": "precario-receitas",
+  "versao": 1,
+  "receitas": [
+    {
+      "nome": "Arroz branco",
+      "descricao": "",
+      "categoria": "Acompanhamentos",
+      "subcategoria": "",
+      "tags": ["básico"],
+      "equipamentos": ["panela"],
+      "rendimento": { "quantidade": 4, "unidade": "unidade" },
+      "tempoMin": 30,
+      "fonte": "",
+      "observacoes": "",
+      "ingredientes": [
+        { "secao": "", "nome": "arroz", "quantidade": 200, "unidade": "g", "estado": "", "observacao": "" },
+        { "secao": "", "nome": "alho", "quantidade": 2, "unidade": "unidade", "estado": "picado", "observacao": "dentes" },
+        { "secao": "", "nome": "sal", "quantidade": null, "unidade": "", "estado": "", "observacao": "a gosto" }
+      ],
+      "etapas": [
+        { "texto": "Refogue o alho.", "tempoMin": 3 },
+        { "texto": "Junte o arroz e a água e cozinhe.", "tempoMin": null }
+      ]
+    }
+  ]
+}
+
+REGRAS DOS INGREDIENTES (importante: evitam item duplicado no app)
+- "nome": nome-base do ingrediente, no singular, sem quantidade, sem corte/preparo e sem marca (ex.: "cebola roxa", não "2 cebolas roxas picadas").
+- Se o ingrediente for o mesmo de um da minha lista de itens abaixo (mesmo com outra grafia), use EXATAMENTE o nome da lista. Só crie um nome novo se realmente não houver equivalente.
+- "estado": como o ingrediente entra na receita (picado, cozido, ralado...). Use a minha lista de estados quando servir; senão, uma palavra curta.
+- "unidade": use SOMENTE nomes da minha lista de unidades. Converta: kg para g, L para ml, frações para decimais (1/2 = 0.5). Contagem (ovos, dentes de alho, rendimento em porções/fatias) = "unidade".
+- "a gosto", "pitada", "um fio" e similares: quantidade null, unidade "" e o texto em "observacao".
+- Detalhes como "bem maduro", "em cubos de 2 cm" ou "ou outra alternativa" vão em "observacao". Em "ou" entre ingredientes, use o primeiro e cite o outro na observação.
+- "secao": nome do bloco da receita ("Massa", "Molho") quando houver; senão "".
+- "etapas": um item por passo, na ordem, sem numeração. "tempoMin" só se o texto informar.
+- "categoria": uma da minha lista quando servir; senão, uma categoria curta nova.
+
+MINHA LISTA DE ITENS
+${lista(ord(ITEMS.map(i=>i.nome)))}
+
+MINHA LISTA DE UNIDADES (nome e símbolo)
+${lista(UNIDADES.map(u=>`${u.nome} (${u.simbolo})`))}
+
+MEUS ESTADOS
+${lista(ord(ESTADOS.map(e=>e.nome)))}
+
+MINHAS CATEGORIAS DE RECEITA
+${lista(ord(RECEITA_CATS.map(c=>c.nome)))}
+
+RECEITAS PARA CONVERTER:
+`;
+}
+document.getElementById('btnCopiarInstrIA').addEventListener('click', async ()=>{
+  const res = document.getElementById('import-receitas-result');
+  const texto = impInstrucoesIA();
+  try{
+    await navigator.clipboard.writeText(texto);
+    res.textContent = 'Instruções copiadas. Cole em uma IA, depois cole a(s) receita(s) logo abaixo e salve a resposta como arquivo .json.';
+  }catch(e){
+    res.innerHTML = 'Não consegui copiar sozinho. Toque no texto abaixo, selecione tudo e copie:<textarea readonly id="imp-ia-txt" style="width:100%;height:160px;margin-top:6px"></textarea>';
+    const ta = document.getElementById('imp-ia-txt'); ta.value = texto; ta.focus(); ta.select();
+  }
+});
+document.getElementById('btnImportReceitas').addEventListener('click', async ()=>{
+  const fi = document.getElementById('fileImportReceitas');
+  const res = document.getElementById('import-receitas-result');
+  const file = fi.files[0];
+  if(!file){ avisar('Selecione um arquivo .json primeiro.'); return; }
+  let txt = (await file.text()).replace(/^﻿/,'').trim();
+  let dados;
+  try{ dados = JSON.parse(txt); }
+  catch(e){
+    try{   // a IA às vezes devolve texto em volta do JSON: tenta só o trecho entre as chaves
+      const a = txt.indexOf('{'), b = txt.lastIndexOf('}');
+      dados = JSON.parse(txt.slice(a, b+1));
+    }catch(e2){ res.textContent = 'Não consegui ler este arquivo como JSON. Peça à IA para devolver só o JSON, sem texto em volta.'; return; }
+  }
+  if(dados && dados.app==='precario'){ res.textContent = 'Este arquivo é um backup completo, não de receitas. Para backup use “Restaurar backup completo”.'; return; }
+  if(Array.isArray(dados)) dados = {receitas:dados};
+  if(!dados || !Array.isArray(dados.receitas) || !dados.receitas.length){ res.textContent = 'Não encontrei receitas neste arquivo.'; return; }
+  const plano = await impMontarPlano(dados);
+  if(!plano.receitas.length){ res.textContent = 'Nenhuma receita válida (cada uma precisa ter "nome").'; return; }
+  res.textContent = '';
+  impAbrirConferencia(plano);
+});
+
+/* ============================================================
    LISTAS DE COMPRAS
    Stores: listas_compras {nome, descricao, criadaEm}  e
            lista_compras_itens {listaId, itemId, quantidade, unidadeId, comprado, precoId, obs}
@@ -7227,7 +7753,7 @@ applyDefaultsToUI();
 fillConfiguracoesForm();
 ativarTelaAcesa();
 /* ---- PWA: versão, armazenamento persistente e service worker ---- */
-const APP_VERSION = 'v1_68';
+const APP_VERSION = 'v1_70';
 document.getElementById('appVersaoTxt').textContent = APP_VERSION;
 if(navigator.storage && navigator.storage.persist){
   navigator.storage.persist().then(ok=>{

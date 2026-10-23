@@ -1,6 +1,6 @@
 # ARQUITETURA.md — App "Preços"
 
-Documento de referência para quem for mexer no código (Claude ou pessoa). Ler inteiro antes de começar uma versão nova. Conferido contra o código da v1_68 em 2026-10-17; se algo aqui divergir do `index.html`, o código vale e este documento deve ser corrigido.
+Documento de referência para quem for mexer no código (Claude ou pessoa). Ler inteiro antes de começar uma versão nova. Conferido contra o código da v1_70 em 2026-10-23; se algo aqui divergir do `index.html`, o código vale e este documento deve ser corrigido.
 
 ---
 
@@ -50,7 +50,7 @@ App 100% offline para registrar preços de itens e, sobre eles, gerenciar receit
 
 ## 6. Dados (IndexedDB)
 
-`DB_VERSION = 9`. Todos os stores usam `{keyPath:'id', autoIncrement:true}` e são criados em `onupgradeneeded` com `if(!contains)`. Acesso via `getAll`, `putRecord(store,obj)`, `deleteRecord`, `reloadAll()` (recarrega as variáveis globais, ex.: `LISTAS`, `TRANSFORMACOES`).
+`DB_VERSION = 10`. Todos os stores usam `{keyPath:'id', autoIncrement:true}` e são criados em `onupgradeneeded` com `if(!contains)`. Acesso via `getAll`, `putRecord(store,obj)`, `deleteRecord`, `reloadAll()` (recarrega as variáveis globais, ex.: `LISTAS`, `TRANSFORMACOES`).
 
 Stores:
 
@@ -61,6 +61,7 @@ Stores:
 - **Preparos:** `receita_preparos`, `preparo_ingredientes`, `preparo_etapas`.
 - **Transformações:** `transformacoes`.
 - **Listas de compras:** `listas_compras` (`nome`, `descricao`, `criadaEm`), `lista_compras_itens`.
+- **Importação de receitas:** `importacao_equivalencias` (`tipo` = `item`|`unidade`|`estado`|`categoria`, `chave` = nome normalizado do arquivo, `alvoId`): ligações escolhidas à mão na conferência, reaproveitadas nas próximas importações.
 
 Fotos **não** têm store próprio: ficam como imagem redimensionada (data URL) no campo `foto` do próprio registro (`itens`, `categorias`, `receitas`...), e por isso já vão no backup `.json` (o `.csv` não leva fotos).
 
@@ -125,6 +126,7 @@ Modos de leitura têm **3 estilos de texto**:
 - Exportação genérica: percorre `db.objectStoreNames` e todas as chaves `precario_*` do `localStorage`; nada é listado à mão.
 - Importação: **apaga os dados atuais** e substitui pelos do backup, só dos stores que o banco conhece. Backups antigos (só categorias, itens, locais e preços) mantêm receitas, preparos e transformações atuais.
 - Há também exportação/importação `.csv` só de preços (sem fotos).
+- **Importar receitas (.json)** (v1_70, bloco `IMPORTAR RECEITAS` no `index.html`, prefixo `imp*`): só **soma**, nunca apaga (diferente do restaurar backup). Formato `{formato:'precario-receitas', versao:1, receitas:[{nome, descricao, categoria, subcategoria, tags[], equipamentos[], rendimento:{quantidade,unidade}, tempoMin, fonte, observacoes, ingredientes:[{secao,nome,quantidade,unidade,estado,observacao}], etapas:[texto|{texto,tempoMin}]}]}`. Fluxo: `impMontarPlano` (entradas ÚNICAS de item/unidade/estado/categoria; casou = nome normalizado igual ou equivalência lembrada; sugestão por similaridade de tokens, **nunca aplicada sozinha**) → tela de conferência (`impAbrirConferencia`, nada gravado) → `impExecutar` grava tudo numa única transação (falhou = nada muda). Item sem correspondência só é criado se o usuário escolher "Criar novo"; "Ignorar" anota o ingrediente na observação da receita; unidade desconhecida → "sem unidade" guarda o texto original na observação; kg/L viram g/ml; receita com título já existente vem desmarcada; sub-receita e grupo de itens não são importados. O botão "Copiar instruções para IA" (`impInstrucoesIA`) monta o prompt com as listas atuais de itens, unidades, estados e categorias, para a IA usar os mesmos nomes.
 - `navigator.storage.persist()` está ativo; Wake Lock nativo funciona no preparo.
 
 ## 12. Fora de escopo (decidido)
