@@ -2019,10 +2019,17 @@ function openItemView(item){
   }));
 }
 
-function openItemForm(item){
+/* opts (opcional): {sub:true} abre numa camada por cima da atual (sub-sheet, tela cheia);
+   {onSalvar:fn(obj)} em vez de gravar no banco, entrega o cadastro preenchido a quem chamou (usado na conferência da
+   importação de receitas: o item só é criado ao importar); {titulo}. Sem id em `item` = cadastro novo já preenchido (rascunho). */
+function openItemForm(item, opts){
+  opts = opts || {};
   const editing = !!item;
-  openSheet(`
-    <h3>${editing?'Editar item':'Novo item'}</h3>
+  const existente = editing && item.id!=null;     // item já gravado (pode excluir); rascunho não tem id
+  const abrirCamada = opts.sub ? openSubSheet : openSheet;
+  const fecharCamada = opts.sub ? closeSubSheet : closeSheet;
+  abrirCamada(`
+    <h3>${opts.titulo || (existente?'Editar item':(editing?'Cadastrar item':'Novo item'))}</h3>
     <label>Nome</label>
     <input type="text" id="i-nome" value="${editing?escapeHtml(item.nome):''}" placeholder="Ex: Arroz 5kg">
     <label>Categoria</label>
@@ -2079,11 +2086,11 @@ function openItemForm(item){
     <label>Observação</label>
     <textarea id="i-obs" placeholder="Observações sobre o item">${editing?escapeHtml(item.obs||''):''}</textarea>
     <div class="sheet-actions">
-      ${editing?`<button class="btn btn-danger" id="i-del">Excluir</button>`:''}
+      ${existente?`<button class="btn btn-danger" id="i-del">Excluir</button>`:''}
       <button class="btn btn-outline" id="i-cancel">Cancelar</button>
-      <button class="btn btn-accent btn-block" id="i-save">Salvar</button>
+      <button class="btn btn-accent btn-block" id="i-save">${opts.onSalvar?'Concluir cadastro':'Salvar'}</button>
     </div>
-  `);
+  `, opts.sub ? {topAnchored:true} : undefined);
   function populateSubcatSelect(categoriaId, selectedId){
     const sel = document.getElementById('i-subcat');
     const opts = subcatsOf(categoriaId).map(s=>`<option value="${s.id}" ${s.id===selectedId?'selected':''}>${escapeHtml(s.nome)}</option>`).join('');
@@ -2172,8 +2179,8 @@ function openItemForm(item){
     const img = document.createElement('img'); img.id='i-foto-preview'; img.src=fotoData;
     prev.replaceWith(img);
   });
-  document.getElementById('i-cancel').addEventListener('click', closeSheet);
-  if(editing){
+  document.getElementById('i-cancel').addEventListener('click', fecharCamada);
+  if(existente){
     document.getElementById('i-del').addEventListener('click', async ()=>{
       const nPrecos = PRICES.filter(p=>p.itemId===item.id).length;
       // onde mais o item é usado (esses registros NÃO são apagados: ficam com "(item removido)" e custo indisponível)
@@ -2230,8 +2237,9 @@ function openItemForm(item){
     obj.densPesoUnId = dnAtiva ? Number(document.getElementById('i-dn-peso-un').value) : null;
     obj.obs = document.getElementById('i-obs').value.trim();
     obj.foto = fotoData;
+    if(opts.onSalvar){ opts.onSalvar(obj); fecharCamada(); return; }   // rascunho: quem chamou decide quando gravar
     await putRecord('itens', obj);
-    await reloadAll(); closeSheet(); renderCurrent();
+    await reloadAll(); fecharCamada(); renderCurrent();
   });
 }
 
@@ -6438,7 +6446,7 @@ document.getElementById('btnImportJson').addEventListener('click', async ()=>{
      ingredientes:[{secao,nome,quantidade,unidade,estado,observacao}], etapas:[{texto,tempoMin}|texto]}]}
    Fluxo: ler arquivo → montar plano (entradas ÚNICAS de item/unidade/estado/categoria, com casou/sugestão/pendente)
    → tela de conferência (nada é gravado) → com zero pendências, "Importar" grava tudo numa única transação (falhou = nada muda).
-   Regras: sugestão nunca decide sozinha; item sem correspondência só é criado se o usuário escolher "Criar novo".
+   Regras: sugestão nunca decide sozinha; item sem correspondência só é criado se o usuário escolher "Cadastrar item…" (abre o cadastro completo; vira rascunho e só é gravado em "Importar") ou o criar-em-lote só com o nome.
    Store importacao_equivalencias {tipo:'item'|'unidade'|'estado'|'categoria', chave, alvoId}: escolhas manuais lembradas (vão no backup).
    ============================================================ */
 const IMP_STOP = new Set(['de','da','do','das','dos','e','em','com','a','o','as','os','para']);
@@ -6584,7 +6592,7 @@ function impPendentes(plano){
 }
 function impDestinoTxt(e){
   if(!e.alvo) return '⚠ pendente';
-  if(e.alvo.t==='novo') return 'criar novo: '+impCap(e.nome);
+  if(e.alvo.t==='novo') return 'criar novo: '+(e.alvo.dados ? e.alvo.dados.nome : impCap(e.nome))+(e.alvo.dados ? ' (cadastro preenchido)' : ' (só com o nome)');
   if(e.alvo.t==='nenhum') return ({item:'ignorar (vai para a observação da receita)', unidade:'sem unidade (fica no texto)', estado:'sem estado', categoria:'sem categoria'})[e.tipo];
   const reg = impRegPorId(e.tipo, e.alvo.id);
   return reg ? impNomeReg(e.tipo, reg) : '(removido)';
@@ -6598,7 +6606,7 @@ function impLinhaIng(row){
     if(un && un.alvo && un.alvo.t==='id'){ const u = impRegPorId('unidade', un.alvo.id); if(u) q += ' '+u.simbolo; }
     else if(un && un.alvo && un.alvo.t==='nenhum') q = '';
   }
-  let nome = it.alvo ? (it.alvo.t==='id' ? ((impRegPorId('item',it.alvo.id)||{}).nome||'?') : (it.alvo.t==='novo' ? impCap(it.nome)+' (novo)' : '(ignorado) '+it.nome)) : '⚠ '+it.nome;
+  let nome = it.alvo ? (it.alvo.t==='id' ? ((impRegPorId('item',it.alvo.id)||{}).nome||'?') : (it.alvo.t==='novo' ? (it.alvo.dados ? it.alvo.dados.nome : impCap(it.nome))+' (novo)' : '(ignorado) '+it.nome)) : '⚠ '+it.nome;
   let est = '';
   if(row.est && row.est.alvo){
     if(row.est.alvo.t==='id') est = (impRegPorId('estado',row.est.alvo.id)||{}).nome||'';
@@ -6613,7 +6621,7 @@ function impEntradaHTML(e){
   if(e.tipo==='item'){
     acoes = sug.map(s=>`<button type="button" class="btn btn-accent btn-xs" ${dados} data-act="sug" data-id="${s.id}">Usar: ${escapeHtml(s.nome)}</button>`).join('')
       + `<button type="button" class="btn btn-outline btn-xs" ${dados} data-act="esc">Escolher item…</button>`
-      + `<button type="button" class="btn btn-outline btn-xs" ${dados} data-act="novo">Criar novo</button>`
+      + `<button type="button" class="btn btn-outline btn-xs" ${dados} data-act="novo">Cadastrar item…</button>`
       + `<button type="button" class="btn btn-outline btn-xs" ${dados} data-act="ign">Ignorar</button>`;
   } else {
     const lista = IMP_TIPOS[e.tipo].lista();
@@ -6646,7 +6654,7 @@ function impRender(plano){
   }).join('');
   h += `<div class="view-heading" style="margin-top:14px">Categoria dos itens novos</div>
     <select id="imp-catnovos"><option value="">Sem categoria</option>${catOptionsHTML(plano.catItensNovos?Number(plano.catItensNovos):undefined)}</select>
-    <p class="hint">Vale só para os ingredientes que você mandar “Criar novo”.</p>`;
+    <p class="hint">Vale para os itens criados só com o nome. Em “Cadastrar item…” você escolhe a categoria no próprio cadastro.</p>`;
   let temBulk = {sug:0, novo:0};
   let blocos = '', conferidos = '';
   for(const tipo of Object.keys(IMP_TIPOS)){
@@ -6657,13 +6665,13 @@ function impRender(plano){
     if(pendT.length) blocos += `<div class="view-heading" style="margin-top:14px">${IMP_TIPOS[tipo].rotulo} a conferir (${pendT.length})</div>` + pendT.map(impEntradaHTML).join('');
     if(okT.length) conferidos += `<div class="hint" style="margin-top:8px"><b>${IMP_TIPOS[tipo].rotulo}</b></div>` + okT.map(e=>
       `<div class="leitura" style="display:flex;gap:6px;align-items:center;justify-content:space-between;padding:3px 0"><span>${escapeHtml(e.nome)} → ${escapeHtml(impDestinoTxt(e))}${e.alvo.origem==='lembrado'?' <span class="hint">(lembrado)</span>':''}${e.fator!==1&&e.alvo.t==='id'?' <span class="hint">(×'+e.fator+')</span>':''}</span>
-      <button type="button" class="btn btn-outline btn-xs" data-act="rev" data-tipo="${e.tipo}" data-chave="${escapeHtml(e.chave)}">Alterar</button></div>`).join('');
+      <span style="display:flex;gap:6px;flex:none">${e.tipo==='item' && e.alvo.t==='novo' ? `<button type="button" class="btn btn-outline btn-xs" data-act="novo" data-tipo="${e.tipo}" data-chave="${escapeHtml(e.chave)}">Editar cadastro</button>` : ''}<button type="button" class="btn btn-outline btn-xs" data-act="rev" data-tipo="${e.tipo}" data-chave="${escapeHtml(e.chave)}">Alterar</button></span></div>`).join('');
   }
   if(pend){
     h += `<div class="view-heading" style="margin-top:16px">Pendências: ${pend}</div><p class="hint">Resolva cada pendência abaixo para liberar o botão Importar. Sugestões nunca são aplicadas sozinhas.</p>`;
     if(temBulk.sug || temBulk.novo) h += `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">`
       + (temBulk.sug ? `<button type="button" class="btn btn-outline btn-sm" data-act="bulk-sug">Aceitar todas as sugestões (${temBulk.sug})</button>` : '')
-      + (temBulk.novo ? `<button type="button" class="btn btn-outline btn-sm" data-act="bulk-novo">Criar novos os que não têm sugestão (${temBulk.novo})</button>` : '') + `</div>`;
+      + (temBulk.novo ? `<button type="button" class="btn btn-outline btn-sm" data-act="bulk-novo">Criar só com o nome os que não têm sugestão (${temBulk.novo})</button>` : '') + `</div>`;
     h += blocos;
   } else {
     h += `<div class="view-heading" style="margin-top:16px">Tudo conferido</div><p class="hint">Nenhuma pendência. Revise “Ver como ficará” se quiser e toque em Importar.</p>`;
@@ -6680,6 +6688,31 @@ function impAplicar(e, valor){
   if(valor==='__novo__') e.alvo = {t:'novo'};
   else if(valor==='__nenhum__') e.alvo = {t:'nenhum'};
   else if(valor) e.alvo = {t:'id', id:Number(valor), origem:'manual'};
+}
+/* Dimensão sugerida para um item novo: a da primeira unidade já resolvida entre os ingredientes que o usam. */
+function impDimensaoSugerida(plano, e){
+  for(const r of plano.receitas){
+    for(const g of r.ingredientes){
+      if(g.item!==e || !g.un || !g.un.alvo || g.un.alvo.t!=='id') continue;
+      const u = unidadeById(g.un.alvo.id);
+      if(u && u.dimensao) return u.dimensao;
+    }
+  }
+  return null;
+}
+/* "Cadastrar item…": abre a tela completa de cadastro do item (por cima da conferência) já com o nome e a categoria
+   dos itens novos. Ao concluir, o cadastro fica como rascunho na conferência; o item só é criado quando o usuário
+   toca em Importar (cancelar o formulário não muda nada). */
+function impCadastrarItem(plano, e){
+  const base = (e.alvo && e.alvo.t==='novo' && e.alvo.dados) ? {...e.alvo.dados} : {
+    nome: impCap(e.nome), categoriaId: plano.catItensNovos ? Number(plano.catItensNovos) : null, subcategoriaId: null,
+    dimensaoReferencia: impDimensaoSugerida(plano, e), obs:'', foto:null
+  };
+  openItemForm(base, {sub:true, titulo:'Cadastrar item', onSalvar:(obj)=>{
+    delete obj.id;
+    e.alvo = {t:'novo', dados: obj};
+    impRender(plano);
+  }});
 }
 function impAbrirConferencia(plano){
   openSheet(`<h3>Conferir importação</h3>
@@ -6703,7 +6736,10 @@ function impAbrirConferencia(plano){
     }
     const e = achar(b); if(!e) return;
     if(act==='sug') impAplicar(e, b.dataset.id);
-    else if(act==='novo') impAplicar(e, '__novo__');
+    else if(act==='novo'){
+      if(e.tipo==='item'){ impCadastrarItem(plano, e); return; }
+      impAplicar(e, '__novo__');
+    }
     else if(act==='ign') impAplicar(e, '__nenhum__');
     else if(act==='rev') e.alvo = null;
     else if(act==='esc'){
@@ -6800,8 +6836,10 @@ function impExecutar(plano){
             let itemId = g.item.alvo.t==='id' ? g.item.alvo.id : g.item.novoId;
             if(itemId==null){   // item novo, criado na primeira vez que aparece (herda a dimensão da primeira unidade conhecida)
               const u = unId ? unidadeById(unId) : null;
-              const obj = {nome: impCap(g.item.nome), categoriaId: plano.catItensNovos ? Number(plano.catItensNovos) : null, subcategoriaId:null, obs:'', foto:null};
-              if(u && u.dimensao) obj.dimensaoReferencia = u.dimensao;
+              const dados = g.item.alvo.dados;   // cadastro preenchido na conferência ("Cadastrar item…"), se houver
+              const obj = dados ? {...dados} : {nome: impCap(g.item.nome), categoriaId: plano.catItensNovos ? Number(plano.catItensNovos) : null, subcategoriaId:null, obs:'', foto:null};
+              delete obj.id;
+              if(!dados && u && u.dimensao) obj.dimensaoReferencia = u.dimensao;
               itemId = g.item.novoId = await put('itens', obj);
               resumo.itensNovos++;
             }
@@ -7913,7 +7951,7 @@ applyDefaultsToUI();
 fillConfiguracoesForm();
 ativarTelaAcesa();
 /* ---- PWA: versão, armazenamento persistente e service worker ---- */
-const APP_VERSION = 'v1_71';
+const APP_VERSION = 'v1_72';
 document.getElementById('appVersaoTxt').textContent = APP_VERSION;
 if(navigator.storage && navigator.storage.persist){
   navigator.storage.persist().then(ok=>{
