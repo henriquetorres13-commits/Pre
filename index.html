@@ -90,6 +90,18 @@ button{font-family:inherit;cursor:pointer;border:none;}
 .card img.thumb{width:46px;height:46px;border-radius:8px;object-fit:cover;flex:none;border:1px solid var(--line);}
 .thumb-ph{width:46px;height:46px;border-radius:8px;flex:none;background:var(--paper-alt);display:flex;align-items:center;
   justify-content:center;font-size:18px;color:var(--ink-soft);}
+/* Receitas: cards por categoria (v1_73) */
+.rec-topo{display:flex;align-items:center;gap:10px;margin:16px 0 10px;}
+.rec-topo-t{flex:1;min-width:0;font-weight:700;font-size:15px;}
+.rec-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.rec-grid:empty{display:none;}
+.rec-cat{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;}
+.rec-cat:active{background:var(--paper-alt);}
+.rec-cat .img{aspect-ratio:4/3;background:var(--paper-alt);display:flex;align-items:center;justify-content:center;font-size:34px;position:relative;overflow:hidden;}
+.rec-cat .img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
+.rec-cat .info{padding:8px 10px;}
+.rec-cat .nome{font-weight:700;font-size:14px;overflow-wrap:anywhere;}
+.rec-cat .n{font-size:12px;color:var(--ink-soft);margin-top:2px;}
 .card .body{flex:1;min-width:0;}
 .card .title{font-weight:700;font-size:15px;}
 .card .meta{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
@@ -483,7 +495,8 @@ html.dark header{background:#0D0F13;color:#ECE7DA;}
       <input type="checkbox" id="rf-arquivadas">
       <label style="margin:0" for="rf-arquivadas">Mostrar arquivadas</label>
     </div>
-    <h2 class="section-title" style="margin-top:16px">Receitas</h2>
+    <div id="rec-topo" class="rec-topo"></div>
+    <div id="rec-cats" class="rec-grid"></div>
     <div id="lista-receitas"></div>
   </section>
 
@@ -1102,7 +1115,7 @@ let viewAtual = null;
    As entradas de tela já empilhadas são devolvidas ao histórico do navegador (history.go) pra não sobrar entrada fantasma. */
 function zerarPilhaTelas(){
   if(navStack.some(e=>e.k==='modal')) return;   // com modal aberto não mexe (não deveria ocorrer num toque de menu)
-  const n = navStack.filter(e=>e.k==='view').length;
+  const n = navStack.filter(e=>e.k==='view' || e.k==='recvisao').length;
   if(!n) return;
   const pendentes = aposHistorico.length;       // empilhamentos ainda não feitos no histórico físico
   aposHistorico = [];
@@ -1117,6 +1130,7 @@ function switchView(name, opts){
   const anterior = viewAtual;
   if(opts.raiz){
     zerarPilhaTelas();
+    if(name==='receitas') recVisao = null;   // tocar na aba Receitas volta aos cards por categoria
   } else if(!opts.semHistorico && anterior && anterior!==name){
     const topo = navStack[navStack.length-1];
     if(topo && topo.k==='view' && topo.from===name){
@@ -1255,6 +1269,10 @@ window.addEventListener('popstate', ()=>{
     else if(sub2Overlay.classList.contains('active')) closeSub2SheetDom();
     else if(subOverlay.classList.contains('active')) closeSubSheetDom();
     else if(overlay.classList.contains('active')) closeSheetDom();
+  } else if(topo.k==='recvisao'){
+    // lista de receitas filtrada por categoria -> volta aos cards
+    navStack.pop();
+    recVisao = null; renderReceitas(); window.scrollTo(0,0);
   } else {
     navStack.pop();
     switchView(topo.from, {semHistorico:true, restoreY:topo.y});
@@ -1770,7 +1788,7 @@ function renderCategoriasReceita(){
     const n = RECEITAS.filter(r=>r.categoriaId===c.id).length;
     const nSub = receitaSubcatsOf(c.id).length;
     return `<div class="card" data-id="${c.id}">
-      <div class="thumb-ph">🍲</div>
+      ${c.foto ? `<img class="thumb" src="${c.foto}">` : `<div class="thumb-ph">🍲</div>`}
       <div class="body">
         <div class="title">${escapeHtml(c.nome)}</div>
         <div class="meta">${n} ${n===1?'receita':'receitas'}${nSub?` · ${nSub} subcategoria${nSub===1?'':'s'}`:''}</div>
@@ -1789,6 +1807,12 @@ function openReceitaCategoriaForm(cat){
     <h3>${editing?'Editar categoria de receita':'Nova categoria de receita'}</h3>
     <label>Nome</label>
     <input type="text" id="rcat-nome" value="${editing?escapeHtml(cat.nome):''}" placeholder="Ex: Comida de cachorro">
+    <label>Imagem</label>
+    <div class="photo-pick">
+      ${editing && cat.foto ? `<img id="rcat-foto-preview" src="${cat.foto}">` : `<div class="ph" id="rcat-foto-preview">🍲</div>`}
+      <input type="file" accept="image/*" id="rcat-foto-input" style="width:auto">
+    </div>
+    <button class="btn btn-outline btn-sm" id="rcat-foto-rem" type="button" style="margin-top:6px;${editing && cat.foto?'':'display:none'}">Remover imagem</button>
     <label>Layout das transformações</label>
     <select id="rcat-layout">
       ${Object.keys(LAYOUTS_TRANSF).map(k=>`<option value="${k}" ${k===layoutAtual?'selected':''}>${escapeHtml(LAYOUTS_TRANSF[k])}</option>`).join('')}
@@ -1806,6 +1830,22 @@ function openReceitaCategoriaForm(cat){
     </div>
   `);
   if(editing) renderReceitaSubcatsList(cat.id);
+  let fotoData = editing ? (cat.foto||null) : null;
+  const fotoRem = document.getElementById('rcat-foto-rem');
+  document.getElementById('rcat-foto-input').addEventListener('change', async (e)=>{
+    const f = e.target.files[0]; if(!f) return;
+    fotoData = await resizeImage(f);
+    const img = document.createElement('img'); img.id='rcat-foto-preview'; img.src=fotoData;
+    document.getElementById('rcat-foto-preview').replaceWith(img);
+    fotoRem.style.display = '';
+  });
+  fotoRem.addEventListener('click', ()=>{
+    fotoData = null;
+    const ph = document.createElement('div'); ph.className='ph'; ph.id='rcat-foto-preview'; ph.textContent='🍲';
+    document.getElementById('rcat-foto-preview').replaceWith(ph);
+    fotoRem.style.display = 'none';
+    document.getElementById('rcat-foto-input').value = '';
+  });
   document.getElementById('rcat-cancel').addEventListener('click', closeSheet);
   if(editing){
     document.getElementById('rcat-del').addEventListener('click', async ()=>{
@@ -1830,6 +1870,7 @@ function openReceitaCategoriaForm(cat){
     const obj = editing ? {...cat} : {};
     obj.nome = nome;
     obj.layoutTransformacao = document.getElementById('rcat-layout').value;
+    obj.foto = fotoData;
     await putRecord('receita_categorias', obj);
     await reloadAll(); closeSheet(); renderCurrent();
   });
@@ -5779,15 +5820,70 @@ function openPreparoForm(receita, preparo){
   });
 }
 
+/* ---- Tela Receitas: visão padrão = cards por categoria (v1_73) ----
+   recVisao: null = cards por categoria; {tipo:'todas'} | {tipo:'cat', id} | {tipo:'sem'} = lista filtrada.
+   Entrar numa lista empilha {k:'recvisao'} no navStack: o voltar do celular (e "← Categorias") volta aos cards.
+   Com texto na busca e sem visão escolhida, mostra a lista de todas as receitas que casam. */
+let recVisao = null;
+function recModoCards(){ return !recVisao && !document.getElementById('rf-texto').value.trim(); }
+function recAbrirVisao(v){
+  recVisao = v;
+  navStack.push({k:'recvisao'}); limitarNav();
+  executarAposHistorico(()=> history.pushState({nav:1}, ''));
+  renderReceitas(); window.scrollTo(0,0);
+}
+function recVoltarCards(){
+  const topo = navStack[navStack.length-1];
+  if(topo && topo.k==='recvisao'){ navStack.pop(); suppressPopstateCount++; history.back(); }
+  recVisao = null; renderReceitas(); window.scrollTo(0,0);
+}
+function recSemCategoria(r){ return !r.categoriaId || !receitaCatById(r.categoriaId); }
+function renderReceitasCards(ativas){
+  const elCats = document.getElementById('rec-cats');
+  const semCat = ativas.filter(recSemCategoria).length;
+  const cardHTML = (visaoAttr, nome, n, foto, emoji)=>`<div class="rec-cat" ${visaoAttr}>
+      <div class="img">${foto ? `<img src="${foto}" alt="">` : emoji}</div>
+      <div class="info"><div class="nome">${escapeHtml(nome)}</div><div class="n">${n} ${n===1?'receita':'receitas'}</div></div>
+    </div>`;
+  elCats.innerHTML =
+    RECEITA_CATS.map(c=> cardHTML(`data-cat="${c.id}"`, c.nome, ativas.filter(r=>r.categoriaId===c.id).length, c.foto, '🍲')).join('') +
+    (semCat ? cardHTML('data-sem="1"', 'Sem categoria', semCat, null, '📂') : '');
+  elCats.querySelectorAll('.rec-cat').forEach(card=>{
+    card.addEventListener('click', ()=>{
+      if(card.dataset.sem) recAbrirVisao({tipo:'sem'});
+      else recAbrirVisao({tipo:'cat', id:Number(card.dataset.cat)});
+    });
+  });
+}
 function renderReceitas(){
   const q = semAcento(document.getElementById('rf-texto').value.trim());
   const mostrarArquivadas = document.getElementById('rf-arquivadas').checked;
-  const list = RECEITAS
-    .filter(r=> !q || semAcento(r.nome).includes(q))
-    .filter(r=> mostrarArquivadas || !r.arquivada)
-    .sort((a,b)=> (b.favorita?1:0)-(a.favorita?1:0) || a.nome.localeCompare(b.nome));
+  if(recVisao && recVisao.tipo==='cat' && !receitaCatById(recVisao.id)) recVisao = null;   // categoria excluída
+  const ativas = RECEITAS.filter(r=> mostrarArquivadas || !r.arquivada);
+  const elTopo = document.getElementById('rec-topo');
+  const elCats = document.getElementById('rec-cats');
   const el = document.getElementById('lista-receitas');
-  if(!list.length){ el.innerHTML = '<div class="empty">Nenhuma receita encontrada.</div>'; return; }
+  if(!recVisao && !q){
+    // visão padrão: cards por categoria + "Ver tudo"
+    elTopo.innerHTML = `<span class="rec-topo-t">Categorias</span><button type="button" class="btn btn-outline btn-sm" id="rec-vertudo">Ver tudo (${ativas.length})</button>`;
+    document.getElementById('rec-vertudo').addEventListener('click', ()=> recAbrirVisao({tipo:'todas'}));
+    renderReceitasCards(ativas);
+    el.innerHTML = '';
+    atualizarCabecalho();   // o contador não depende de mutação da lista nesta visão
+    return;
+  }
+  elCats.innerHTML = '';
+  const tituloVisao = !recVisao ? 'Resultados da busca'
+    : recVisao.tipo==='todas' ? 'Todas as receitas'
+    : recVisao.tipo==='sem' ? 'Sem categoria'
+    : receitaCatById(recVisao.id).nome;
+  elTopo.innerHTML = `${recVisao?`<button type="button" class="btn btn-outline btn-sm" id="rec-voltar">← Categorias</button>`:''}<span class="rec-topo-t">${escapeHtml(tituloVisao)}</span>`;
+  if(recVisao) document.getElementById('rec-voltar').addEventListener('click', recVoltarCards);
+  const list = ativas
+    .filter(r=> !q || semAcento(r.nome).includes(q))
+    .filter(r=> !recVisao || recVisao.tipo==='todas' || (recVisao.tipo==='cat' ? r.categoriaId===recVisao.id : recSemCategoria(r)))
+    .sort((a,b)=> (b.favorita?1:0)-(a.favorita?1:0) || a.nome.localeCompare(b.nome));
+  if(!list.length){ el.innerHTML = `<div class="empty">${recVisao && !q ? 'Nenhuma receita nesta categoria.' : 'Nenhuma receita encontrada.'}</div>`; return; }
   el.innerHTML = list.map(r=>{
     const cat = r.categoriaId ? receitaCatById(r.categoriaId) : null;
     const subcat = r.subcategoriaId ? receitaSubcatById(r.subcategoriaId) : null;
@@ -7367,7 +7463,11 @@ function atualizarCabecalho(){
   document.getElementById('headerTitle').textContent = HEADER_TITULOS[currentTab] || 'Preços';
   const cfg = HEADER_LISTAS[currentTab];
   let txt = '';
-  if(cfg){
+  if(currentTab==='receitas' && recModoCards()){
+    const nCats = RECEITA_CATS.length;
+    const nRec = document.getElementById('rf-arquivadas').checked ? RECEITAS.length : RECEITAS.filter(r=>!r.arquivada).length;
+    txt = `${nCats} ${nCats===1?'categoria':'categorias'} · ${nRec} ${nRec===1?'receita':'receitas'}`;
+  } else if(cfg){
     const mostrados = document.querySelectorAll('#'+cfg.lista+' > .card').length;
     const total = cfg.total ? cfg.total() : mostrados;
     const nome = (total===1 ? cfg.sing : cfg.plur);
@@ -7951,7 +8051,7 @@ applyDefaultsToUI();
 fillConfiguracoesForm();
 ativarTelaAcesa();
 /* ---- PWA: versão, armazenamento persistente e service worker ---- */
-const APP_VERSION = 'v1_72';
+const APP_VERSION = 'v1_73';
 document.getElementById('appVersaoTxt').textContent = APP_VERSION;
 if(navigator.storage && navigator.storage.persist){
   navigator.storage.persist().then(ok=>{

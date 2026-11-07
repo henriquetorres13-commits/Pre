@@ -1,6 +1,6 @@
 # ARQUITETURA.md — App "Preços"
 
-Documento de referência para quem for mexer no código (Claude ou pessoa). Ler inteiro antes de começar uma versão nova. Conferido contra o código da v1_72 em 2026-11-07; se algo aqui divergir do `index.html`, o código vale e este documento deve ser corrigido.
+Documento de referência para quem for mexer no código (Claude ou pessoa). Ler inteiro antes de começar uma versão nova. Conferido contra o código da v1_73 em 2026-11-07; se algo aqui divergir do `index.html`, o código vale e este documento deve ser corrigido.
 
 ---
 
@@ -73,7 +73,7 @@ Campos relevantes já decididos:
 - **Preparo (`receita_preparos`):** `receitaId`, `data`, `escala`, `custoRealizado`, `pesoFinalReal`, `porcoesFinais`, `rodadaGrupos`, `rodadas`, `obs`, `fatorBase` (texto da base do fator, ex.: "alho 590 g"; zera se o fator for mexido à mão).
 - **Ingrediente de preparo (`preparo_ingredientes`):** `quantidade` (prevista, somente leitura), `quantidadeReal`, `comentarioPreparo` (separado do `observacao` da receita), `transformacaoId` (liga a transformação ao preparo e, por ele, à receita).
 - **Transformação:** item de origem, data, valor pago (vazio = preço médio), `layout` (`'padrao'` | `'cachorros'`; **ausente = `'cachorros'`**, ver `layoutDaTransformacao`). Layout padrão usa `etapas[]` com `pesoInicial`, `estadoInicialId`, `pesoFinal`, `estadoFinalId`; layout cachorros usa `rodadas`, cozido, caldo e purê.
-- **Categoria de receita (`receita_categorias`):** `layoutTransformacao` (`'padrao'` | `'cachorros'`; ausente = `'padrao'`). O último layout usado fica em `CONFIG.transfLayoutUltimo`.
+- **Categoria de receita (`receita_categorias`):** `layoutTransformacao` (`'padrao'` | `'cachorros'`; ausente = `'padrao'`), `foto` (imagem redimensionada, data URL, opcional; v1_73; aparece no card da tela Receitas e na lista de categorias do Mais). O último layout usado fica em `CONFIG.transfLayoutUltimo`.
 - **Migrações únicas:** marcadas por chave em `localStorage` (ex.: `precario_mig_layout_cat_v1`); devem ser idempotentes e, por terem prefixo `precario_`, entram no backup.
 
 ## 7. Motor de custo
@@ -120,6 +120,7 @@ Modos de leitura têm **3 estilos de texto**:
 - Helpers de UI compartilhados: `optionsHTML`, fábrica de camadas, `fatorPorIngredienteHTML/Attach`, picker de itens, máscaras de quantidade e dinheiro.
 - Textareas crescem com o texto. Campo de busca tem ✕; filtros têm "✕ Limpar".
 - `openItemForm(item, opts)`: `opts.sub` abre em sub-sheet; `opts.onSalvar(obj)` entrega o cadastro a quem chamou em vez de gravar; `item` sem `id` = cadastro novo já preenchido (rascunho, sem botão Excluir).
+- **Tela Receitas** (v1_73): visão padrão = **cards por categoria** (`renderReceitasCards`; imagem da categoria ou 🍲, nome, nº de receitas; "Sem categoria" só aparece se houver receitas sem categoria) com botão **Ver tudo (N)** no topo. Estado `recVisao` (`null` = cards; `{tipo:'todas'|'cat'|'sem', id}` = lista filtrada, a lista de cards de receita de sempre). Entrar numa lista empilha `{k:'recvisao'}` no `navStack` (`recAbrirVisao`); o voltar do celular e o botão "← Categorias" (`recVoltarCards`) voltam aos cards. Tocar na aba Receitas (raiz) sempre volta aos cards; `zerarPilhaTelas` conta `view` e `recvisao`. Com texto na busca e sem visão escolhida, mostra a lista de todas as receitas que casam ("Resultados da busca"). "Mostrar arquivadas" vale para as contagens dos cards. O contador do cabeçalho nos cards é "N categorias · M receitas" (`recModoCards`). Sem campo novo além de `foto` na categoria e sem mudança de `DB_VERSION`.
 - **Leitura do item** (v1_71, `openItemView`): tocar num card da tela Itens abre a leitura (mesmos 3 estilos); ✏️ leva ao formulário (`openItemForm`). Blocos: cabeçalho com foto pequena + categoria + observação (nota), atalhos (+ Preço, 🛒 Lista, Preços, Gráfico), Preços (último, média dos 5 últimos com R$/kg|L|un, menor visto — via `statsPrecosItem` — e os últimos registros, tocáveis para editar), Cadastro (só o que está preenchido: dimensão, 1 un = X, densidade, regra de custo) e **Usado em receitas**.
 - **Usado em receitas** (`receitasQueUsamItem`): calculado na hora, sem campo novo e sem store. `nivel` 0 = ingrediente direto (mostra as quantidades), 1 = por grupo de itens (o item é membro do grupo; mostra "via grupo X"), 2 = indireto por sub-receita ("via receita Y", qualquer profundidade, protegido contra ciclo). Receitas arquivadas aparecem esmaecidas e por último dentro do nível. Tocar abre `openReceitaView(receita, {voltarItemId})`, que mostra o botão "← Item" para voltar à leitura do item. O botão voltar do celular fecha a folha (volta à lista de Itens), não reabre o item.
 
