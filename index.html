@@ -1864,6 +1864,161 @@ function renderCategorias(){
    ============================================================ */
 function itemOptionsHTML(selectedId){ return optionsHTML(ITEMS, selectedId); }
 
+/* ---- Onde um item é usado: receitas que o têm como ingrediente.
+   nivel 0 = direto; 1 = por grupo de itens (o item é membro do grupo usado); 2 = indireto, por sub-receita
+   (a receita usa outra receita que usa o item; qualquer profundidade, com proteção contra ciclo).
+   Calculado na hora a partir dos dados, sem campo novo. Devolve [{receita, nivel, linhas[], via[]}]. ---- */
+function receitasQueUsamItem(itemId){
+  const achadas = new Map();
+  const qtdTxt = (ing)=>{
+    if(ing.quantidade==null) return '';
+    const un = ing.unidadeId ? unidadeById(ing.unidadeId) : null;
+    const est = ing.estadoId ? ESTADOS.find(e=>e.id===ing.estadoId) : null;
+    return `${fmtQtd(ing.quantidade, un)}${un?' '+un.simbolo:''}${est?' ('+est.nome.toLowerCase()+')':''}`;
+  };
+  // registra a receita; devolve true se for a primeira vez que ela aparece (então precisa ser seguida)
+  const registrar = (receitaId, nivel, linha, via)=>{
+    const receita = RECEITAS.find(r=>r.id===receitaId);
+    if(!receita) return false;
+    let e = achadas.get(receitaId);
+    const nova = !e;
+    if(nova){ e = {receita, nivel, linhas:[], via:[]}; achadas.set(receitaId, e); }
+    if(nivel<e.nivel) e.nivel = nivel;
+    if(linha && !e.linhas.includes(linha)) e.linhas.push(linha);
+    if(via && !e.via.includes(via)) e.via.push(via);
+    return nova;
+  };
+  const grupoIds = new Set(GRUPO_ITENS_MEMBROS.filter(m=>m.itemId===itemId).map(m=>m.grupoId));
+  const fila = [];
+  for(const ing of RECEITA_INGREDIENTES){
+    if(ing.itemId===itemId){
+      if(registrar(ing.receitaId, 0, qtdTxt(ing), null)) fila.push(ing.receitaId);
+    } else if(ing.grupoId && grupoIds.has(ing.grupoId)){
+      const g = GRUPOS_ITENS.find(x=>x.id===ing.grupoId);
+      if(registrar(ing.receitaId, 1, qtdTxt(ing), g?g.nome:'')) fila.push(ing.receitaId);
+    }
+  }
+  while(fila.length){
+    const rid = fila.shift();
+    const usada = RECEITAS.find(r=>r.id===rid);
+    for(const ing of RECEITA_INGREDIENTES){
+      if(ing.subReceitaId===rid && registrar(ing.receitaId, 2, '', usada?usada.nome:'')) fila.push(ing.receitaId);
+    }
+  }
+  return [...achadas.values()].sort((a,b)=> a.nivel-b.nivel || (a.receita.arquivada?1:0)-(b.receita.arquivada?1:0) || a.receita.nome.localeCompare(b.receita.nome));
+}
+
+/* ---- Modo leitura do item (visão padrão ao tocar num item; ✏️ leva ao formulário). Mesmo padrão da leitura da receita:
+   .leitura (14px), .view-heading e .view-nota (12px cinza). ---- */
+function openItemView(item){
+  if(!item) return;
+  const cat = catById(item.categoriaId), subcat = subcatById(item.subcategoriaId);
+  const catLabel = [cat?cat.nome:null, subcat?subcat.nome:null].filter(Boolean).join(' › ');
+  const st = statsPrecosItem(item.id);
+  const nomeUn = id => { const u = id ? unidadeById(id) : null; return u ? u.simbolo : ''; };
+
+  let precosHtml = '<p class="hint">Nenhum preço registrado.</p>';
+  if(st){
+    const loc = localNomeDoPreco(st.ultimo);
+    const qtdCusto = precoQtdECustoTxt(st.ultimo);
+    const linhas = [];
+    linhas.push(`Último: <b>${fmtMoney(st.ultimo.preco)}</b> · ${fmtDateBR(st.ultimo.data)}${loc?' · '+escapeHtml(loc):''}`);
+    if(qtdCusto) linhas.push(`<span class="view-nota">${escapeHtml(qtdCusto)}</span>`);
+    if(st.total>1){
+      const base = st.mediaBase!=null ? ` · ${fmtCustoPorBase(st.mediaBase, st.dimBase)}` : '';
+      linhas.push(`Média dos ${st.recentes.length} últimos: ${fmtMoney(st.mediaN)}${base}`);
+      linhas.push(`Menor visto: ${fmtMoney(st.menor.preco)} (${fmtDateBR(st.menor.data)})`);
+    }
+    const recentesHtml = st.recentes.map(p=>{
+      const l = localNomeDoPreco(p), q = precoQtdECustoTxt(p);
+      return `<div class="view-ing-linha" data-pid="${p.id}">${fmtDateBR(p.data)} · ${fmtMoney(p.preco)}${(q||l)?` <span class="view-nota">· ${escapeHtml([q,l].filter(Boolean).join(' · '))}</span>`:''}</div>`;
+    }).join('');
+    precosHtml = `<div>${linhas.join('<br>')}</div>
+      <div class="view-nota" style="margin-top:8px">${st.total>1?`Últimos ${st.recentes.length} de ${st.total} registros (toque para editar)`:'1 registro (toque para editar)'}</div>
+      ${recentesHtml}`;
+  }
+
+  // Cadastro: só mostra o que está preenchido
+  const cad = [];
+  const dimTxt = {peso:'Peso (g)', volume:'Volume (ml)', unidade:'Contagem (unidades)'}[item.dimensaoReferencia];
+  if(dimTxt) cad.push(`Dimensão de referência: ${dimTxt}`);
+  if(item.convQtd!=null && item.convUnidadeId) cad.push(`1 un = ${fmtQtd(item.convQtd, unidadeById(item.convUnidadeId))} ${nomeUn(item.convUnidadeId)}`);
+  if(item.densVolQtd!=null && item.densPesoQtd!=null){
+    cad.push(`Densidade: ${fmtQtd(item.densVolQtd, unidadeById(item.densVolUnId))} ${nomeUn(item.densVolUnId)} = ${fmtQtd(item.densPesoQtd, unidadeById(item.densPesoUnId))} ${nomeUn(item.densPesoUnId)}`);
+  }
+  if(item.custoMinQtd>0 || item.custoIndivQtd>0){
+    const un = nomeUn(item.regraUnidadeId);
+    const partes = [];
+    if(item.custoMinQtd>0) partes.push(`mínimo ${fmtQtd(item.custoMinQtd, unidadeById(item.regraUnidadeId))} ${un}`);
+    if(item.custoIndivQtd>0) partes.push(`indivisível ${fmtQtd(item.custoIndivQtd, unidadeById(item.regraUnidadeId))} ${un}`);
+    let regra = `Regra de custo: ${partes.join(' · ')}`;
+    if(item.custoMinQtd>0 && item.custoIndivQtd>0){
+      regra += ' — ' + ({minimo:'vale só o mínimo', indivisivel:'vale só o indivisível'}[item.regraPrioridade] || 'cobra o maior custo');
+    }
+    cad.push(regra);
+  }
+  const cadHtml = cad.length ? `<div class="view-heading">Cadastro</div><div>${cad.map(escapeHtml).join('<br>')}</div>` : '';
+
+  // Receitas que usam o item
+  const usos = receitasQueUsamItem(item.id);
+  let usosHtml;
+  if(!usos.length){
+    usosHtml = '<p class="hint">Nenhuma receita usa este item.</p>';
+  } else {
+    usosHtml = usos.map(u=>{
+      const r = u.receita;
+      let nota = '';
+      if(u.nivel===0) nota = u.linhas.join(' + ');
+      else if(u.nivel===1) nota = [u.linhas.join(' + '), 'via grupo '+u.via.join(', ')].filter(Boolean).join(' · ');
+      else nota = 'via receita '+u.via.join(', ');
+      if(r.arquivada) nota = (nota?nota+' · ':'') + 'arquivada';
+      return `<div class="view-ing-linha" data-rid="${r.id}" style="${r.arquivada?'opacity:.65':''}">${r.favorita?'★ ':''}${escapeHtml(r.nome)}${nota?`<div class="view-nota">${escapeHtml(nota)}</div>`:''}</div>`;
+    }).join('');
+  }
+
+  openSheet(`<div class="leitura">
+    <div style="display:flex;align-items:flex-start;gap:8px">
+      ${item.foto?`<img src="${item.foto}" style="width:44px;height:44px;object-fit:cover;border-radius:10px;flex:none">`:''}
+      <div style="flex:1;min-width:0">
+        <h3 style="margin:0">${escapeHtml(item.nome)}</h3>
+        <p class="hint" style="margin-top:2px">${catLabel?escapeHtml(catLabel):'Sem categoria'}</p>
+      </div>
+      <div style="display:flex;gap:6px;flex:none">
+        <button type="button" class="btn btn-outline btn-sm" id="iv-editar">✏️</button>
+        <button type="button" class="btn btn-outline btn-sm" id="iv-fechar">✕</button>
+      </div>
+    </div>
+    ${item.obs?`<div class="view-nota pre-wrap" style="margin-top:6px">${escapeHtml(item.obs)}</div>`:''}
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
+      <button type="button" class="btn btn-outline btn-sm" id="iv-preco">+ Preço</button>
+      <button type="button" class="btn btn-outline btn-sm" id="iv-lista">🛒 Lista</button>
+      <button type="button" class="btn btn-outline btn-sm" id="iv-hist">Preços</button>
+      <button type="button" class="btn btn-outline btn-sm" id="iv-grafico">Gráfico</button>
+    </div>
+
+    <div class="view-heading">Preços</div>
+    ${precosHtml}
+    ${cadHtml}
+    <div class="view-heading">Usado em receitas${usos.length?` (${usos.length})`:''}</div>
+    ${usosHtml}
+  </div>`, {topAnchored:true});
+
+  document.getElementById('iv-editar').addEventListener('click', ()=> openItemForm(item));
+  document.getElementById('iv-fechar').addEventListener('click', closeSheet);
+  document.getElementById('iv-preco').addEventListener('click', ()=> openPriceForm(null, item.id));
+  document.getElementById('iv-lista').addEventListener('click', ()=> openAdicionarALista(item.id));
+  document.getElementById('iv-hist').addEventListener('click', ()=>{ closeSheet(); goToPrecos(item.id); });
+  document.getElementById('iv-grafico').addEventListener('click', ()=>{ closeSheet(); goToChart(item.id); });
+  sheet.querySelectorAll('[data-pid]').forEach(el=> el.addEventListener('click', ()=>{
+    const p = PRICES.find(x=>x.id===Number(el.dataset.pid));
+    if(p) openPriceForm(p);
+  }));
+  sheet.querySelectorAll('[data-rid]').forEach(el=> el.addEventListener('click', ()=>{
+    const r = RECEITAS.find(x=>x.id===Number(el.dataset.rid));
+    if(r) openReceitaView(r, {voltarItemId: item.id});
+  }));
+}
+
 function openItemForm(item){
   const editing = !!item;
   openSheet(`
@@ -2173,7 +2328,7 @@ function renderItens(){
   el.querySelectorAll('.card').forEach(card=>{
     card.addEventListener('click', ()=>{
       const id = Number(card.dataset.id);
-      openItemForm(itemById(id));
+      openItemView(itemById(id));
     });
   });
   el.querySelectorAll('[data-select]').forEach(btn=>{
@@ -3442,7 +3597,8 @@ function ingredienteLinhaTexto(ing, extra){
   }
   return html;
 }
-function openReceitaView(receita){
+function openReceitaView(receita, opts){
+  opts = opts || {};
   const cat = receita.categoriaId ? receitaCatById(receita.categoriaId) : null;
   const subcat = receita.subcategoriaId ? receitaSubcatById(receita.subcategoriaId) : null;
   const catLabel = [cat?.nome, subcat?.nome].filter(Boolean).join(' · ');
@@ -3487,6 +3643,7 @@ function openReceitaView(receita){
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
       <h3 style="margin:0;flex:1">${receita.favorita?'★ ':''}${escapeHtml(receita.nome)}</h3>
       <div style="display:flex;gap:6px;flex:none">
+        ${opts.voltarItemId?'<button type="button" class="btn btn-outline btn-sm" id="rv-voltar-item">← Item</button>':''}
         <button type="button" class="btn btn-outline btn-sm" id="rv-preparos">Prep</button>
         <button type="button" class="btn btn-outline btn-sm" id="rv-editar">✏️</button>
         <button type="button" class="btn btn-outline btn-sm" id="rv-fechar">✕</button>
@@ -3514,6 +3671,9 @@ function openReceitaView(receita){
   document.getElementById('rv-editar').addEventListener('click', ()=> openReceitaForm(receita));
   document.getElementById('rv-preparos').addEventListener('click', ()=> openPreparosSheet(receita));
   document.getElementById('rv-fechar').addEventListener('click', closeSheet);
+  if(opts.voltarItemId){
+    document.getElementById('rv-voltar-item').addEventListener('click', ()=> openItemView(itemById(opts.voltarItemId)));
+  }
 }
 function openReceitaForm(receita){
   const editing = !!receita;
@@ -7753,7 +7913,7 @@ applyDefaultsToUI();
 fillConfiguracoesForm();
 ativarTelaAcesa();
 /* ---- PWA: versão, armazenamento persistente e service worker ---- */
-const APP_VERSION = 'v1_70';
+const APP_VERSION = 'v1_71';
 document.getElementById('appVersaoTxt').textContent = APP_VERSION;
 if(navigator.storage && navigator.storage.persist){
   navigator.storage.persist().then(ok=>{

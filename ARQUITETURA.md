@@ -1,6 +1,6 @@
 # ARQUITETURA.md — App "Preços"
 
-Documento de referência para quem for mexer no código (Claude ou pessoa). Ler inteiro antes de começar uma versão nova. Conferido contra o código da v1_70 em 2026-10-23; se algo aqui divergir do `index.html`, o código vale e este documento deve ser corrigido.
+Documento de referência para quem for mexer no código (Claude ou pessoa). Ler inteiro antes de começar uma versão nova. Conferido contra o código da v1_71 em 2026-11-07; se algo aqui divergir do `index.html`, o código vale e este documento deve ser corrigido.
 
 ---
 
@@ -119,6 +119,8 @@ Modos de leitura têm **3 estilos de texto**:
 - Textos explicativos estáticos usam o ícone "?" que abre/fecha: `.ajuda-p`, `.ajuda-btn`, `.ajuda-txt`. Hints calculados ou vazios não.
 - Helpers de UI compartilhados: `optionsHTML`, fábrica de camadas, `fatorPorIngredienteHTML/Attach`, picker de itens, máscaras de quantidade e dinheiro.
 - Textareas crescem com o texto. Campo de busca tem ✕; filtros têm "✕ Limpar".
+- **Leitura do item** (v1_71, `openItemView`): tocar num card da tela Itens abre a leitura (mesmos 3 estilos); ✏️ leva ao formulário (`openItemForm`). Blocos: cabeçalho com foto pequena + categoria + observação (nota), atalhos (+ Preço, 🛒 Lista, Preços, Gráfico), Preços (último, média dos 5 últimos com R$/kg|L|un, menor visto — via `statsPrecosItem` — e os últimos registros, tocáveis para editar), Cadastro (só o que está preenchido: dimensão, 1 un = X, densidade, regra de custo) e **Usado em receitas**.
+- **Usado em receitas** (`receitasQueUsamItem`): calculado na hora, sem campo novo e sem store. `nivel` 0 = ingrediente direto (mostra as quantidades), 1 = por grupo de itens (o item é membro do grupo; mostra "via grupo X"), 2 = indireto por sub-receita ("via receita Y", qualquer profundidade, protegido contra ciclo). Receitas arquivadas aparecem esmaecidas e por último dentro do nível. Tocar abre `openReceitaView(receita, {voltarItemId})`, que mostra o botão "← Item" para voltar à leitura do item. O botão voltar do celular fecha a folha (volta à lista de Itens), não reabre o item.
 
 ## 11. Backup
 
