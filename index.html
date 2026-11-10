@@ -1972,10 +1972,13 @@ function openItemView(item){
     }
     const recentesHtml = st.recentes.map(p=>{
       const l = localNomeDoPreco(p), q = precoQtdECustoTxt(p);
-      return `<div class="view-ing-linha" data-pid="${p.id}">${fmtDateBR(p.data)} · ${fmtMoney(p.preco)}${(q||l)?` <span class="view-nota">· ${escapeHtml([q,l].filter(Boolean).join(' · '))}</span>`:''}</div>`;
+      return `<div class="view-ing-linha" data-pid="${p.id}" style="display:flex;align-items:center;gap:8px">
+        <div style="flex:1;min-width:0">${fmtDateBR(p.data)} · ${fmtMoney(p.preco)}${(q||l)?` <span class="view-nota">· ${escapeHtml([q,l].filter(Boolean).join(' · '))}</span>`:''}</div>
+        <button type="button" class="btn btn-outline btn-sm" data-repetir="${p.id}" aria-label="Repetir este preço" style="flex:none;padding:3px 8px;font-size:12px">🔁 Repetir</button>
+      </div>`;
     }).join('');
     precosHtml = `<div>${linhas.join('<br>')}</div>
-      <div class="view-nota" style="margin-top:8px">${st.total>1?`Últimos ${st.recentes.length} de ${st.total} registros (toque para editar)`:'1 registro (toque para editar)'}</div>
+      <div class="view-nota" style="margin-top:8px">${st.total>1?`Últimos ${st.recentes.length} de ${st.total} registros`:'1 registro'} (toque para editar · 🔁 repete com a data de hoje)</div>
       ${recentesHtml}`;
   }
 
@@ -2053,6 +2056,12 @@ function openItemView(item){
   sheet.querySelectorAll('[data-pid]').forEach(el=> el.addEventListener('click', ()=>{
     const p = PRICES.find(x=>x.id===Number(el.dataset.pid));
     if(p) openPriceForm(p);
+  }));
+  // 🔁 Repetir: abre o formulário de novo preço já preenchido com este registro (data de hoje; nada é gravado até salvar)
+  sheet.querySelectorAll('[data-repetir]').forEach(btn=> btn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const p = PRICES.find(x=>x.id===Number(btn.dataset.repetir));
+    if(p) openPriceForm(null, null, p);
   }));
   sheet.querySelectorAll('[data-rid]').forEach(el=> el.addEventListener('click', ()=>{
     const r = RECEITAS.find(x=>x.id===Number(el.dataset.rid));
@@ -2351,7 +2360,7 @@ function renderItens(){
   if(!list.length){ el.innerHTML = `<div class="empty">Nenhum item encontrado.<br>Toque em + para cadastrar.</div>`; return; }
   if(itemSelecionadoId!=null && !list.some(i=>i.id===itemSelecionadoId)) itemSelecionadoId = null;
   const listasPendentesPorItem = new Map();
-  LISTA_ITENS.forEach(li=>{ if(!li.comprado){ const arr = listasPendentesPorItem.get(li.itemId) || []; arr.push(li.listaId); listasPendentesPorItem.set(li.itemId, arr); } });
+  LISTA_ITENS.forEach(li=>{ if(!li.comprado && li.itemId!=null){ const arr = listasPendentesPorItem.get(li.itemId) || []; arr.push(li.listaId); listasPendentesPorItem.set(li.itemId, arr); } });
   el.innerHTML = list.map(i=>{
     const cat = catById(i.categoriaId);
     const subcat = subcatById(i.subcategoriaId);
@@ -7084,6 +7093,7 @@ document.getElementById('btnImportReceitas').addEventListener('click', async ()=
    LISTAS DE COMPRAS
    Stores: listas_compras {nome, descricao, criadaEm}  e
            lista_compras_itens {listaId, itemId, quantidade, unidadeId, comprado, precoId, obs}
+           (v1_74: item AVULSO = itemId null + nome livre; sem preço/histórico/gráfico)
    Reaproveita: picker de item (apenasItens), formulário de preço (openPriceForm com onSaved),
    goToChart, máscara de quantidade, sheets, cards com bolinha de seleção.
    ============================================================ */
@@ -7128,6 +7138,12 @@ async function addItemNaLista(listaId, itemId, quantidade, unidadeId){
   novo.id = await putRecord('lista_compras_itens', novo);
   await reloadListas();
   return {dup:false, registro:novo};
+}
+function itemListaAvulso(li){ return li.itemId==null; }
+function nomeDoItemLista(li){
+  if(itemListaAvulso(li)) return li.nome || '(sem nome)';
+  const it = itemById(li.itemId);
+  return it ? it.nome : '(item removido)';
 }
 function unidadesOptsDoItem(item, selId){
   const lista = (item && item.dimensaoReferencia) ? UNIDADES.filter(u=>u.dimensao===item.dimensaoReferencia) : UNIDADES;
@@ -7263,12 +7279,19 @@ function abrirPickerItemLista(){
   });
 }
 
-/* ---- Editor de um item da lista: quantidade, observação, remover ---- */
+/* ---- Editor de um item da lista: quantidade, observação, remover.
+   Item avulso (itemId null) também edita o nome. `li` sem id = avulso novo ainda não gravado (só grava ao salvar). ---- */
 function openListaItemForm(li){
-  const item = itemById(li.itemId);
+  const avulso = itemListaAvulso(li);
+  const novo = li.id==null;
+  const item = avulso ? null : itemById(li.itemId);
   const unSug = li.unidadeId || null;   // vazio = quantidade em embalagens/unidades (ex.: 2 caixas de leite)
   openSheet(`
-    <h3>${item?escapeHtml(item.nome):'(item removido)'}</h3>
+    ${avulso ? `<h3>${novo?'Novo item avulso':'Item avulso'}</h3>
+    <label>Nome</label>
+    <input type="text" id="li-nome" placeholder="Ex: Pilhas, presente da Ana" value="${escapeHtml(li.nome||'')}">
+    <p class="hint" style="margin-top:2px">Só para lembrar na lista: não vira item cadastrado e não tem preço.</p>`
+    : `<h3>${item?escapeHtml(item.nome):'(item removido)'}</h3>`}
     <label>Quantidade a comprar <span style="font-weight:400;text-transform:none">(opcional)</span></label>
     <div class="grid2">
       <input type="text" id="li-qtd" placeholder="Ex: 2">
@@ -7277,20 +7300,29 @@ function openListaItemForm(li){
     <label>Observação</label>
     <textarea id="li-obs" placeholder="Ex: marca X, o maior pacote">${escapeHtml(li.obs||'')}</textarea>
     <div class="sheet-actions">
-      <button class="btn btn-danger" id="li-del">Remover</button>
+      ${novo?'':'<button class="btn btn-danger" id="li-del">Remover</button>'}
       <button class="btn btn-outline" id="li-cancel">Cancelar</button>
-      <button class="btn btn-accent btn-block" id="li-save">Salvar</button>
+      <button class="btn btn-accent btn-block" id="li-save">${novo?'Adicionar':'Salvar'}</button>
     </div>
   `);
   attachQtyMask(document.getElementById('li-qtd'), li.quantidade!=null ? li.quantidade : null);
   document.getElementById('li-cancel').addEventListener('click', closeSheet);
-  document.getElementById('li-del').addEventListener('click', async ()=>{
+  if(!novo) document.getElementById('li-del').addEventListener('click', async ()=>{
     if(!await confirmar('Remover este item da lista?')) return;
     await deleteRecord('lista_compras_itens', li.id);
     await reloadListas(); closeSheet(); renderCurrent();
   });
   document.getElementById('li-save').addEventListener('click', async ()=>{
-    const reg = LISTA_ITENS.find(x=>x.id===li.id) || li;
+    const reg = novo ? li : (LISTA_ITENS.find(x=>x.id===li.id) || li);
+    if(avulso){
+      const nome = document.getElementById('li-nome').value.trim();
+      if(!nome){ avisar('Informe o nome do item.'); return; }
+      const chave = normalizeNome(nome);
+      if(LISTA_ITENS.some(x=>x.listaId===reg.listaId && x.id!==reg.id && itemListaAvulso(x) && normalizeNome(x.nome||'')===chave)){
+        avisar('Já existe um item avulso com esse nome nesta lista.'); return;
+      }
+      reg.nome = nome;
+    }
     const q = getQtyValue(document.getElementById('li-qtd'));
     const un = document.getElementById('li-un').value;
     reg.quantidade = q;
@@ -7299,6 +7331,13 @@ function openListaItemForm(li){
     await putRecord('lista_compras_itens', reg);
     await reloadListas(); closeSheet(); renderCurrent();
   });
+}
+
+/* Item avulso: só um nome, sem ligação com o cadastro de itens (itemId null) */
+function abrirNovoItemAvulso(){
+  if(!listaById(listaAbertaId)) return;
+  openListaItemForm({listaId:listaAbertaId, itemId:null, nome:'', quantidade:null, unidadeId:null,
+                     comprado:false, precoId:null, obs:'', adicionadoEm:new Date().toISOString()});
 }
 
 /* ---- Registrar preço/compra pela lista: reaproveita o formulário de preço (já com "Comprei" marcado,
@@ -7336,10 +7375,12 @@ function renderListaDetalhe(){
     </div>
     <div class="list-actions-row" style="margin-bottom:12px">
       <button class="btn btn-accent btn-sm" id="listad-add" type="button">+ Item</button>
+      <button class="btn btn-accent btn-sm" id="listad-avulso" type="button">✍️ Avulso</button>
       <button class="btn btn-outline btn-sm" id="listad-desmarcar" type="button">↺ Desmarcar tudo</button>
     </div>`;
   document.getElementById('listad-edit').addEventListener('click', ()=> openListaForm(lista));
   document.getElementById('listad-add').addEventListener('click', abrirPickerItemLista);
+  document.getElementById('listad-avulso').addEventListener('click', abrirNovoItemAvulso);
   document.getElementById('listad-desmarcar').addEventListener('click', async ()=>{
     if(!comp){ showToast('Nenhum item marcado como comprado.'); return; }
     if(!await confirmar('Desmarcar todos os itens comprados desta lista?')) return;
@@ -7348,22 +7389,23 @@ function renderListaDetalhe(){
   });
 
   const el = document.getElementById('lista-compras-itens');
-  if(!itens.length){ el.innerHTML = '<div class="empty">Lista vazia.<br>Toque em + para incluir itens (ou use o botão 🛒 na tela Itens).</div>'; return; }
+  if(!itens.length){ el.innerHTML = '<div class="empty">Lista vazia.<br>Toque em + Item para incluir itens cadastrados, em ✍️ Avulso para anotar só um nome (ou use o botão 🛒 na tela Itens).</div>'; return; }
   const ordenados = itens.slice().sort((a,b)=>{
     if(a.comprado!==b.comprado) return a.comprado ? 1 : -1;
-    const ia = itemById(a.itemId), ib = itemById(b.itemId);
-    return (ia?ia.nome:'').localeCompare(ib?ib.nome:'');
+    return nomeDoItemLista(a).localeCompare(nomeDoItemLista(b));
   });
   el.innerHTML = ordenados.map(li=>{
-    const item = itemById(li.itemId);
+    const avulso = itemListaAvulso(li);
+    const item = avulso ? null : itemById(li.itemId);
     const cat = item ? catById(item.categoriaId) : null;
     const subcat = item ? subcatById(item.subcategoriaId) : null;
     const un = li.unidadeId ? unidadeById(li.unidadeId) : null;
     const qtdTxt = li.quantidade!=null ? ` · ${fmtQtd(li.quantidade, un)}${un?' '+un.simbolo:''}` : '';
     const st = item ? statsPrecosItem(item.id) : null;
-    const pago = li.comprado && li.precoId ? PRICES.find(p=>p.id===li.precoId) : null;
+    const pago = !avulso && li.comprado && li.precoId ? PRICES.find(p=>p.id===li.precoId) : null;
     let precoTxt;
-    if(!st) precoTxt = 'Sem preço registrado ainda';
+    if(avulso) precoTxt = '';
+    else if(!st) precoTxt = 'Sem preço registrado ainda';
     else {
       const loc = localNomeDoPreco(st.ultimo);
       precoTxt = `Último: <strong>${fmtMoney(st.ultimo.preco)}</strong> (${fmtDateBR(st.ultimo.data)}${loc?' · '+escapeHtml(loc):''})`;
@@ -7373,25 +7415,25 @@ function renderListaDetalhe(){
       }
       if(st.total>1 && st.menor.preco<st.ultimo.preco) precoTxt += `<br>Menor já visto: <strong>${fmtMoney(st.menor.preco)}</strong> (${fmtDateBR(st.menor.data)})`;
     }
-    const aberto = listaHistAbertos.has(li.id) && st;
+    const aberto = !avulso && listaHistAbertos.has(li.id) && st;
     const histHtml = aberto ? `<div class="lista-hist">${st.recentes.map(p=>{
         const loc = localNomeDoPreco(p), qc = precoQtdECustoTxt(p);
         return `<div>${fmtDateBR(p.data)} · <strong>${fmtMoney(p.preco)}</strong>${loc?' · '+escapeHtml(loc):''}${qc?' · '+escapeHtml(qc):''}${p.comprou?'':' · não comprei'}</div>`;
       }).join('')}</div>` : '';
     return `<div class="card ${li.comprado?'comprado':''}" data-id="${li.id}">
       <button type="button" class="select-toggle-zone ${li.comprado?'on':''}" data-comprado aria-label="Marcar como comprado"><span class="select-dot"></span></button>
-      ${item&&item.foto?`<img class="thumb" src="${item.foto}">`:`<div class="thumb-ph">📦</div>`}
+      ${item&&item.foto?`<img class="thumb" src="${item.foto}">`:`<div class="thumb-ph">${avulso?'✍️':'📦'}</div>`}
       <div class="body">
-        <div class="title">${item?escapeHtml(item.nome):'(item removido)'}${escapeHtml(qtdTxt)}</div>
-        <div class="meta">${cat?escapeHtml(cat.nome):'Sem categoria'}${subcat?' › '+escapeHtml(subcat.nome):''}</div>
+        <div class="title">${escapeHtml(nomeDoItemLista(li))}${escapeHtml(qtdTxt)}</div>
+        <div class="meta">${avulso?'Item avulso':(cat?escapeHtml(cat.nome):'Sem categoria')+(subcat?' › '+escapeHtml(subcat.nome):'')}</div>
         ${pago?`<div class="meta"><strong>✅ Comprado por ${fmtMoney(pago.preco)}</strong> em ${fmtDateBR(pago.data)}${localNomeDoPreco(pago)?' · '+escapeHtml(localNomeDoPreco(pago)):''}</div>`:''}
-        <div class="meta">${precoTxt}</div>
+        ${avulso?'':`<div class="meta">${precoTxt}</div>`}
         ${li.obs?`<div class="obs pre-wrap">${escapeHtml(li.obs)}</div>`:''}
-        <div class="list-actions-row" style="margin-top:8px">
+        ${avulso?'':`<div class="list-actions-row" style="margin-top:8px">
           <button type="button" class="btn btn-accent btn-sm" data-act="preco">💲 Preço</button>
           <button type="button" class="btn btn-outline btn-sm" data-act="hist">🕘 Histórico</button>
           <button type="button" class="btn btn-outline btn-sm" data-act="grafico">📈 Gráfico</button>
-        </div>
+        </div>`}
         ${histHtml}
       </div>
     </div>`;
@@ -8051,7 +8093,7 @@ applyDefaultsToUI();
 fillConfiguracoesForm();
 ativarTelaAcesa();
 /* ---- PWA: versão, armazenamento persistente e service worker ---- */
-const APP_VERSION = 'v1_73';
+const APP_VERSION = 'v1_74';
 document.getElementById('appVersaoTxt').textContent = APP_VERSION;
 if(navigator.storage && navigator.storage.persist){
   navigator.storage.persist().then(ok=>{
