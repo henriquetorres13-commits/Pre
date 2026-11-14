@@ -1,6 +1,6 @@
 # ARQUITETURA.md — App "Preços"
 
-Documento de referência para quem for mexer no código (Claude ou pessoa). Ler inteiro antes de começar uma versão nova. Conferido contra o código da v1_75 em 2026-11-14; se algo aqui divergir do `index.html`, o código vale e este documento deve ser corrigido.
+Documento de referência para quem for mexer no código (Claude ou pessoa). Ler inteiro antes de começar uma versão nova. Conferido contra o código da v1_76 em 2026-11-14; se algo aqui divergir do `index.html`, o código vale e este documento deve ser corrigido.
 
 ---
 
@@ -152,6 +152,8 @@ Modos de leitura têm **3 estilos de texto**:
 - Possível: aproximar a fonte dos metadados dos cards (12,5 px) da nota de rodapé (12 px); cards/listas e telas de edição ainda fora do padrão de leitura.
 
 ## 14. Armadilhas conhecidas
+
+- Item de flex com `<img>` de foto real (JPEG redimensionado a até 640 px) usa a largura natural da imagem como mínimo: sem `min-width:0` a foto passa da proporção prevista e espreme o texto ao lado (visto no topo do formulário de preço, v1_76: `.pf-foto`). Testar telas com foto real, não com imagem minúscula.
 
 - O hook de "unpushed" pode reclamar quando o ref remoto local não atualiza: `git fetch origin <branch>:refs/remotes/origin/<branch>`.
 - O celular já abriu o app via `content://`; por isso o HTML único é mantido.
