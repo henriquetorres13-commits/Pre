@@ -195,8 +195,8 @@ button{font-family:inherit;cursor:pointer;border:none;}
 nav.tabs{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);
   display:flex;z-index:20;padding-bottom:env(safe-area-inset-bottom);}
 nav.tabs button{flex:1;background:none;padding:9px 1px 7px;display:flex;flex-direction:column;align-items:center;
-  gap:2px;color:var(--ink-soft);font-size:9.5px;font-weight:700;}
-nav.tabs button .ic{font-size:17px;}
+  gap:3px;color:var(--ink-soft);font-size:10px;font-weight:700;}
+nav.tabs button .ic{display:flex;}
 nav.tabs button.active{color:var(--accent);}
 
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
@@ -346,6 +346,37 @@ input.pf-switch:checked::before{left:27px;}
 #lp-lista .pf-row{min-height:64px;padding:8px 0;}
 .ip-thumb{width:40px;height:40px;border-radius:8px;object-fit:cover;flex:none;border:1px solid var(--line);}
 .ip-thumb.ph{display:flex;align-items:center;justify-content:center;background:var(--paper-alt);font-size:16px;}
+
+/* ---- Lista de Preços (v1_77): linhas sem cartão ---- */
+.pl-busca{display:flex;align-items:center;gap:8px;height:48px;border-bottom:1px solid var(--line);margin-bottom:2px;}
+.pl-busca:focus-within{border-bottom-color:var(--accent);}
+.pl-busca>svg{flex:none;color:var(--ink-soft);}
+.pl-busca .search-wrap{flex:1;}
+.pl-busca input[type=text]{border:none;border-radius:0;background:transparent;padding:0 30px 0 0;font-size:16px;height:46px;}
+.pl-busca input[type=text]:focus{border:none;}
+.pl-txtbtn{flex:none;height:44px;padding:0 4px;background:transparent;color:var(--ink-soft);font-weight:700;font-size:15px;display:inline-flex;align-items:center;gap:6px;}
+.pl-txtbtn.accent{color:var(--accent);}
+.card.pr-row{border:none;border-bottom:1px solid var(--line);border-left:3px solid transparent;border-radius:0;background:none;
+  padding:14px 0 14px 10px;margin:0 0 0 -10px;gap:14px;}
+.card.pr-row:active{background:none;}
+.card.pr-row.selecionado{border-left-color:var(--accent);background:none;}
+.pr-ft{flex:none;width:56px;display:flex;flex-direction:column;align-items:center;gap:6px;}
+.pr-img{width:56px;height:56px;border-radius:12px;object-fit:cover;display:flex;align-items:center;justify-content:center;
+  background:var(--paper-alt);font-size:22px;color:var(--ink-soft);}
+.selecionado .pr-img{box-shadow:0 0 0 2px var(--accent);}
+.pr-comprei{font-size:11px;font-weight:700;color:var(--good);line-height:1;}
+.pr-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;}
+.pr-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+.pr-l{min-width:0;display:flex;flex-direction:column;gap:3px;}
+.pr-nome{font-size:16px;font-weight:700;line-height:1.25;}
+.pr-meta{font-size:13px;color:var(--ink-soft);}
+.pr-r{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
+.pr-preco{font-size:18px;font-weight:800;white-space:nowrap;line-height:1.2;}
+.pr-custo{font-size:13px;font-weight:700;color:var(--accent);white-space:nowrap;}
+.pr-qtd{font-size:12px;color:var(--ink-soft);white-space:nowrap;}
+.pr-obs{font-size:13px;color:var(--ink-soft);font-style:italic;line-height:1.35;}
+.pr-acoes{display:flex;align-items:center;gap:6px;margin-top:2px;}
+.pr-acao{height:44px;padding:0 14px 0 0;background:transparent;color:var(--accent);font-weight:700;font-size:14px;display:inline-flex;align-items:center;gap:7px;}
 </style>
 </head>
 <body>
@@ -360,12 +391,11 @@ input.pf-switch:checked::before{left:27px;}
 
   <!-- ================= PREÇOS ================= -->
   <section class="view active" id="view-precos">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-      <h2 class="section-title" style="margin:0">Buscar preços</h2>
-      <div style="display:flex;gap:6px;flex:none"><button class="btn btn-outline btn-sm" id="pf-limpar-filtros" type="button">✕ Limpar</button><button class="btn btn-outline btn-sm" id="pf-toggle-filtros" type="button">+ Filtros</button></div>
-    </div>
-    <div class="searchbar" style="margin-top:8px">
-      <div class="search-wrap"><input type="text" id="pf-texto" placeholder="Item ou categoria..."><button type="button" class="search-clear" data-target="pf-texto" aria-label="Limpar">✕</button></div>
+    <div class="pl-busca">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <div class="search-wrap"><input type="text" id="pf-texto" placeholder="Item ou categoria" aria-label="Buscar item ou categoria"><button type="button" class="search-clear" data-target="pf-texto" aria-label="Limpar">✕</button></div>
+      <button class="pl-txtbtn" id="pf-limpar-filtros" type="button" style="display:none">Limpar</button>
+      <button class="pl-txtbtn accent" id="pf-toggle-filtros" type="button"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg><span class="lbl">Filtros</span></button>
     </div>
     <div id="pf-filtros-extra" style="display:none">
       <div class="grid2">
@@ -379,14 +409,7 @@ input.pf-switch:checked::before{left:27px;}
       <label>Local</label>
       <select id="pf-local"><option value="">Todos</option></select>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:16px">
-      <h2 class="section-title" style="margin:0">Registros</h2>
-      <div class="list-actions-row">
-        <button class="btn btn-outline btn-sm" id="pl-repetir" type="button">🔁 Repetir</button>
-        <button class="btn btn-outline btn-sm" id="pl-grafico" type="button">📈 Gráfico</button>
-      </div>
-    </div>
-    <div id="lista-precos"></div>
+    <div id="lista-precos" style="margin-top:4px"></div>
   </section>
 
   <!-- ================= ITENS ================= -->
@@ -741,13 +764,13 @@ input.pf-switch:checked::before{left:27px;}
 <button class="scroll-top-btn" id="btnScrollTop" title="Voltar ao topo" type="button">↑</button>
 
 <nav class="tabs">
-  <button class="tab-btn active" data-view="precos"><span class="ic">💲</span>Preços</button>
-  <button class="tab-btn" data-view="itens"><span class="ic">📦</span>Itens</button>
-  <button class="tab-btn" data-view="receitas"><span class="ic">🍳</span>Receitas</button>
-  <button class="tab-btn" data-view="transformacoes"><span class="ic">🔄</span>Transf.</button>
-  <button class="tab-btn" data-view="grafico"><span class="ic">📈</span>Gráfico</button>
-  <button class="tab-btn" data-view="oportunidades"><span class="ic">🔥</span>Boas</button>
-  <button class="tab-btn" data-view="mais"><span class="ic">⋯</span>Mais</button>
+  <button class="tab-btn active" data-view="precos"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M16.5 7.5c0-1.7-2-3-4.5-3s-4.5 1.3-4.5 3 2 2.7 4.5 3 4.5 1.3 4.5 3-2 3-4.5 3-4.5-1.3-4.5-3"/></svg></span>Preços</button>
+  <button class="tab-btn" data-view="itens"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5zM3 7.5 12 12l9-4.5M12 12v9"/></svg></span>Itens</button>
+  <button class="tab-btn" data-view="receitas"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 10h14v7a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3zM3 10h18M9 6c0-1 .8-2 1.5-2M14 6c0-1 .8-2 1.5-2"/></svg></span>Receitas</button>
+  <button class="tab-btn" data-view="transformacoes"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14-4M4 5v4h4M4 13a8 8 0 0 0 14 4M20 19v-4h-4"/></svg></span>Transf.</button>
+  <button class="tab-btn" data-view="grafico"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V4M4 20h16M8 15l4-4 3 3 5-6"/></svg></span>Gráfico</button>
+  <button class="tab-btn" data-view="oportunidades"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-6 1-9z"/></svg></span>Boas</button>
+  <button class="tab-btn" data-view="mais"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></span>Mais</button>
 </nav>
 
 <div class="overlay" id="overlay">
@@ -2883,6 +2906,7 @@ function openPriceForm(price, presetItemId, repeatFrom, opts){
 function localOptionsHTML(selectedId){ return optionsHTML(LOCAIS, selectedId); }
 
 function renderPrecos(){
+  atualizarLimparPrecos();
   const q = semAcento(document.getElementById('pf-texto').value.trim());
   const de = document.getElementById('pf-de').value;
   const ate = document.getElementById('pf-ate').value;
@@ -2911,55 +2935,64 @@ function renderPrecos(){
   if(precoSelecionadoId!=null && !list.some(p=>p.id===precoSelecionadoId)) precoSelecionadoId = null;
   el.innerHTML = list.map(p=>{
     const item = itemById(p.itemId);
-    const cat = item ? catById(item.categoriaId) : null;
-    const subcat = item ? subcatById(item.subcategoriaId) : null;
     const localNome = localNomeDoPreco(p);
     const sel = precoSelecionadoId===p.id;
-    return `<div class="card ${sel?'selecionado':''}" data-id="${p.id}" data-type="preco">
-      <button type="button" class="select-toggle-zone ${sel?'on':''}" data-select><span class="select-dot"></span></button>
-      <div class="thumb-col">
-        ${item&&item.foto?`<img class="thumb" src="${item.foto}">`:`<div class="thumb-ph">💲</div>`}
-        <span class="badge-mini ${p.comprou?'badge-good':'badge-bad'}">${p.comprou?'Comprei':'Não comprei'}</span>
+    const qc = precoQtdECusto(p);
+    return `<div class="card pr-row ${sel?'selecionado':''}" data-id="${p.id}" data-type="preco">
+      <div class="pr-ft">
+        ${item&&item.foto?`<img class="pr-img" src="${item.foto}" alt="">`:`<div class="pr-img">💲</div>`}
+        ${p.comprou?'<span class="pr-comprei">Comprei</span>':''}
       </div>
-      <div class="body">
-        <div class="price-row">
-          <span class="name">${item?escapeHtml(item.nome):'(item removido)'}</span>
-          <span class="dots"></span>
-          <span class="val mono">${fmtMoney(p.preco)}</span>
+      <div class="pr-main">
+        <div class="pr-top">
+          <div class="pr-l">
+            <span class="pr-nome">${item?escapeHtml(item.nome):'(item removido)'}</span>
+            <span class="pr-meta">${fmtDateBR(p.data)}${localNome?' · '+escapeHtml(localNome):''}</span>
+          </div>
+          <div class="pr-r">
+            <span class="pr-preco mono">${fmtMoney(p.preco)}</span>
+            ${qc.custo?`<span class="pr-custo">${escapeHtml(qc.custo)}</span>`:''}
+            ${qc.qtd?`<span class="pr-qtd">${escapeHtml(qc.qtd)}</span>`:''}
+          </div>
         </div>
-        <div class="meta">${fmtDateBR(p.data)} ${localNome?' · '+escapeHtml(localNome):''} ${cat?' · '+escapeHtml(cat.nome):''}${subcat?' › '+escapeHtml(subcat.nome):''}</div>
-        ${precoQtdECustoTxt(p)?`<div class="meta"><strong>${escapeHtml(precoQtdECustoTxt(p))}</strong></div>`:''}
-        ${p.obs?`<div class="obs">${escapeHtml(p.obs)}</div>`:''}
+        ${p.obs?`<div class="pr-obs obs">${escapeHtml(p.obs)}</div>`:''}
+        ${sel?`<div class="pr-acoes">
+          <button type="button" class="pr-acao" data-act="edit">${PR_ICO.edit}Editar</button>
+          <button type="button" class="pr-acao" data-act="rep">${PR_ICO.rep}Repetir</button>
+          <button type="button" class="pr-acao" data-act="graf">${PR_ICO.graf}Gráfico</button>
+        </div>`:''}
       </div>
     </div>`;
   }).join('');
-  el.querySelectorAll('.card').forEach(card=>{
-    card.addEventListener('click', ()=>{
-      const id = Number(card.dataset.id);
-      openPriceForm(PRICES.find(p=>p.id===id));
-    });
-  });
-  el.querySelectorAll('[data-select]').forEach(btn=>{
-    btn.addEventListener('click', (e)=>{
-      e.stopPropagation();
-      const id = Number(e.target.closest('.card').dataset.id);
-      precoSelecionadoId = (precoSelecionadoId===id) ? null : id;
-      renderPrecos();
-    });
-  });
+  /* tocar na linha seleciona; tocar de novo desmarca; tocar em outra troca a seleção */
+  el.onclick = (e)=>{
+    const card = e.target.closest('.card');
+    if(!card) return;
+    const id = Number(card.dataset.id);
+    const act = e.target.closest('[data-act]');
+    if(act){
+      const price = PRICES.find(p=>p.id===id);
+      if(!price) return;
+      if(act.dataset.act==='edit'){ openPriceForm(price); return; }
+      if(!itemById(price.itemId)){ showToast('O item deste registro foi removido.'); return; }
+      if(act.dataset.act==='rep') openPriceForm(null, null, price);
+      else goToChart(price.itemId);
+      return;
+    }
+    precoSelecionadoId = (precoSelecionadoId===id) ? null : id;
+    renderPrecos();
+  };
 }
-document.getElementById('pl-repetir').addEventListener('click', ()=>{
-  const price = PRICES.find(p=>p.id===precoSelecionadoId);
-  if(!price){ showToast('Selecione um registro na lista primeiro.'); return; }
-  if(!itemById(price.itemId)){ showToast('O item deste registro foi removido.'); return; }
-  openPriceForm(null, null, price);
-});
-document.getElementById('pl-grafico').addEventListener('click', ()=>{
-  const price = PRICES.find(p=>p.id===precoSelecionadoId);
-  if(!price){ showToast('Selecione um registro na lista primeiro.'); return; }
-  if(!itemById(price.itemId)){ showToast('O item deste registro foi removido.'); return; }
-  goToChart(price.itemId);
-});
+const PR_ICO = {
+  edit:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
+  rep:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14-4M4 5v4h4M4 13a8 8 0 0 0 14 4M20 19v-4h-4"/></svg>',
+  graf:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V4M4 20h16M8 15l4-4 3 3 5-6"/></svg>'
+};
+/* "Limpar" só aparece quando há filtro ativo */
+function atualizarLimparPrecos(){
+  const ativo = ['pf-texto','pf-de','pf-ate','pf-cat','pf-item','pf-local'].some(id=>document.getElementById(id).value);
+  document.getElementById('pf-limpar-filtros').style.display = ativo ? '' : 'none';
+}
 
 /* ============================================================
    FILTROS (popular selects de categoria/item)
@@ -2967,7 +3000,9 @@ document.getElementById('pl-grafico').addEventListener('click', ()=>{
 /* ---- Padrão comum de "+ Filtros / - Filtros" usado em Preços, Itens e Gráfico ---- */
 function setFiltrosCollapsed(boxId, btnId, collapsed){
   document.getElementById(boxId).style.display = collapsed ? 'none' : 'block';
-  document.getElementById(btnId).textContent = collapsed ? '+ Filtros' : '- Filtros';
+  const btn = document.getElementById(btnId), lbl = btn.querySelector('.lbl');
+  if(lbl) lbl.textContent = collapsed ? 'Filtros' : 'Ocultar';
+  else btn.textContent = collapsed ? '+ Filtros' : '- Filtros';
 }
 function toggleFiltros(boxId, btnId){
   setFiltrosCollapsed(boxId, btnId, document.getElementById(boxId).style.display !== 'none');
@@ -3388,6 +3423,17 @@ function precoQtdECustoTxt(p){
   const emBase = paraBase(p.quantidadeRef, p.unidadeRefId);
   if(emBase>0 && p.preco!=null) partes.push(fmtCustoPorBase(p.preco/emBase, u.dimensao));
   return partes.join(' · ');
+}
+/* Igual a precoQtdECustoTxt, mas separado: {qtd:'700 ml', custo:'R$ 685,57/L'} */
+function precoQtdECusto(p){
+  const r = {qtd:'', custo:''};
+  if(!p || p.quantidadeRef==null || !p.unidadeRefId) return r;
+  const u = unidadeById(p.unidadeRefId);
+  if(!u) return r;
+  r.qtd = `${fmtQtd(p.quantidadeRef,u)} ${u.simbolo}`;
+  const emBase = paraBase(p.quantidadeRef, p.unidadeRefId);
+  if(emBase>0 && p.preco!=null) r.custo = fmtCustoPorBase(p.preco/emBase, u.dimensao);
+  return r;
 }
 function unidadePadraoDaDimensao(dimensao){
   if(!dimensao) return null;
@@ -8351,7 +8397,7 @@ applyDefaultsToUI();
 fillConfiguracoesForm();
 ativarTelaAcesa();
 /* ---- PWA: versão, armazenamento persistente e service worker ---- */
-const APP_VERSION = 'v1_76';
+const APP_VERSION = 'v1_77';
 document.getElementById('appVersaoTxt').textContent = APP_VERSION;
 if(navigator.storage && navigator.storage.persist){
   navigator.storage.persist().then(ok=>{
