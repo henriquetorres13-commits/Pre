@@ -290,6 +290,62 @@ html.dark header{background:#0D0F13;color:#ECE7DA;}
 .ajuda-p{margin:2px 0 4px!important;display:flex;align-items:flex-start;gap:6px}
 .ajuda-btn{flex:none;width:18px;height:18px;padding:0;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--ink-soft);font-size:11px;font-weight:700;line-height:16px;cursor:pointer}
 .ajuda-txt{flex:1;min-width:0}
+
+/* ---- Formulário de preço (v1_75): tela cheia, minimalista, sem cartões ---- */
+.overlay.full{align-items:stretch;background:var(--paper);}
+.overlay.full .sheet{height:100%;max-height:none;border-radius:0;padding:0;overflow:hidden;animation:fade .15s ease;}
+.pf{display:flex;flex-direction:column;height:100%;}
+.pf-top{flex:none;display:flex;align-items:center;justify-content:space-between;padding:10px 12px 6px 20px;min-height:56px;}
+.pf-top h3{margin:0;font-size:20px;}
+.pf-del{width:44px;height:44px;border-radius:50%;background:transparent;color:var(--danger);display:flex;align-items:center;justify-content:center;flex:none;}
+.pf-body{flex:1;min-height:0;overflow-y:auto;padding:0 20px 12px;display:flex;flex-direction:column;}
+.pf-prod{display:flex;align-items:center;gap:16px;width:100%;padding:4px 0 18px;background:transparent;color:var(--ink);text-align:left;font:inherit;cursor:pointer;flex:none;}
+.pf-foto{flex:0 0 33%;max-width:140px;aspect-ratio:1/1;border-radius:10px;object-fit:cover;background:var(--paper-alt);display:flex;align-items:center;justify-content:center;font-size:40px;}
+.pf-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;}
+.pf-nome{font-size:22px;font-weight:700;line-height:1.2;overflow-wrap:anywhere;}
+.pf-nome.vazio{color:var(--ink-soft);font-weight:600;}
+.pf-sub{font-size:13px;color:var(--ink-soft);}
+.pf-chev{display:flex;flex:none;color:var(--accent);}
+.pf-in{border:none;background:transparent;padding:0;border-radius:0;color:var(--ink);width:100%;font-family:inherit;}
+.pf-in:focus{outline:none;}
+.pf-preco{flex:none;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:4px 0 18px;border-bottom:1px solid var(--line);}
+.pf-preco-col{flex:1;min-width:0;}
+.pf-preco-linha{display:flex;align-items:baseline;gap:6px;}
+.pf-rs{font-size:22px;font-weight:700;color:var(--accent);}
+.pf-preco-linha .pf-in{font-size:50px;font-weight:800;letter-spacing:-.02em;}
+.pf-custo{font-size:13px;color:var(--ink-soft);min-height:18px;}
+.pf-qcol{flex:0 0 104px;display:flex;flex-direction:column;align-items:flex-end;}
+.pf-qcol .pf-in{font-size:26px;font-weight:700;text-align:right;border-bottom:1.5px solid var(--line);padding-bottom:2px;}
+.pf-qcol .pf-in:focus{border-bottom-color:var(--accent);}
+.pf-qcol .pf-in:disabled{opacity:.45;}
+.pf-un{position:relative;display:inline-flex;align-items:center;gap:2px;min-height:44px;color:var(--accent);font-size:17px;font-weight:700;}
+.pf-un select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;}
+.pf-row{display:flex;align-items:center;gap:12px;width:100%;padding:12px 0;background:transparent;border-bottom:1px solid var(--line);color:var(--ink);text-align:left;font:inherit;cursor:pointer;flex:none;}
+div.pf-row{cursor:default;}
+.pf-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;}
+.pf-lbl{display:block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);}
+.pf-val{font-size:17px;font-weight:600;}
+.pf-loc{display:flex;align-items:center;gap:10px;}
+.pf-datain{font-size:17px;font-weight:600;width:auto;}
+.pf-urlin{font-size:15px;text-overflow:ellipsis;}
+label.pf-comprei{margin:0;font-size:16px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink);cursor:pointer;}
+input.pf-switch{-webkit-appearance:none;appearance:none;width:56px;height:32px;padding:0;margin:0;flex:none;border-radius:16px;background:var(--paper-alt);border:1.5px solid var(--line);position:relative;cursor:pointer;transition:background .15s;}
+input.pf-switch::before{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--accent);transition:left .15s;}
+input.pf-switch:checked{background:var(--accent-soft);border-color:var(--accent);}
+input.pf-switch:checked::before{left:27px;}
+.pf-open{width:44px;height:44px;flex:none;background:transparent;color:var(--accent);display:flex;align-items:center;justify-content:center;}
+.pf-open:disabled{opacity:.35;cursor:default;}
+.pf-obs{width:100%;min-height:140px;flex:1;border:none;background:transparent;padding:6px 0 0;border-radius:0;font-size:17px;line-height:1.45;resize:none;}
+.pf-obs:focus{outline:none;}
+.pf-bar{flex:none;display:flex;align-items:center;gap:16px;padding:10px 20px calc(14px + env(safe-area-inset-bottom));background:var(--paper);}
+.pf-cancel{background:transparent;color:var(--ink-soft);font-weight:600;font-size:16px;padding:0 8px;height:52px;}
+.pf-save{flex:1;height:52px;border-radius:26px;background:var(--accent);color:#fff;font-weight:700;font-size:17px;}
+.loc-tile{width:36px;height:36px;border-radius:9px;object-fit:cover;flex:none;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px;}
+.loc-tile.g{width:48px;height:48px;border-radius:12px;font-size:16px;}
+.lp-topo{display:flex;align-items:center;gap:4px;margin-bottom:10px;}
+#lp-lista .pf-row{min-height:64px;padding:8px 0;}
+.ip-thumb{width:40px;height:40px;border-radius:8px;object-fit:cover;flex:none;border:1px solid var(--line);}
+.ip-thumb.ph{display:flex;align-items:center;justify-content:center;background:var(--paper-alt);font-size:16px;}
 </style>
 </head>
 <body>
@@ -1297,11 +1353,12 @@ function criarCamada(overlayId, sheetId){
       sh.innerHTML = html;
       ov.classList.add('active');
       ov.classList.toggle('top-anchored', !!(opts && opts.topAnchored));
+      ov.classList.toggle('full', !!(opts && opts.full));
       ov.scrollTop = 0;
       sh.scrollTop = 0;
       if(!jaAberto) pushModalHistory();   // reabrir por cima de uma camada já aberta não empilha outra entrada
     },
-    fecharDom(){ ov.classList.remove('active'); ov.classList.remove('top-anchored'); sh.innerHTML=''; c.dirty=false; c.salvando=false; },
+    fecharDom(){ ov.classList.remove('active'); ov.classList.remove('top-anchored'); ov.classList.remove('full'); sh.innerHTML=''; c.dirty=false; c.salvando=false; },
     fecharAgora(){
       const wasActive = c.ativa();
       c.fecharDom();
@@ -1493,7 +1550,7 @@ function openIngredientePicker({excluirReceitaId, onSelect, apenasItens}){
     });
     let html = '';
     const secao = (titulo, itens, tipo)=> itens.length ? `<div class="hint" style="margin-top:10px">${titulo}</div>` +
-      itens.map(x=>`<div class="card ip-row" style="cursor:pointer" data-tipo="${tipo}" data-id="${x.id}"><div class="body"><div class="title">${escapeHtml(x.nome)}</div></div></div>`).join('') : '';
+      itens.map(x=>`<div class="card ip-row" style="cursor:pointer;align-items:center" data-tipo="${tipo}" data-id="${x.id}">${tipo==='item'?(x.foto?`<img class="ip-thumb" src="${x.foto}" alt="" loading="lazy" decoding="async">`:`<span class="ip-thumb ph">💲</span>`):''}<div class="body"><div class="title">${escapeHtml(x.nome)}</div></div></div>`).join('') : '';
     html += secao(apenasItens?'':'Itens', itensFiltrados, 'item');
     html += secao('Grupos', gruposFiltrados, 'grupo');
     html += secao('Receitas (sub-receita)', receitasFiltradas, 'receita');
@@ -2544,105 +2601,262 @@ document.getElementById('btnDuplicatas').addEventListener('click', openDuplicate
 /* ============================================================
    PREÇOS
    ============================================================ */
+/* ---- Ícones do formulário de preço (v1_75) ---- */
+const PF_ICO = {
+  dir:   '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>',
+  baixo: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
+  lixo:  '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v5M14 11v5"/></svg>',
+  abrir: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>',
+  voltar:'<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>',
+  check: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>'
+};
+
+/* ---- Miniatura de local: foto do local ou quadradinho colorido com as iniciais (cor fixa pelo nome) ---- */
+const LOC_CORES = [['#1f6f78','#2f9aa3'],['#7a2f4a','#b2577a'],['#4a5a1f','#7f9a34'],['#5a3b8c','#8a64c4'],['#8a4b14','#c9792b'],['#2f4f8a','#5b86c9']];
+function localIniciais(nome){
+  const p = (nome||'').trim().split(/\s+/).filter(Boolean);
+  if(!p.length) return '?';
+  if(/^[A-Z]{2,3}$/.test(p[0])) return p[0];   // sigla já escrita no nome (ex.: "GW Imports" -> GW)
+  return (p.length>1 ? p[0][0]+p[1][0] : p[0].slice(0,2)).toUpperCase();
+}
+function localTileHTML(l, grande){
+  const cls = 'loc-tile' + (grande ? ' g' : '');
+  if(l && l.foto) return `<img class="${cls}" src="${l.foto}" alt="">`;
+  const nome = l ? l.nome : '';
+  let h = 0; for(const ch of nome) h = (h*31 + ch.charCodeAt(0)) >>> 0;
+  const [a,b] = LOC_CORES[h % LOC_CORES.length];
+  return `<span class="${cls}" style="background:linear-gradient(150deg,${a},${b})">${escapeHtml(localIniciais(nome))}</span>`;
+}
+
+/* ---- Link do produto: aceita "site.com/produto" (assume https) e só abre http/https ---- */
+function normalizarUrl(s){
+  s = (s||'').trim();
+  if(!s) return '';
+  if(!/^[a-z][a-z0-9+.-]*:/i.test(s)) s = 'https://' + s;
+  return s;
+}
+function urlValida(s){
+  try{ const u = new URL(s); return u.protocol==='http:' || u.protocol==='https:'; }catch(e){ return false; }
+}
+
+/* ---- Lista para escolher o local (sub-sheet em tela cheia): miniatura + nome, "Novo local" no topo ----
+   opts: {selectedId, onSelect(id|null), onNovo()} */
+function openLocalPicker(opts){
+  const sel = opts.selectedId;
+  openSubSheet(`
+    <div class="lp-topo">
+      <button type="button" class="pf-del" id="lp-fechar" aria-label="Voltar" style="color:var(--ink)">${PF_ICO.voltar}</button>
+      <h3 style="margin:0">Local</h3>
+    </div>
+    <div class="searchbar"><div class="search-wrap"><input type="text" id="lp-texto" placeholder="Buscar local..." autocomplete="off"><button type="button" class="search-clear" data-target="lp-texto" aria-label="Limpar">✕</button></div></div>
+    <div id="lp-lista"></div>
+  `);
+  const lista = document.getElementById('lp-lista');
+  function render(){
+    const q = semAcento(document.getElementById('lp-texto').value.trim());
+    const locais = LOCAIS.filter(l=> !q || semAcento(l.nome).includes(q));
+    let html = `<button type="button" class="pf-row" id="lp-novo" style="color:var(--accent);font-weight:700"><span class="loc-tile g" style="border:1.5px dashed var(--accent);font-size:26px;font-weight:300">+</span>Novo local</button>`;
+    html += locais.map(l=>`<button type="button" class="pf-row" data-id="${l.id}">${localTileHTML(l,true)}<span class="pf-val" style="flex:1;min-width:0;overflow-wrap:anywhere">${escapeHtml(l.nome)}</span>${l.id===sel?PF_ICO.check:''}</button>`).join('');
+    if(!q) html += `<button type="button" class="pf-row" data-id=""><span class="loc-tile g" style="background:var(--paper-alt);color:var(--ink-soft)">—</span><span class="pf-val" style="flex:1;color:var(--ink-soft)">Sem local</span>${sel==null?PF_ICO.check:''}</button>`;
+    lista.innerHTML = html;
+  }
+  render();
+  document.getElementById('lp-texto').addEventListener('input', render);
+  document.getElementById('lp-fechar').addEventListener('click', closeSubSheet);
+  lista.addEventListener('click', (e)=>{
+    const b = e.target.closest('button'); if(!b) return;
+    if(b.id==='lp-novo'){ opts.onNovo(); return; }
+    const id = b.dataset.id ? Number(b.dataset.id) : null;
+    closeSubSheet();
+    opts.onSelect(id);
+  });
+}
+
+/* ---- Formulário de preço (v1_75): tela cheia, sem cartões ----
+   topo: foto (1/3) + nome do produto (toque = lista de produtos); preço grande + custo por kg/L/un; quantidade e unidade ao lado;
+   depois local (lista com miniaturas), data + "Comprei" (interruptor), link do produto e observação. */
 function openPriceForm(price, presetItemId, repeatFrom, opts){
   const editing = !!price;
   const base = editing ? price : (repeatFrom || null);
   const today = todayLocal();
+  const itemIdInicial = base ? base.itemId : (presetItemId || null);
+  const localIdInicial = base ? base.localId : null;
+  const titulo = editing ? 'Editar preço' : ((opts&&opts.titulo) || (repeatFrom ? 'Repetir preço' : 'Novo preço'));
   openSheet(`
-    <h3>${editing?'Editar preço':((opts&&opts.titulo)||(repeatFrom?'Repetir preço':'Novo preço'))}</h3>
-    <label>Item</label>
-    <select id="p-item">${ITEMS.length?itemOptionsHTML(base?base.itemId:presetItemId):'<option value="">Cadastre um item primeiro</option>'}</select>
-    <label>Preço</label>
-    <input type="text" id="p-preco" class="mono" placeholder="0,00">
-    <label>Quantidade de referência <span style="font-weight:400;text-transform:none">(opcional — ex: "pacote de 200g")</span></label>
-    <div class="grid2">
-      <input type="text" id="p-ref-qtd" placeholder="Ex: 200">
-      <select id="p-ref-unidade"><option value="">Unidade</option></select>
+    <div class="pf">
+      <div class="pf-top">
+        <h3>${titulo}</h3>
+        ${editing?`<button type="button" class="pf-del" id="p-del" aria-label="Excluir preço">${PF_ICO.lixo}</button>`:''}
+      </div>
+      <div class="pf-body">
+        <button type="button" class="pf-prod" id="p-item-btn"></button>
+        <input type="hidden" id="p-item" value="${itemIdInicial||''}">
+        <div class="pf-preco">
+          <div class="pf-preco-col">
+            <div class="pf-preco-linha"><span class="pf-rs">R$</span><input type="text" id="p-preco" class="pf-in" aria-label="Preço" placeholder="0,00"></div>
+            <div class="pf-custo" id="p-custo"></div>
+          </div>
+          <div class="pf-qcol">
+            <input type="text" id="p-ref-qtd" class="pf-in" aria-label="Quantidade" placeholder="Qtd">
+            <span class="pf-un"><span id="p-un-txt">unidade</span>${PF_ICO.baixo}<select id="p-ref-unidade" aria-label="Unidade de medida"><option value="">Unidade</option></select></span>
+          </div>
+        </div>
+        <p class="hint ajuda-p" id="p-ref-ajuda" style="display:none"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" id="p-ref-ajuda-txt" hidden></span></p>
+        <button type="button" class="pf-row" id="p-local-btn">
+          <span class="pf-col"><span class="pf-lbl">Local</span><span id="p-local-conteudo"></span></span>
+          <span class="pf-chev">${PF_ICO.dir}</span>
+        </button>
+        <input type="hidden" id="p-local" value="${localIdInicial||''}">
+        <div class="pf-row">
+          <div class="pf-col"><span class="pf-lbl">Data</span><input type="date" id="p-data" class="pf-in pf-datain" aria-label="Data em que verificou" value="${editing?price.data:today}"></div>
+          <label for="p-comprou" class="pf-comprei">Comprei</label>
+          <input type="checkbox" role="switch" id="p-comprou" class="pf-switch" ${base && base.comprou?'checked':''}>
+        </div>
+        <div class="pf-row" style="padding-top:8px;padding-bottom:8px">
+          <div class="pf-col"><span class="pf-lbl">Link do produto</span><input type="text" id="p-url" class="pf-in pf-urlin" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Cole o endereço do site" value="${escapeHtml((base&&base.url)||'')}"></div>
+          <button type="button" class="pf-open" id="p-url-abrir" aria-label="Abrir link do produto">${PF_ICO.abrir}</button>
+        </div>
+        <span class="pf-lbl" style="margin-top:14px">Observação</span>
+        <textarea id="p-obs" class="pf-obs" placeholder="Observações sobre este preço">${base?escapeHtml(base.obs||''):''}</textarea>
+      </div>
+      <div class="pf-bar">
+        <button type="button" class="pf-cancel" id="p-cancel">Cancelar</button>
+        <button type="button" class="pf-save" id="p-save">Salvar</button>
+      </div>
     </div>
-    <p class="hint" id="p-ref-hint" style="margin-top:2px"></p>
-    <label>Data em que verificou</label>
-    <input type="date" id="p-data" value="${editing?price.data:today}">
-    <label>Onde verificou</label>
-    <div style="display:flex;gap:8px">
-      <select id="p-local" style="flex:1"><option value="">${LOCAIS.length?'Não informado':'Nenhum local cadastrado ainda'}</option>${localOptionsHTML(base?base.localId:null)}</select>
-      <button class="btn btn-outline btn-sm" id="p-local-add" type="button" style="flex:none">+ Novo</button>
-    </div>
-    <div class="check-row">
-      <input type="checkbox" id="p-comprou" ${base && base.comprou?'checked':''}>
-      <label style="margin:0" for="p-comprou">Comprei</label>
-    </div>
-    <label>Observação</label>
-    <textarea id="p-obs" placeholder="Observações sobre este preço">${base?escapeHtml(base.obs||''):''}</textarea>
-    <div class="sheet-actions">
-      ${editing?`<button class="btn btn-danger" id="p-del">Excluir</button>`:''}
-      <button class="btn btn-outline" id="p-cancel">Cancelar</button>
-      <button class="btn btn-accent btn-block" id="p-save">Salvar</button>
-    </div>
-  `);
-  attachMoneyMask(document.getElementById('p-preco'), base?base.preco:null);
-  attachQtyMask(document.getElementById('p-ref-qtd'), base&&base.quantidadeRef!=null?base.quantidadeRef:null);
-  function refreshRefUnidadeOptions(itemId, selectedUnidadeId){
-    const item = ITEMS.find(i=>i.id===Number(itemId));
-    const sel = document.getElementById('p-ref-unidade');
-    const hint = document.getElementById('p-ref-hint');
-    const qtdInput = document.getElementById('p-ref-qtd');
-    if(!item || !item.dimensaoReferencia){
-      sel.innerHTML = '<option value="">Unidade</option>';
-      sel.disabled = true; qtdInput.disabled = true; qtdInput.value = ''; qtdInput.dataset.raw = '';
-      hint.textContent = 'Defina a "dimensão de referência" no cadastro deste item pra poder informar a quantidade do pacote aqui.';
-      return;
-    }
-    const opts = UNIDADES.filter(u=>u.dimensao===item.dimensaoReferencia)
-      .map(u=>`<option value="${u.id}" ${u.id===selectedUnidadeId?'selected':''}>${escapeHtml(u.nome)} (${escapeHtml(u.simbolo)})</option>`).join('');
-    sel.innerHTML = '<option value="">Unidade</option>' + opts;
-    sel.disabled = false; qtdInput.disabled = false;
-    hint.textContent = 'Ex: se este preço é de um pacote de 200g, informe 200 e "Grama".';
+  `, {full:true});
+
+  const $ = id => document.getElementById(id);
+  const pItem = $('p-item'), pLocal = $('p-local'), pPreco = $('p-preco'), pQtd = $('p-ref-qtd'), pUn = $('p-ref-unidade'), pUrl = $('p-url');
+  attachMoneyMask(pPreco, base ? base.preco : null);
+  attachQtyMask(pQtd, base && base.quantidadeRef!=null ? base.quantidadeRef : null);
+  const marcarAlterado = ()=>{ camadaMain.dirty = true; camadaMain.salvando = false; };
+
+  /* produto */
+  function renderItemBtn(){
+    const it = pItem.value ? itemById(Number(pItem.value)) : null;
+    const foto = it && it.foto ? `<img class="pf-foto" src="${it.foto}" alt="">` : `<span class="pf-foto">💲</span>`;
+    let sub = '';
+    if(it){ const c = catById(it.categoriaId), s = subcatById(it.subcategoriaId); sub = [c&&c.nome, s&&s.nome].filter(Boolean).join(' › '); }
+    const nome = it ? escapeHtml(it.nome) : (ITEMS.length ? 'Escolher produto' : 'Cadastre um item primeiro');
+    $('p-item-btn').innerHTML = `${foto}<span class="pf-txt"><span class="pf-nome${it?'':' vazio'}">${nome}</span>${sub?`<span class="pf-sub">${escapeHtml(sub)}</span>`:''}</span><span class="pf-chev">${PF_ICO.dir}</span>`;
+    $('p-item-btn').setAttribute('aria-label', it ? `Produto: ${it.nome}. Toque para trocar` : 'Escolher produto');
   }
-  const pItemSel = document.getElementById('p-item');
-  const initialItemId = pItemSel.value ? Number(pItemSel.value) : null;
-  const initialUnidade = (base && base.unidadeRefId!=null)
-    ? base.unidadeRefId
-    : (editing ? null : unidadeSugeridaParaAlvo('item', initialItemId));
-  refreshRefUnidadeOptions(initialItemId, initialUnidade);
-  document.getElementById('p-item').addEventListener('change', (e)=>{
-    const sugerida = editing ? null : unidadeSugeridaParaAlvo('item', e.target.value);
-    refreshRefUnidadeOptions(e.target.value, sugerida);
+
+  /* local */
+  function renderLocalBtn(){
+    const l = pLocal.value ? localById(Number(pLocal.value)) : null;
+    $('p-local-conteudo').innerHTML = l
+      ? `<span class="pf-loc">${localTileHTML(l)}<span class="pf-val">${escapeHtml(l.nome)}</span></span>`
+      : `<span class="pf-val" style="color:var(--ink-soft)">Não informado</span>`;
+  }
+
+  /* preço, quantidade e unidade */
+  function fitPreco(){
+    const n = pPreco.value.length;
+    pPreco.style.fontSize = (n<=6 ? 50 : n<=8 ? 42 : n<=10 ? 34 : 28) + 'px';
+  }
+  function atualizarUnTxt(){
+    const u = pUn.value ? unidadeById(Number(pUn.value)) : null;
+    $('p-un-txt').textContent = u ? u.simbolo : 'unidade';
+  }
+  function atualizarCusto(){
+    const preco = getMoneyValue(pPreco), qtd = getQtyValue(pQtd);
+    let txt = '';
+    if(preco>0 && qtd>0 && pUn.value && !pUn.disabled){
+      const u = unidadeById(Number(pUn.value));
+      const emBase = u ? paraBase(qtd, u.id) : null;
+      if(emBase>0) txt = fmtCustoPorBase(preco/emBase, u.dimensao);
+    }
+    $('p-custo').textContent = txt;
+  }
+  function refreshRefUnidadeOptions(itemId, selectedUnidadeId){
+    const item = itemId ? itemById(Number(itemId)) : null;
+    if(!item || !item.dimensaoReferencia){
+      pUn.innerHTML = '<option value="">Unidade</option>';
+      pUn.disabled = true; pQtd.disabled = true; pQtd.dataset.raw = ''; pQtd.value = '';
+      $('p-ref-ajuda-txt').textContent = item
+        ? 'Defina a "dimensão de referência" no cadastro deste item pra poder informar a quantidade do pacote aqui.'
+        : 'Escolha o produto pra poder informar a quantidade do pacote.';
+      $('p-ref-ajuda').style.display = 'flex';
+    } else {
+      const ops = UNIDADES.filter(u=>u.dimensao===item.dimensaoReferencia)
+        .map(u=>`<option value="${u.id}" ${u.id===selectedUnidadeId?'selected':''}>${escapeHtml(u.nome)} (${escapeHtml(u.simbolo)})</option>`).join('');
+      pUn.innerHTML = '<option value="">Unidade</option>' + ops;
+      pUn.disabled = false; pQtd.disabled = false;
+      $('p-ref-ajuda').style.display = 'none';
+    }
+    atualizarUnTxt(); atualizarCusto();
+  }
+
+  /* link do produto */
+  function atualizarUrlBtn(){ $('p-url-abrir').disabled = !pUrl.value.trim(); }
+  /* preço novo: sugere o link do último preço deste produto que tenha link (só se o campo estiver vazio) */
+  function sugerirUrl(){
+    if(editing || pUrl.value.trim()) return;
+    const id = Number(pItem.value); if(!id) return;
+    const ult = PRICES.filter(p=>p.itemId===id && p.url).sort((a,b)=> (b.data||'').localeCompare(a.data||'') || b.id-a.id)[0];
+    if(ult){ pUrl.value = ult.url; atualizarUrlBtn(); }
+  }
+
+  pPreco.addEventListener('input', ()=>{ fitPreco(); atualizarCusto(); });
+  pQtd.addEventListener('input', atualizarCusto);
+  pUn.addEventListener('change', ()=>{ atualizarUnTxt(); atualizarCusto(); });
+  pUrl.addEventListener('input', atualizarUrlBtn);
+
+  $('p-item-btn').addEventListener('click', ()=>{
+    if(!ITEMS.length){ avisar('Cadastre um item primeiro (aba Itens).'); return; }
+    openIngredientePicker({apenasItens:true, onSelect:(tipo, id)=>{
+      pItem.value = String(id);
+      renderItemBtn();
+      marcarAlterado();
+      refreshRefUnidadeOptions(id, editing ? null : unidadeSugeridaParaAlvo('item', id));
+      sugerirUrl();
+    }});
   });
-  document.getElementById('p-local-add').addEventListener('click', async ()=>{
-    const nome = await perguntar('Nome do local:');
-    if(!nome || !nome.trim()) return;
-    const id = await putRecord('locais', {nome:nome.trim(), obs:''});
-    LOCAIS.push({id, nome:nome.trim(), obs:''});
-    LOCAIS.sort((a,b)=>a.nome.localeCompare(b.nome));
-    const sel = document.getElementById('p-local');
-    sel.innerHTML = localOptionsHTML(id);
+  $('p-local-btn').addEventListener('click', ()=>{
+    openLocalPicker({
+      selectedId: pLocal.value ? Number(pLocal.value) : null,
+      onSelect: (id)=>{ pLocal.value = id ? String(id) : ''; renderLocalBtn(); marcarAlterado(); },
+      onNovo: ()=> openLocalForm(null, {level:'sub2', onSaved:(id)=>{
+        closeSubSheet();
+        pLocal.value = String(id); renderLocalBtn(); marcarAlterado();
+      }})
+    });
   });
-  document.getElementById('p-cancel').addEventListener('click', closeSheet);
+  $('p-url-abrir').addEventListener('click', ()=>{
+    const u = normalizarUrl(pUrl.value);
+    if(!u) return;
+    if(!urlValida(u)){ avisar('Esse endereço não parece um link válido.'); return; }
+    window.open(u, '_blank', 'noopener');
+  });
+  $('p-cancel').addEventListener('click', closeSheet);
   if(editing){
-    document.getElementById('p-del').addEventListener('click', async ()=>{
+    $('p-del').addEventListener('click', async ()=>{
       if(!await confirmar('Excluir este registro de preço?')) return;
       await deleteRecord('precos', price.id);
       await reloadAll(); closeSheet(); renderCurrent();
     });
   }
-  document.getElementById('p-save').addEventListener('click', async ()=>{
-    const itemId = Number(document.getElementById('p-item').value);
-    const preco = getMoneyValue(document.getElementById('p-preco'));
-    const data = document.getElementById('p-data').value;
-    if(!itemId){ avisar('Selecione um item.'); return; }
+  $('p-save').addEventListener('click', async ()=>{
+    const itemId = Number(pItem.value);
+    const preco = getMoneyValue(pPreco);
+    const data = $('p-data').value;
+    if(!itemId){ avisar('Selecione um produto.'); return; }
     if(!preco || preco<=0){ avisar('Informe o preço.'); return; }
     if(!data){ avisar('Informe a data.'); return; }
+    const url = normalizarUrl(pUrl.value);
+    if(url && !urlValida(url)){ avisar('O link do produto não parece um endereço válido.'); return; }
     const obj = editing ? {...price} : {};
     obj.itemId = itemId;
     obj.preco = preco;
     obj.data = data;
-    obj.localId = document.getElementById('p-local').value ? Number(document.getElementById('p-local').value) : null;
-    obj.comprou = document.getElementById('p-comprou').checked;
-    const refQtdEl = document.getElementById('p-ref-qtd');
-    const refUnEl = document.getElementById('p-ref-unidade');
-    obj.quantidadeRef = (!refQtdEl.disabled && getQtyValue(refQtdEl)!=null) ? getQtyValue(refQtdEl) : null;
-    obj.unidadeRefId = (!refUnEl.disabled && refUnEl.value) ? Number(refUnEl.value) : null;
-    obj.obs = document.getElementById('p-obs').value.trim();
+    obj.localId = pLocal.value ? Number(pLocal.value) : null;
+    obj.comprou = $('p-comprou').checked;
+    obj.quantidadeRef = (!pQtd.disabled && getQtyValue(pQtd)!=null) ? getQtyValue(pQtd) : null;
+    obj.unidadeRefId = (!pUn.disabled && pUn.value) ? Number(pUn.value) : null;
+    obj.obs = $('p-obs').value.trim();
+    if(url) obj.url = url; else delete obj.url;
     const savedId = await putRecord('precos', obj);
     obj.id = savedId;
     await reloadAll();
@@ -2653,6 +2867,18 @@ function openPriceForm(price, presetItemId, repeatFrom, opts){
       showToast(`🔥 Bom preço! Está entre os ${Math.max(1,bom.pct)}% mais baratos do histórico deste item (mediana ${fmtMoney(bom.mediana)}).`);
     }
   });
+
+  /* estado inicial */
+  const initialItemId = pItem.value ? Number(pItem.value) : null;
+  const initialUnidade = (base && base.unidadeRefId!=null)
+    ? base.unidadeRefId
+    : (editing ? null : unidadeSugeridaParaAlvo('item', initialItemId));
+  renderItemBtn();
+  renderLocalBtn();
+  fitPreco();
+  refreshRefUnidadeOptions(initialItemId, initialUnidade);
+  sugerirUrl();
+  atualizarUrlBtn();
 }
 function localOptionsHTML(selectedId){ return optionsHTML(LOCAIS, selectedId); }
 
@@ -5942,12 +6168,23 @@ function renderReceitas(){
 /* ============================================================
    LOCAIS
    ============================================================ */
-function openLocalForm(local){
+/* opts (opcional): {level:'sub2'|true|falsy} camada em que abre (padrão: sheet principal); {onSaved:fn(id)} chamado depois de salvar
+   (usado pelo "Novo local" da lista de locais do formulário de preço). Foto (v1_75): campo `foto` no registro do local, miniatura redimensionada. */
+function openLocalForm(local, opts){
+  opts = opts || {};
+  const level = opts.level || null;
+  const camada = level==='sub2' ? camadaSub2 : (level ? camadaSub : camadaMain);
   const editing = !!local;
-  openSheet(`
+  openLayer(`
     <h3>${editing?'Editar local':'Novo local'}</h3>
     <label>Nome</label>
     <input type="text" id="l-nome" value="${editing?escapeHtml(local.nome):''}" placeholder="Ex: Mercado São José">
+    <label>Foto</label>
+    <div class="photo-pick">
+      ${editing && local.foto ? `<img id="l-foto-preview" src="${local.foto}">` : `<div class="ph" id="l-foto-preview">📍</div>`}
+      <input type="file" accept="image/*" id="l-foto-input" style="width:auto">
+    </div>
+    <button type="button" class="btn btn-outline btn-xs" id="l-foto-remover" style="margin-top:6px;${editing && local.foto?'':'display:none'}">Remover foto</button>
     <label>Observação</label>
     <textarea id="l-obs" placeholder="Observações sobre o local">${editing?escapeHtml(local.obs||''):''}</textarea>
     <div class="sheet-actions">
@@ -5955,15 +6192,34 @@ function openLocalForm(local){
       <button class="btn btn-outline" id="l-cancel">Cancelar</button>
       <button class="btn btn-accent btn-block" id="l-save">Salvar</button>
     </div>
-  `);
-  document.getElementById('l-cancel').addEventListener('click', closeSheet);
+  `, level);
+  let fotoData = editing ? (local.foto||null) : null;
+  function trocarPreview(src){
+    const prev = document.getElementById('l-foto-preview');
+    let novo;
+    if(src){ novo = document.createElement('img'); novo.src = src; }
+    else { novo = document.createElement('div'); novo.className = 'ph'; novo.textContent = '📍'; }
+    novo.id = 'l-foto-preview';
+    prev.replaceWith(novo);
+    document.getElementById('l-foto-remover').style.display = src ? '' : 'none';
+  }
+  document.getElementById('l-foto-input').addEventListener('change', async (e)=>{
+    const f = e.target.files[0]; if(!f) return;
+    fotoData = await resizeImage(f, 480, 0.75);
+    trocarPreview(fotoData);
+  });
+  document.getElementById('l-foto-remover').addEventListener('click', ()=>{
+    fotoData = null; trocarPreview(null);
+    camada.dirty = true; camada.salvando = false;
+  });
+  document.getElementById('l-cancel').addEventListener('click', ()=> closeLayer(level));
   if(editing){
     document.getElementById('l-del').addEventListener('click', async ()=>{
       const nUsos = PRICES.filter(p=>p.localId===local.id).length;
       if(!await confirmar(`Excluir este local? ${nUsos} registro(s) de preço ligados a ele ficarão sem local.`)) return;
       await deleteRecord('locais', local.id);
       for(const p of PRICES.filter(p=>p.localId===local.id)){ p.localId=null; await putRecord('precos', p); }
-      await reloadAll(); closeSheet(); renderCurrent();
+      await reloadAll(); closeLayer(level); renderCurrent();
     });
   }
   document.getElementById('l-save').addEventListener('click', async ()=>{
@@ -5972,8 +6228,10 @@ function openLocalForm(local){
     const obj = editing ? {...local} : {};
     obj.nome = nome;
     obj.obs = document.getElementById('l-obs').value.trim();
-    await putRecord('locais', obj);
-    await reloadAll(); closeSheet(); renderCurrent();
+    if(fotoData) obj.foto = fotoData; else delete obj.foto;
+    const savedId = await putRecord('locais', obj);
+    await reloadAll(); closeLayer(level); renderCurrent();
+    if(opts.onSaved) opts.onSaved(savedId);
   });
 }
 
@@ -5985,7 +6243,7 @@ function renderLocais(){
   el.innerHTML = list.map(l=>{
     const nUsos = PRICES.filter(p=>p.localId===l.id).length;
     return `<div class="card" data-id="${l.id}" data-type="local">
-      <div class="thumb-ph">📍</div>
+      ${l.foto ? `<img class="thumb" src="${l.foto}">` : `<div class="thumb-ph">📍</div>`}
       <div class="body">
         <div class="title">${escapeHtml(l.nome)}</div>
         <div class="meta">${nUsos} ${nUsos===1?'registro de preço':'registros de preço'}</div>
@@ -8093,7 +8351,7 @@ applyDefaultsToUI();
 fillConfiguracoesForm();
 ativarTelaAcesa();
 /* ---- PWA: versão, armazenamento persistente e service worker ---- */
-const APP_VERSION = 'v1_74';
+const APP_VERSION = 'v1_75';
 document.getElementById('appVersaoTxt').textContent = APP_VERSION;
 if(navigator.storage && navigator.storage.persist){
   navigator.storage.persist().then(ok=>{
