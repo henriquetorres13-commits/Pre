@@ -356,6 +356,27 @@ input.pf-switch:checked::before{left:27px;}
 .pl-busca input[type=text]:focus{border:none;}
 .pl-txtbtn{flex:none;height:44px;padding:0 4px;background:transparent;color:var(--ink-soft);font-weight:700;font-size:15px;display:inline-flex;align-items:center;gap:6px;}
 .pl-txtbtn.accent{color:var(--accent);}
+/* ---- Filtros da lista de Preços (v1_78): campos em linha, sem caixas ---- */
+.pf-filtros{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px;row-gap:6px;padding:10px 0 8px;}
+.pf-filtros .span2{grid-column:span 2;}
+.pf-filtros select[hidden]{display:none;}
+.pf-campo,.pf-filtros input[type=date]{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;height:38px;padding:0;margin:0;border:none;border-bottom:1px solid var(--line);border-radius:0;background:transparent;color:var(--ink-soft);font:inherit;font-size:16px;text-align:left;cursor:pointer;}
+.pf-filtros input[type=date]{display:block;}
+.pf-campo .v{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pf-campo svg{flex:none;}
+.pf-campo.ativo,.pf-filtros input[type=date].ativo{color:var(--accent);border-bottom-color:var(--accent);font-weight:600;}
+.pf-filtros input[type=date]:focus{outline:none;border-bottom-color:var(--accent);}
+/* ---- Lista de opções dos filtros (v1_78): folha de baixo, linhas finas, sem bolinhas ---- */
+.lo{display:flex;flex-direction:column;max-height:calc(92vh - 32px - env(safe-area-inset-bottom));}
+.lo-handle{align-self:center;flex:none;width:36px;height:4px;border-radius:2px;background:var(--line);margin:-6px 0 14px;}
+.lo-tit{flex:none;padding:0 0 4px;}
+.lo .pl-busca{flex:none;margin-bottom:4px;}
+.lo-lista{flex:1;min-height:0;overflow-y:auto;}
+.lo-row{display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;min-height:52px;padding:6px 0;background:transparent;border-bottom:1px solid var(--line);color:var(--ink);font:inherit;font-size:17px;text-align:left;cursor:pointer;}
+.lo-row .t{flex:1;min-width:0;overflow-wrap:anywhere;}
+.lo-row.sel{color:var(--accent);font-weight:700;}
+.lo-row .ck{flex:none;display:flex;}
+.lo-vazio{padding:20px 0;color:var(--ink-soft);}
 .card.pr-row{border:none;border-bottom:1px solid var(--line);border-left:3px solid transparent;border-radius:0;background:none;
   padding:14px 0 14px 10px;margin:0 0 0 -10px;gap:14px;}
 .card.pr-row:active{background:none;}
@@ -394,20 +415,17 @@ input.pf-switch:checked::before{left:27px;}
     <div class="pl-busca">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <div class="search-wrap"><input type="text" id="pf-texto" placeholder="Item ou categoria" aria-label="Buscar item ou categoria"><button type="button" class="search-clear" data-target="pf-texto" aria-label="Limpar">✕</button></div>
-      <button class="pl-txtbtn" id="pf-limpar-filtros" type="button" style="display:none">Limpar</button>
+      <button class="pl-txtbtn" id="pf-limpar-filtros" type="button" style="display:none"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>Limpar</button>
       <button class="pl-txtbtn accent" id="pf-toggle-filtros" type="button"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg><span class="lbl">Filtros</span></button>
     </div>
     <div id="pf-filtros-extra" style="display:none">
-      <div class="grid2">
-        <div><label>De</label><input type="date" id="pf-de"></div>
-        <div><label>Até</label><input type="date" id="pf-ate"></div>
+      <div class="pf-filtros">
+        <div><span class="pf-lbl">De</span><input type="date" id="pf-de" aria-label="De"></div>
+        <div><span class="pf-lbl">Até</span><input type="date" id="pf-ate" aria-label="Até"></div>
+        <div><span class="pf-lbl">Categoria</span><button type="button" class="pf-campo" data-sel="pf-cat" data-titulo="Categoria"><span class="v">Todas</span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><select id="pf-cat" hidden><option value="">Todas</option></select></div>
+        <div><span class="pf-lbl">Item</span><button type="button" class="pf-campo" data-sel="pf-item" data-titulo="Item"><span class="v">Todos</span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><select id="pf-item" hidden><option value="">Todos</option></select></div>
+        <div class="span2"><span class="pf-lbl">Local</span><button type="button" class="pf-campo" data-sel="pf-local" data-titulo="Local"><span class="v">Todos</span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><select id="pf-local" hidden><option value="">Todos</option></select></div>
       </div>
-      <div class="grid2" style="margin-top:8px">
-        <div><label>Categoria</label><select id="pf-cat"><option value="">Todas</option></select></div>
-        <div><label>Item</label><select id="pf-item"><option value="">Todos</option></select></div>
-      </div>
-      <label>Local</label>
-      <select id="pf-local"><option value="">Todos</option></select>
     </div>
     <div id="lista-precos" style="margin-top:4px"></div>
   </section>
@@ -943,7 +961,7 @@ async function removerUnidadesObsoletasSeNecessario(){
 /* ============================================================
    UTILS
    ============================================================ */
-function fmtMoney(v){ return 'R$ ' + Number(v).toFixed(2).replace('.', ','); }
+function fmtMoney(v){ return 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}); }
 /* Padroniza casas decimais de quantidades pra exibição: peso abaixo de 100 usa 2 casas, a partir de 100 usa 0;
    outras dimensões (volume, unidade) mantêm a formatação simples de sempre. */
 function fmtQtd(valor, unidade){
@@ -2906,6 +2924,7 @@ function openPriceForm(price, presetItemId, repeatFrom, opts){
 function localOptionsHTML(selectedId){ return optionsHTML(LOCAIS, selectedId); }
 
 function renderPrecos(){
+  syncFiltrosPrecos();
   atualizarLimparPrecos();
   const q = semAcento(document.getElementById('pf-texto').value.trim());
   const de = document.getElementById('pf-de').value;
@@ -2988,6 +3007,67 @@ const PR_ICO = {
   rep:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14-4M4 5v4h4M4 13a8 8 0 0 0 14 4M20 19v-4h-4"/></svg>',
   graf:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V4M4 20h16M8 15l4-4 3 3 5-6"/></svg>'
 };
+/* Mostra nos campos dos filtros o texto da opção escolhida nos <select> escondidos (que continuam sendo a fonte do valor) */
+function syncFiltrosPrecos(){
+  document.querySelectorAll('#pf-filtros-extra .pf-campo').forEach(b=>{
+    const s = document.getElementById(b.dataset.sel);
+    const o = s.options[s.selectedIndex] || s.options[0];
+    b.querySelector('.v').textContent = o ? o.textContent : '';
+    b.classList.toggle('ativo', !!s.value);
+  });
+  ['pf-de','pf-ate'].forEach(id=>{
+    const e = document.getElementById(id);
+    e.classList.toggle('ativo', !!e.value);
+  });
+}
+/* Lista de opções de um filtro (folha de baixo): linhas finas, a escolhida em laranja com ✓, busca quando a lista é longa.
+   Tocar numa opção aplica e fecha. thumbFn(valor) opcional devolve a miniatura (HTML) de cada opção. */
+function openListaOpcoes(selId, titulo, thumbFn){
+  const sel = document.getElementById(selId);
+  const ops = Array.from(sel.options).map(o=>({v:o.value, l:o.textContent}));
+  const atual = sel.value;
+  const comBusca = ops.length > 8;
+  openSheet(`<div class="lo">
+    <div class="lo-handle"></div>
+    <div class="pf-lbl lo-tit">${escapeHtml(titulo)}</div>
+    ${comBusca?`<div class="pl-busca"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><div class="search-wrap"><input type="text" id="lo-texto" placeholder="Buscar" aria-label="Buscar na lista" autocomplete="off"><button type="button" class="search-clear" data-target="lo-texto" aria-label="Limpar">✕</button></div></div>`:''}
+    <div class="lo-lista" id="lo-lista"></div>
+  </div>`);
+  const lista = document.getElementById('lo-lista');
+  function render(){
+    const q = comBusca ? semAcento(document.getElementById('lo-texto').value.trim()) : '';
+    const vis = ops.filter(o=> q ? (o.v!=='' && semAcento(o.l).includes(q)) : true);
+    lista.innerHTML = vis.length ? vis.map(o=>{
+      const ativo = o.v===atual;
+      return `<button type="button" class="lo-row${ativo?' sel':''}" data-v="${escapeHtml(o.v)}">${thumbFn?thumbFn(o.v):''}<span class="t">${escapeHtml(o.l)}</span><span class="ck">${ativo?PF_ICO.check:''}</span></button>`;
+    }).join('') : '<div class="lo-vazio">Nada encontrado.</div>';
+  }
+  render();
+  if(comBusca) document.getElementById('lo-texto').addEventListener('input', render);
+  lista.addEventListener('click', (e)=>{
+    const b = e.target.closest('.lo-row'); if(!b) return;
+    sel.value = b.dataset.v;
+    closeSheet();
+    sel.dispatchEvent(new Event('change', {bubbles:true}));
+  });
+}
+function thumbOpcaoFiltro(selId){
+  if(selId==='pf-item') return v=>{
+    if(v==='') return '<span class="ip-thumb ph">·</span>';
+    const it = itemById(Number(v));
+    return it&&it.foto ? `<img class="ip-thumb" src="${it.foto}" alt="" loading="lazy" decoding="async">` : '<span class="ip-thumb ph">💲</span>';
+  };
+  if(selId==='pf-local') return v=>{
+    if(v==='') return '<span class="loc-tile" style="background:var(--paper-alt);color:var(--ink-soft)">·</span>';
+    const l = localById(Number(v));
+    return l ? localTileHTML(l) : '';
+  };
+  return null;
+}
+document.getElementById('pf-filtros-extra').addEventListener('click', (e)=>{
+  const b = e.target.closest('.pf-campo'); if(!b) return;
+  openListaOpcoes(b.dataset.sel, b.dataset.titulo, thumbOpcaoFiltro(b.dataset.sel));
+});
 /* "Limpar" só aparece quando há filtro ativo */
 function atualizarLimparPrecos(){
   const ativo = ['pf-texto','pf-de','pf-ate','pf-cat','pf-item','pf-local'].some(id=>document.getElementById(id).value);
@@ -3032,6 +3112,7 @@ function refreshFilterSelects(){
   pfCat.value = keepCat; pfItem.value = keepItem; ifCat.value = keepIfCat; pfLocal.value = keepLocal;
   populateIfSubcatOptions();
   refreshGfSelects();
+  syncFiltrosPrecos();
 }
 function populateOpSubcatOptions(){
   const opCat = document.getElementById('op-cat');
@@ -8397,7 +8478,7 @@ applyDefaultsToUI();
 fillConfiguracoesForm();
 ativarTelaAcesa();
 /* ---- PWA: versão, armazenamento persistente e service worker ---- */
-const APP_VERSION = 'v1_77';
+const APP_VERSION = 'v1_78';
 document.getElementById('appVersaoTxt').textContent = APP_VERSION;
 if(navigator.storage && navigator.storage.persist){
   navigator.storage.persist().then(ok=>{
