@@ -398,6 +398,93 @@ input.pf-switch:checked::before{left:27px;}
 .pr-obs{font-size:13px;color:var(--ink-soft);font-style:italic;line-height:1.35;}
 .pr-acoes{display:flex;align-items:center;gap:6px;margin-top:2px;}
 .pr-acao{height:44px;padding:0 14px 0 0;background:transparent;color:var(--accent);font-weight:700;font-size:14px;display:inline-flex;align-items:center;gap:7px;}
+/* ---- Itens (v1_79): leitura e edição em tela cheia, sem cartões ---- */
+.pf-sub2{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px;}
+.iv{display:flex;flex-direction:column;height:100%;}
+.iv-top{flex:none;display:flex;align-items:center;justify-content:space-between;min-height:52px;padding:4px 10px 0;}
+.iv-link{background:transparent;color:var(--accent);font-size:16px;font-weight:600;height:44px;padding:0 10px;}
+.iv-body{flex:1;min-height:0;overflow-y:auto;padding:0 20px 28px;}
+.iv-head{display:flex;gap:12px;align-items:center;}
+.iv-foto{width:56px;height:56px;flex:none;border-radius:12px;object-fit:cover;background:var(--paper-alt);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--ink-soft);}
+.iv-nome{font-size:19px;font-weight:600;line-height:1.2;overflow-wrap:anywhere;}
+.iv-cat{font-size:12px;color:var(--ink-soft);margin-top:3px;}
+.iv-pills{display:flex;gap:8px;margin-top:18px;}
+.iv-pill{flex:1;min-width:0;height:44px;background:transparent;border:1px solid var(--accent);color:var(--accent);border-radius:999px;font-size:14px;font-weight:600;}
+.iv-resumo{display:flex;margin-top:20px;}
+.iv-res{flex:1;min-width:0;text-align:left;background:transparent;color:var(--ink);padding:0 10px;border-left:1px solid var(--line);}
+.iv-res:first-child{border-left:none;padding-left:0;flex:1.1;}
+.iv-res .l{font-size:11px;letter-spacing:.08em;font-weight:700;color:var(--ink-soft);}
+.iv-res.on .l{color:var(--accent);}
+.iv-res .v{font-size:18px;font-weight:600;margin-top:5px;white-space:nowrap;}
+.iv-res.big .v{font-size:22px;margin-top:2px;}
+.iv-res .c{font-size:12px;color:var(--accent);white-space:nowrap;}
+.iv-tabs{display:flex;margin-top:22px;border-bottom:1px solid var(--line);}
+.iv-tab{flex:1;background:transparent;color:var(--ink-soft);font-size:14px;padding:12px 0;border-bottom:2px solid transparent;margin-bottom:-1px;}
+.iv-tab.on{color:var(--accent);font-weight:700;border-bottom-color:var(--accent);}
+.iv-lin{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;padding:12px 0;background:transparent;border-bottom:1px solid var(--line);color:var(--ink);font-size:14px;text-align:left;}
+.iv-lin .k{flex:none;color:var(--ink-soft);}
+.iv-lin .v{min-width:0;text-align:right;overflow-wrap:anywhere;}
+.iv-lin.nota .v{font-size:12px;color:var(--ink-soft);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;}
+.iv-lin .ch,.if-v .ch,.if-un .ch{color:var(--accent);}
+.if-v .ch{margin-left:4px;}
+.iv-edp{padding:14px 0 16px;border-bottom:1px solid var(--line);}
+.iv-edacts{display:flex;justify-content:flex-end;align-items:center;gap:16px;margin-top:14px;}
+.iv-edc{background:transparent;color:var(--ink-soft);font-size:14px;height:40px;padding:0 6px;}
+.iv-eds{background:var(--accent);color:#fff;font-size:14px;font-weight:600;height:36px;padding:0 18px;border-radius:8px;}
+.iv-prow{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer;}
+.iv-prow .m{flex:1;min-width:0;}
+.iv-prow .l1{font-size:15px;}
+.iv-prow .l1 .c{font-size:13px;color:var(--accent);}
+.iv-prow .l2{font-size:12px;color:var(--ink-soft);margin-top:1px;}
+.iv-prow .l2 .ok{color:var(--good);font-weight:700;}
+.iv-prow .ch{color:var(--accent);}
+.iv-rep{flex:none;height:44px;padding:0 4px 0 10px;background:transparent;color:var(--accent);font-size:13px;font-weight:600;}
+.iv-aviso{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);}
+.iv-mostrar{background:transparent;color:var(--accent);font-size:13px;white-space:nowrap;height:40px;padding:0;}
+/* campos do cadastro (edição completa e painel de uma linha) */
+.if-sel{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;padding:10px 0;border-bottom:1px solid var(--line);}
+.if-sel select{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:none;padding:0;cursor:pointer;}
+.if-k{font-size:14px;color:var(--ink-soft);}
+.if-v{min-width:0;text-align:right;font-size:15px;overflow-wrap:anywhere;}
+.if-lblrow{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin:14px 0 2px;}
+.if-lblrow .ajuda-txt{flex:1 0 100%;font-size:12px;line-height:1.4;color:var(--ink-soft);}
+.if-opc{font-size:12px;color:var(--ink-soft);}
+.if-tit{font-size:15px;font-weight:600;}
+.if-dimtabs{margin-top:4px;}
+.if-dens{display:flex;align-items:flex-end;gap:8px;margin-top:4px;}
+.if-num,.if-num2,.if-nome{border:none;border-bottom:1px solid var(--line);border-radius:0;background:transparent;color:var(--ink);padding:6px 0;}
+.if-num{width:64px;min-width:0;flex:none;font-size:20px;text-align:right;}
+.if-num2{width:100%;font-size:20px;}
+.if-nome{font-size:17px;font-weight:600;}
+.if-num:focus,.if-num2:focus,.if-nome:focus,.if-obs:focus{outline:none;border-bottom-color:var(--accent);}
+.if-un{position:relative;display:inline-flex;align-items:flex-end;gap:3px;min-height:40px;padding:0 2px 8px;color:var(--accent);font-size:15px;white-space:nowrap;}
+.if-un select{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:none;padding:0;cursor:pointer;}
+.if-eq{font-size:20px;color:var(--ink-soft);padding:0 4px 8px;}
+.if-duo{display:flex;gap:20px;margin-top:4px;}
+.if-duo>div{flex:1;min-width:0;display:flex;flex-direction:column;}
+.if-obs{display:block;width:100%;margin-top:4px;border:none;border-bottom:1px solid var(--line);border-radius:0;background:transparent;font-size:14px;padding:6px 0;resize:none;min-height:56px;}
+/* edição completa */
+.if-top{gap:8px;}
+.if-top h3{margin:0;font-size:16px;text-align:center;flex:1;}
+.if-cancel{background:transparent;color:var(--ink-soft);font-size:15px;height:44px;padding:0 6px;}
+.if-save{flex:none;background:var(--accent);color:#fff;font-size:14px;font-weight:600;height:36px;padding:0 18px;border-radius:8px;}
+.if-body{flex:1;min-height:0;overflow-y:auto;padding:0 20px 28px;}
+.if-id{display:flex;gap:16px;align-items:flex-end;}
+.if-fotobox{flex:none;width:112px;height:112px;}
+.if-foto{display:flex;align-items:center;justify-content:center;width:112px;height:112px;border-radius:12px;object-fit:cover;background:var(--paper-alt);font-size:40px;}
+.if-idcol{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+label.if-trocar{margin:8px 0 0;font-size:12px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--accent);cursor:pointer;}
+.if-topo{margin-top:22px;border-top:1px solid var(--line);}
+.if-obsbox{margin-top:20px;}
+.if-sec{margin-top:26px;border-top:1px solid var(--line);}
+.if-regra{margin-top:8px;padding-top:2px;}
+.if-sechead{display:flex;align-items:center;gap:8px;width:100%;padding:14px 0;background:transparent;color:var(--ink);text-align:left;}
+.if-sechead .t{flex:1;min-width:0;display:flex;flex-direction:column;}
+.if-sechead .t b{font-size:15px;font-weight:600;}
+.if-sechead .s{font-size:12px;color:var(--ink-soft);}
+.if-sechead .ch{color:var(--accent);font-size:18px;}
+.if-medcorpo{padding-bottom:14px;}
+.if-excluir{display:block;width:100%;margin-top:40px;background:transparent;color:var(--danger);font-size:14px;height:44px;}
 </style>
 </head>
 <body>
@@ -432,65 +519,53 @@ input.pf-switch:checked::before{left:27px;}
 
   <!-- ================= ITENS ================= -->
   <section class="view" id="view-itens">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-      <h2 class="section-title" style="margin:0">Buscar itens</h2>
-      <div style="display:flex;gap:6px;flex:none"><button class="btn btn-outline btn-sm" id="if-limpar-filtros" type="button">✕ Limpar</button><button class="btn btn-outline btn-sm" id="if-toggle-filtros" type="button">+ Filtros</button></div>
+    <div class="pl-busca">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <div class="search-wrap"><input type="text" id="if-texto" placeholder="Nome do item" aria-label="Buscar item"><button type="button" class="search-clear" data-target="if-texto" aria-label="Limpar">✕</button></div>
+      <button class="pl-txtbtn" id="if-limpar-filtros" type="button" style="display:none"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>Limpar</button>
+      <button class="pl-txtbtn accent" id="if-toggle-filtros" type="button"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg><span class="lbl">Filtros</span></button>
     </div>
-    <div class="searchbar" style="margin-top:8px"><div class="search-wrap"><input type="text" id="if-texto" placeholder="Nome do item..."><button type="button" class="search-clear" data-target="if-texto" aria-label="Limpar">✕</button></div></div>
     <div id="if-filtros-extra" style="display:none">
-      <div class="grid2">
-        <select id="if-cat"><option value="">Todas categorias</option></select>
-        <select id="if-subcat"><option value="">Todas subcategorias</option></select>
-      </div>
-      <label style="margin-top:10px">Atualização do preço</label>
-      <select id="if-atualizacao">
-        <option value="">Todos</option>
-        <option value="sem">Sem nenhum preço cadastrado</option>
-        <option value="15d">Último preço há mais de 15 dias</option>
-        <option value="1m">Último preço há mais de 1 mês</option>
-        <option value="3m">Último preço há mais de 3 meses</option>
-        <option value="6m">Último preço há mais de 6 meses</option>
-        <option value="1a">Último preço há mais de 1 ano</option>
-      </select>
-      <label style="margin-top:10px">Ordenar por</label>
-      <select id="if-sort">
-        <option value="nome">Nome (A-Z)</option>
-        <option value="preco_asc">Preço: menor primeiro</option>
-        <option value="preco_desc">Preço: maior primeiro</option>
-        <option value="data_asc">Sem atualizar há mais tempo</option>
-      </select>
-      <div class="grid2" id="if-sort-opts" style="margin-top:8px;display:grid">
-        <div>
-          <label>Considerar</label>
-          <select id="if-metrica">
-            <option value="min">Valor mínimo</option>
-            <option value="max">Valor máximo</option>
-            <option value="media">Valor médio</option>
-          </select>
-        </div>
-        <div>
-          <label>Período</label>
-          <select id="if-periodo">
-            <option value="30d">Últimos 30 dias</option>
-            <option value="3m">Últimos 3 meses</option>
-            <option value="6m">Últimos 6 meses</option>
-            <option value="1a">Último 1 ano</option>
-            <option value="tudo">Tudo</option>
-          </select>
+      <div class="pf-filtros">
+        <div><span class="pf-lbl">Categoria</span><button type="button" class="pf-campo" data-sel="if-cat" data-titulo="Categoria"><span class="v">Todas categorias</span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><select id="if-cat" hidden><option value="">Todas categorias</option></select></div>
+        <div><span class="pf-lbl">Subcategoria</span><button type="button" class="pf-campo" data-sel="if-subcat" data-titulo="Subcategoria"><span class="v">Todas subcategorias</span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><select id="if-subcat" hidden><option value="">Todas subcategorias</option></select></div>
+        <div class="span2"><span class="pf-lbl">Atualização do preço</span><button type="button" class="pf-campo" data-sel="if-atualizacao" data-titulo="Atualização do preço"><span class="v">Todos</span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+          <select id="if-atualizacao" hidden>
+            <option value="">Todos</option>
+            <option value="sem">Sem nenhum preço cadastrado</option>
+            <option value="15d">Último preço há mais de 15 dias</option>
+            <option value="1m">Último preço há mais de 1 mês</option>
+            <option value="3m">Último preço há mais de 3 meses</option>
+            <option value="6m">Último preço há mais de 6 meses</option>
+            <option value="1a">Último preço há mais de 1 ano</option>
+          </select></div>
+        <div class="span2"><span class="pf-lbl">Ordenar por</span><button type="button" class="pf-campo" data-sel="if-sort" data-titulo="Ordenar por"><span class="v">Nome (A-Z)</span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+          <select id="if-sort" hidden>
+            <option value="nome">Nome (A-Z)</option>
+            <option value="preco_asc">Preço: menor primeiro</option>
+            <option value="preco_desc">Preço: maior primeiro</option>
+            <option value="data_asc">Sem atualizar há mais tempo</option>
+          </select></div>
+        <div class="span2 pf-sub2" id="if-sort-opts" style="display:grid">
+          <div><span class="pf-lbl">Considerar</span><button type="button" class="pf-campo" data-sel="if-metrica" data-titulo="Considerar"><span class="v">Valor mínimo</span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+            <select id="if-metrica" hidden>
+              <option value="min">Valor mínimo</option>
+              <option value="max">Valor máximo</option>
+              <option value="media">Valor médio</option>
+            </select></div>
+          <div><span class="pf-lbl">Período</span><button type="button" class="pf-campo" data-sel="if-periodo" data-titulo="Período"><span class="v">Últimos 30 dias</span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+            <select id="if-periodo" hidden>
+              <option value="30d">Últimos 30 dias</option>
+              <option value="3m">Últimos 3 meses</option>
+              <option value="6m">Últimos 6 meses</option>
+              <option value="1a">Último 1 ano</option>
+              <option value="tudo">Tudo</option>
+            </select></div>
         </div>
       </div>
-      <button class="btn btn-outline btn-sm btn-block" id="btnDuplicatas" type="button" style="margin-top:12px">🔍 Ver possíveis duplicatas</button>
+      <button class="pl-txtbtn accent" id="btnDuplicatas" type="button">Ver possíveis duplicatas</button>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:16px;flex-wrap:wrap">
-      <h2 class="section-title" style="margin:0">Itens</h2>
-      <div class="list-actions-row">
-        <button class="btn btn-accent btn-sm" id="il-addpreco" type="button">+ Preço</button>
-        <button class="btn btn-outline btn-sm" id="il-precos" type="button">💲 Preços</button>
-        <button class="btn btn-outline btn-sm" id="il-grafico" type="button">📈 Gráfico</button>
-        <button class="btn btn-outline btn-sm" id="il-lista" type="button">🛒 Lista</button>
-      </div>
-    </div>
-    <div id="lista-itens"></div>
+    <div id="lista-itens" style="margin-top:4px"></div>
   </section>
 
   <!-- ================= CATEGORIAS ================= -->
@@ -884,7 +959,7 @@ function deleteRecord(store, id){
 
 /* Cache em memória (recarregado após cada mudança) */
 let CATS=[], SUBCATS=[], ITEMS=[], LOCAIS=[], PRICES=[], DUP_IGNORADAS=[];
-let precoSelecionadoId = null, itemSelecionadoId = null;
+let precoSelecionadoId = null;
 let TAGS=[], UNIDADES=[], CONVERSOES=[], ESTADOS=[], GRUPOS_ITENS=[], GRUPO_ITENS_MEMBROS=[];
 let RECEITA_CATS=[], RECEITA_SUBCATS=[], EQUIPAMENTOS=[], RECEITAS=[], RECEITA_INGREDIENTES=[], RECEITA_ETAPAS=[];
 let RECEITA_PREPAROS=[], PREPARO_INGREDIENTES=[], PREPARO_ETAPAS=[], TRANSFORMACOES=[];
@@ -2047,289 +2122,528 @@ function receitasQueUsamItem(itemId){
   return [...achadas.values()].sort((a,b)=> a.nivel-b.nivel || (a.receita.arquivada?1:0)-(b.receita.arquivada?1:0) || a.receita.nome.localeCompare(b.receita.nome));
 }
 
-/* ---- Modo leitura do item (visão padrão ao tocar num item; ✏️ leva ao formulário). Mesmo padrão da leitura da receita:
-   .leitura (14px), .view-heading e .view-nota (12px cinza). ---- */
-function openItemView(item){
-  if(!item) return;
-  const cat = catById(item.categoriaId), subcat = subcatById(item.subcategoriaId);
-  const catLabel = [cat?cat.nome:null, subcat?subcat.nome:null].filter(Boolean).join(' › ');
-  const st = statsPrecosItem(item.id);
-  const nomeUn = id => { const u = id ? unidadeById(id) : null; return u ? u.simbolo : ''; };
-
-  let precosHtml = '<p class="hint">Nenhum preço registrado.</p>';
-  if(st){
-    const loc = localNomeDoPreco(st.ultimo);
-    const qtdCusto = precoQtdECustoTxt(st.ultimo);
-    const linhas = [];
-    linhas.push(`Último: <b>${fmtMoney(st.ultimo.preco)}</b> · ${fmtDateBR(st.ultimo.data)}${loc?' · '+escapeHtml(loc):''}`);
-    if(qtdCusto) linhas.push(`<span class="view-nota">${escapeHtml(qtdCusto)}</span>`);
-    if(st.total>1){
-      const base = st.mediaBase!=null ? ` · ${fmtCustoPorBase(st.mediaBase, st.dimBase)}` : '';
-      linhas.push(`Média dos ${st.recentes.length} últimos: ${fmtMoney(st.mediaN)}${base}`);
-      linhas.push(`Menor visto: ${fmtMoney(st.menor.preco)} (${fmtDateBR(st.menor.data)})`);
-    }
-    const recentesHtml = st.recentes.map(p=>{
-      const l = localNomeDoPreco(p), q = precoQtdECustoTxt(p);
-      return `<div class="view-ing-linha" data-pid="${p.id}" style="display:flex;align-items:center;gap:8px">
-        <div style="flex:1;min-width:0">${fmtDateBR(p.data)} · ${fmtMoney(p.preco)}${(q||l)?` <span class="view-nota">· ${escapeHtml([q,l].filter(Boolean).join(' · '))}</span>`:''}</div>
-        <button type="button" class="btn btn-outline btn-sm" data-repetir="${p.id}" aria-label="Repetir este preço" style="flex:none;padding:3px 8px;font-size:12px">🔁 Repetir</button>
+/* ============================================================
+   CAMPOS DO CADASTRO DO ITEM (v1_79)
+   Os mesmos campos servem à edição completa (openItemForm) e à edição de UMA linha na aba Cadastro da leitura
+   (openItemView). Cada bloco tem um construtor de HTML (ifCatHTML, ifMedidaHTML, ifRegraHTML, ifObsHTML), `ifBind`
+   liga o comportamento dos blocos presentes na tela e `ifColetar` lê só os blocos presentes. ids: i-*.
+   ============================================================ */
+const IF_DIMS = [['peso','Peso'],['volume','Volume'],['unidade','Contagem'],['','Livre']];
+const IF_AJUDA_DIM = 'Define em que tipo de medida os preços deste item podem ser lançados (evita misturar peso com volume, por exemplo). A quantidade exata do pacote (ex: 200g) é informada em cada preço lançado, não aqui. "Livre" = sem restrição; a medida só é necessária se o item for usado em receitas.';
+const IF_AJUDA_CONV = 'Peso (ou volume) médio de 1 unidade, bruto — com casca, cabinho etc. Permite usar este item em receitas em g ou ml; o rendimento % da receita cuida da parte aproveitável.';
+const IF_AJUDA_DENS = 'Quanto pesa um certo volume deste item (ex.: 100 ml de azeite = 92 g). Permite usar o item em receitas em g mesmo com o preço lançado em ml (ou o contrário) e calcular o custo.';
+const IF_AJUDA_REGRA = 'Mínimo: usar menos que isso custa como se fosse isso (ex: 50 g de um ovo). Indivisível: só se usa em múltiplos inteiros (ex: 1 ovo = 50 g). O custo é calculado sobre a quantidade bruta usada.';
+/* Linha de rótulo do bloco: título + "opcional" + "?" (o texto de ajuda abre logo abaixo, na própria linha) */
+function ifLblRow(rot, extra, ajuda, cls){
+  return `<div class="if-lblrow"><span class="${cls||'pf-lbl'}">${rot}</span>${extra?`<span class="if-opc">${extra}</span>`:''}${ajuda?`<button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>${ajuda}</span>`:''}</div>`;
+}
+/* Linha "rótulo ........ valor ›" cujo valor é um <select> invisível por cima (a lista nativa abre ao tocar); o texto mostrado
+   é atualizado por `txt` em ifBind. peq=true: rótulo pequeno em texto normal (blocos de regra de custo). */
+function ifSelRow(rotulo, selId, selHTML, peq){
+  return `<div class="if-sel"><span class="${peq?'if-k':'pf-lbl'}">${rotulo}</span><span class="if-v"><span id="${selId}-txt"></span><span class="ch">›</span></span>${selHTML}</div>`;
+}
+function ifCatHTML(item){
+  return ifSelRow('Categoria','i-cat',`<select id="i-cat" aria-label="Categoria"><option value="">Sem categoria</option>${catOptionsHTML(item?item.categoriaId:null)}<option value="__novo__">+ Nova categoria...</option></select>`)
+    + ifSelRow('Subcategoria','i-subcat','<select id="i-subcat" aria-label="Subcategoria"><option value="">Sem subcategoria</option></select>');
+}
+function ifObsHTML(item){
+  return `<span class="pf-lbl">Observação</span><textarea id="i-obs" class="if-obs" rows="2" aria-label="Observação" placeholder="Observações sobre o item">${escapeHtml(item?item.obs||'':'')}</textarea>`;
+}
+/* parts.tabs: abas Peso/Volume/Contagem/Livre; parts.dens: densidade (peso/volume) ou "1 un = X g" (contagem), conforme a medida */
+function ifMedidaHTML(item, parts){
+  const dim = (item && item.dimensaoReferencia) || '';
+  let h = `<input type="hidden" id="i-dim-ref" value="${dim}">`;
+  if(parts.tabs){
+    h += `${ifLblRow('Medida de referência', '', IF_AJUDA_DIM)}
+      <div class="iv-tabs if-dimtabs" id="i-dim-tabs">${IF_DIMS.map(([v,l])=>`<button type="button" class="iv-tab${dim===v?' on':''}" data-dim="${v}">${l}</button>`).join('')}</div>`;
+  }
+  if(parts.dens){
+    h += `<div id="i-dn-box" style="display:none">
+        ${ifLblRow('Densidade', 'opcional', IF_AJUDA_DENS)}
+        <div class="if-dens">
+          <input type="text" id="i-dn-vol" class="if-num" aria-label="Volume da densidade" placeholder="100">
+          <span class="if-un"><span id="i-dn-vol-un-txt"></span><span class="ch">›</span><select id="i-dn-vol-un" aria-label="Unidade do volume"></select></span>
+          <span class="if-eq">=</span>
+          <input type="text" id="i-dn-peso" class="if-num" aria-label="Peso da densidade" placeholder="92">
+          <span class="if-un"><span id="i-dn-peso-un-txt"></span><span class="ch">›</span><select id="i-dn-peso-un" aria-label="Unidade do peso"></select></span>
+        </div>
+      </div>
+      <div id="i-cv-box" style="display:none">
+        ${ifLblRow('1 un =', 'opcional', IF_AJUDA_CONV)}
+        <div class="if-dens">
+          <input type="text" id="i-cv-qtd" class="if-num" aria-label="Quantidade de 1 unidade" placeholder="300">
+          <span class="if-un"><span id="i-cv-un-txt"></span><span class="ch">›</span><select id="i-cv-un" aria-label="Unidade da conversão"></select></span>
+        </div>
       </div>`;
-    }).join('');
-    precosHtml = `<div>${linhas.join('<br>')}</div>
-      <div class="view-nota" style="margin-top:8px">${st.total>1?`Últimos ${st.recentes.length} de ${st.total} registros`:'1 registro'} (toque para editar · 🔁 repete com a data de hoje)</div>
-      ${recentesHtml}`;
   }
-
-  // Cadastro: só mostra o que está preenchido
-  const cad = [];
-  const dimTxt = {peso:'Peso (g)', volume:'Volume (ml)', unidade:'Contagem (unidades)'}[item.dimensaoReferencia];
-  if(dimTxt) cad.push(`Dimensão de referência: ${dimTxt}`);
-  if(item.convQtd!=null && item.convUnidadeId) cad.push(`1 un = ${fmtQtd(item.convQtd, unidadeById(item.convUnidadeId))} ${nomeUn(item.convUnidadeId)}`);
-  if(item.densVolQtd!=null && item.densPesoQtd!=null){
-    cad.push(`Densidade: ${fmtQtd(item.densVolQtd, unidadeById(item.densVolUnId))} ${nomeUn(item.densVolUnId)} = ${fmtQtd(item.densPesoQtd, unidadeById(item.densPesoUnId))} ${nomeUn(item.densPesoUnId)}`);
-  }
-  if(item.custoMinQtd>0 || item.custoIndivQtd>0){
-    const un = nomeUn(item.regraUnidadeId);
-    const partes = [];
-    if(item.custoMinQtd>0) partes.push(`mínimo ${fmtQtd(item.custoMinQtd, unidadeById(item.regraUnidadeId))} ${un}`);
-    if(item.custoIndivQtd>0) partes.push(`indivisível ${fmtQtd(item.custoIndivQtd, unidadeById(item.regraUnidadeId))} ${un}`);
-    let regra = `Regra de custo: ${partes.join(' · ')}`;
-    if(item.custoMinQtd>0 && item.custoIndivQtd>0){
-      regra += ' — ' + ({minimo:'vale só o mínimo', indivisivel:'vale só o indivisível'}[item.regraPrioridade] || 'cobra o maior custo');
-    }
-    cad.push(regra);
-  }
-  const cadHtml = cad.length ? `<div class="view-heading">Cadastro</div><div>${cad.map(escapeHtml).join('<br>')}</div>` : '';
-
-  // Receitas que usam o item
-  const usos = receitasQueUsamItem(item.id);
-  let usosHtml;
-  if(!usos.length){
-    usosHtml = '<p class="hint">Nenhuma receita usa este item.</p>';
-  } else {
-    usosHtml = usos.map(u=>{
-      const r = u.receita;
-      let nota = '';
-      if(u.nivel===0) nota = u.linhas.join(' + ');
-      else if(u.nivel===1) nota = [u.linhas.join(' + '), 'via grupo '+u.via.join(', ')].filter(Boolean).join(' · ');
-      else nota = 'via receita '+u.via.join(', ');
-      if(r.arquivada) nota = (nota?nota+' · ':'') + 'arquivada';
-      return `<div class="view-ing-linha" data-rid="${r.id}" style="${r.arquivada?'opacity:.65':''}">${r.favorita?'★ ':''}${escapeHtml(r.nome)}${nota?`<div class="view-nota">${escapeHtml(nota)}</div>`:''}</div>`;
-    }).join('');
-  }
-
-  openSheet(`<div class="leitura">
-    <div style="display:flex;align-items:flex-start;gap:8px">
-      ${item.foto?`<img src="${item.foto}" style="width:44px;height:44px;object-fit:cover;border-radius:10px;flex:none">`:''}
-      <div style="flex:1;min-width:0">
-        <h3 style="margin:0">${escapeHtml(item.nome)}</h3>
-        <p class="hint" style="margin-top:2px">${catLabel?escapeHtml(catLabel):'Sem categoria'}</p>
-      </div>
-      <div style="display:flex;gap:6px;flex:none">
-        <button type="button" class="btn btn-outline btn-sm" id="iv-editar">✏️</button>
-        <button type="button" class="btn btn-outline btn-sm" id="iv-fechar">✕</button>
-      </div>
+  return h;
+}
+function ifRegraHTML(item){
+  const prio = (item && item.regraPrioridade) || 'maior';
+  return `${ifLblRow('Regra de custo', 'opcional — só afeta receitas e preparos', IF_AJUDA_REGRA, 'if-tit')}
+    <div class="if-duo">
+      <div><span class="if-k">Mínimo</span><input type="text" id="i-cr-min" class="if-num2" aria-label="Mínimo" placeholder="—"></div>
+      <div><span class="if-k">Indivisível</span><input type="text" id="i-cr-ind" class="if-num2" aria-label="Indivisível" placeholder="—"></div>
     </div>
-    ${item.obs?`<div class="view-nota pre-wrap" style="margin-top:6px">${escapeHtml(item.obs)}</div>`:''}
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
-      <button type="button" class="btn btn-outline btn-sm" id="iv-preco">+ Preço</button>
-      <button type="button" class="btn btn-outline btn-sm" id="iv-lista">🛒 Lista</button>
-      <button type="button" class="btn btn-outline btn-sm" id="iv-hist">Preços</button>
-      <button type="button" class="btn btn-outline btn-sm" id="iv-grafico">Gráfico</button>
-    </div>
-
-    <div class="view-heading">Preços</div>
-    ${precosHtml}
-    ${cadHtml}
-    <div class="view-heading">Usado em receitas${usos.length?` (${usos.length})`:''}</div>
-    ${usosHtml}
-  </div>`, {topAnchored:true});
-
-  document.getElementById('iv-editar').addEventListener('click', ()=> openItemForm(item));
-  document.getElementById('iv-fechar').addEventListener('click', closeSheet);
-  document.getElementById('iv-preco').addEventListener('click', ()=> openPriceForm(null, item.id));
-  document.getElementById('iv-lista').addEventListener('click', ()=> openAdicionarALista(item.id));
-  document.getElementById('iv-hist').addEventListener('click', ()=>{ closeSheet(); goToPrecos(item.id); });
-  document.getElementById('iv-grafico').addEventListener('click', ()=>{ closeSheet(); goToChart(item.id); });
-  sheet.querySelectorAll('[data-pid]').forEach(el=> el.addEventListener('click', ()=>{
-    const p = PRICES.find(x=>x.id===Number(el.dataset.pid));
-    if(p) openPriceForm(p);
-  }));
-  // 🔁 Repetir: abre o formulário de novo preço já preenchido com este registro (data de hoje; nada é gravado até salvar)
-  sheet.querySelectorAll('[data-repetir]').forEach(btn=> btn.addEventListener('click', (e)=>{
-    e.stopPropagation();
-    const p = PRICES.find(x=>x.id===Number(btn.dataset.repetir));
-    if(p) openPriceForm(null, null, p);
-  }));
-  sheet.querySelectorAll('[data-rid]').forEach(el=> el.addEventListener('click', ()=>{
-    const r = RECEITAS.find(x=>x.id===Number(el.dataset.rid));
-    if(r) openReceitaView(r, {voltarItemId: item.id});
-  }));
+    ${ifSelRow('Unidade da regra','i-cr-un','<select id="i-cr-un" aria-label="Unidade da regra"></select>', true)}
+    ${ifSelRow('Se houver os dois','i-cr-prio',`<select id="i-cr-prio" aria-label="Se houver os dois">
+      <option value="maior" ${prio==='maior'?'selected':''}>Cobrar o maior custo</option>
+      <option value="minimo" ${prio==='minimo'?'selected':''}>Só o mínimo</option>
+      <option value="indivisivel" ${prio==='indivisivel'?'selected':''}>Só o indivisível</option></select>`, true)}`;
 }
 
-/* opts (opcional): {sub:true} abre numa camada por cima da atual (sub-sheet, tela cheia);
+/* Liga o comportamento dos blocos que estão na tela. item = cadastro atual (null = item novo). ctx.marcar() avisa que houve alteração. */
+function ifBind(item, ctx){
+  ctx = ctx || {};
+  const $ = id => document.getElementById(id);
+  const marcar = ()=>{ if(ctx.marcar) ctx.marcar(); };
+  const txt = (selId)=>{
+    const s = $(selId), t = $(selId+'-txt'); if(!s || !t) return;
+    const o = s.options[s.selectedIndex];
+    t.textContent = o ? (o.dataset.s || o.textContent) : '';
+  };
+  const dimAtual = ()=> $('i-dim-ref') ? $('i-dim-ref').value : ((item && item.dimensaoReferencia) || '');
+
+  /* categoria / subcategoria */
+  if($('i-cat')){
+    const populateSubcatSelect = (categoriaId, selectedId)=>{
+      const sel = $('i-subcat');
+      const ops = subcatsOf(categoriaId).map(s=>`<option value="${s.id}" ${s.id===selectedId?'selected':''}>${escapeHtml(s.nome)}</option>`).join('');
+      sel.innerHTML = '<option value="">Sem subcategoria</option>' + ops + '<option value="__novo__">+ Nova subcategoria...</option>';
+      txt('i-subcat');
+    };
+    populateSubcatSelect(item?item.categoriaId:null, item?item.subcategoriaId:null);
+    txt('i-cat');
+    let catAtualId = item && item.categoriaId ? String(item.categoriaId) : '';
+    $('i-cat').addEventListener('change', async (e)=>{
+      if(e.target.value==='__novo__'){
+        const nome = (await perguntar('Nome da nova categoria:')||'').trim();
+        if(!nome){ e.target.value = catAtualId; txt('i-cat'); return; }   // cancelou: volta à categoria que estava
+        // se já existe categoria com esse nome (ignorando acento/caixa), usa a existente em vez de duplicar
+        let cat = CATS.find(c=>semAcento(c.nome)===semAcento(nome));
+        if(!cat){
+          const id = await putRecord('categorias', {nome, obs:'', foto:null});
+          cat = {id, nome, obs:'', foto:null};
+          CATS.push(cat);
+          CATS.sort((a,b)=>a.nome.localeCompare(b.nome));
+        }
+        e.target.innerHTML = '<option value="">Sem categoria</option>' + catOptionsHTML(cat.id) + '<option value="__novo__">+ Nova categoria...</option>';
+        e.target.value = String(cat.id);
+        catAtualId = String(cat.id);
+        populateSubcatSelect(cat.id, null);
+        txt('i-cat'); marcar();
+        return;
+      }
+      catAtualId = e.target.value;
+      populateSubcatSelect(e.target.value?Number(e.target.value):null, null);
+      txt('i-cat');
+    });
+    $('i-subcat').addEventListener('change', async (e)=>{
+      if(e.target.value!=='__novo__'){ txt('i-subcat'); return; }
+      const catId = $('i-cat').value ? Number($('i-cat').value) : null;
+      if(!catId){ avisar('Escolha uma categoria antes de criar a subcategoria.'); e.target.value=''; txt('i-subcat'); return; }
+      const nome = (await perguntar('Nome da nova subcategoria:')||'').trim();
+      if(!nome){ e.target.value=''; txt('i-subcat'); return; }
+      const jaExiste = SUBCATS.find(sc=>sc.categoriaId===catId && semAcento(sc.nome)===semAcento(nome));
+      if(jaExiste){ populateSubcatSelect(catId, jaExiste.id); marcar(); return; }
+      const id = await putRecord('subcategorias', {categoriaId:catId, nome, obs:''});
+      SUBCATS.push({id, categoriaId:catId, nome, obs:''});
+      SUBCATS.sort((a,b)=>a.nome.localeCompare(b.nome));
+      populateSubcatSelect(catId, id);
+      marcar();
+    });
+  }
+
+  /* medida de referência: abas, "1 un = X g" e densidade */
+  if($('i-dim-ref')){
+    const hid = $('i-dim-ref');
+    if($('i-dim-tabs')){
+      $('i-dim-tabs').addEventListener('click', (e)=>{
+        const b = e.target.closest('[data-dim]'); if(!b) return;
+        hid.value = b.dataset.dim;
+        $('i-dim-tabs').querySelectorAll('.iv-tab').forEach(x=>x.classList.toggle('on', x===b));
+        marcar();
+        hid.dispatchEvent(new Event('change', {bubbles:true}));
+      });
+    }
+    if($('i-cv-qtd')){
+      attachQtyMask($('i-cv-qtd'), item && item.convQtd!=null ? item.convQtd : null);
+      const refreshConv = ()=>{
+        $('i-cv-box').style.display = dimAtual()==='unidade' ? '' : 'none';
+        const sel = $('i-cv-un');
+        let keep = sel.value || (item && item.convUnidadeId ? String(item.convUnidadeId) : '');
+        const lista = UNIDADES.filter(u=>u.dimensao==='peso' || u.dimensao==='volume');
+        if(!keep){ const g = unidadePadraoDaDimensao('peso'); if(g) keep = String(g.id); }
+        sel.innerHTML = '<option value="">Selecione...</option>' + lista.map(u=>`<option value="${u.id}" data-s="${escapeHtml(u.simbolo)}" ${String(u.id)===keep?'selected':''}>${escapeHtml(u.nome)} (${escapeHtml(u.simbolo)})</option>`).join('');
+        txt('i-cv-un');
+      };
+      refreshConv();
+      hid.addEventListener('change', refreshConv);
+      $('i-cv-un').addEventListener('change', ()=>txt('i-cv-un'));
+    }
+    if($('i-dn-vol')){
+      attachQtyMask($('i-dn-vol'), item && item.densVolQtd!=null ? item.densVolQtd : null);
+      attachQtyMask($('i-dn-peso'), item && item.densPesoQtd!=null ? item.densPesoQtd : null);
+      const refreshDens = ()=>{
+        const dim = dimAtual();
+        $('i-dn-box').style.display = (dim==='peso' || dim==='volume') ? '' : 'none';
+        const fill = (id, dimU, salvo, padrao)=>{
+          const sel = $(id);
+          const keep = sel.value || (item && salvo ? String(salvo) : (padrao ? String(padrao.id) : ''));
+          sel.innerHTML = UNIDADES.filter(u=>u.dimensao===dimU).map(u=>`<option value="${u.id}" data-s="${escapeHtml(u.simbolo)}" ${String(u.id)===keep?'selected':''}>${escapeHtml(u.simbolo)}</option>`).join('');
+          txt(id);
+        };
+        fill('i-dn-vol-un', 'volume', item && item.densVolUnId, unidadePadraoDaDimensao('volume'));
+        fill('i-dn-peso-un', 'peso', item && item.densPesoUnId, unidadePadraoDaDimensao('peso'));
+      };
+      refreshDens();
+      hid.addEventListener('change', refreshDens);
+      $('i-dn-vol-un').addEventListener('change', ()=>txt('i-dn-vol-un'));
+      $('i-dn-peso-un').addEventListener('change', ()=>txt('i-dn-peso-un'));
+    }
+  }
+
+  /* regra de custo */
+  if($('i-cr-min')){
+    attachQtyMask($('i-cr-min'), item && item.custoMinQtd!=null ? item.custoMinQtd : null);
+    attachQtyMask($('i-cr-ind'), item && item.custoIndivQtd!=null ? item.custoIndivQtd : null);
+    const refreshRegraUnidades = ()=>{
+      const dim = dimAtual();
+      const sel = $('i-cr-un');
+      let keep = sel.value || (item && item.regraUnidadeId ? String(item.regraUnidadeId) : '');
+      const lista = UNIDADES.filter(u=>!dim || u.dimensao===dim);
+      if(!keep && lista.length===1) keep = String(lista[0].id);
+      sel.innerHTML = '<option value="">Selecione...</option>' + lista.map(u=>`<option value="${u.id}" data-s="${escapeHtml(u.simbolo)}" ${String(u.id)===keep?'selected':''}>${escapeHtml(u.nome)} (${escapeHtml(u.simbolo)})</option>`).join('');
+      txt('i-cr-un');
+    };
+    refreshRegraUnidades();
+    if($('i-dim-ref')) $('i-dim-ref').addEventListener('change', refreshRegraUnidades);
+    $('i-cr-un').addEventListener('change', ()=>txt('i-cr-un'));
+    txt('i-cr-prio');
+    $('i-cr-prio').addEventListener('change', ()=>txt('i-cr-prio'));
+  }
+}
+
+/* Lê os blocos presentes na tela e grava em `obj` (cópia do item). Devolve a mensagem de erro, ou '' se estiver tudo certo. */
+function ifColetar(obj, item){
+  const $ = id => document.getElementById(id);
+  if($('i-nome')){
+    const nome = $('i-nome').value.trim();
+    if(!nome) return 'Informe o nome do item.';
+    obj.nome = nome;
+  }
+  if($('i-cat')){
+    const catVal = $('i-cat').value;
+    obj.categoriaId = (catVal && catVal!=='__novo__') ? Number(catVal) : null;
+    const subVal = $('i-subcat').value;
+    obj.subcategoriaId = (subVal && subVal!=='__novo__') ? Number(subVal) : null;
+  }
+  const dim = $('i-dim-ref') ? ($('i-dim-ref').value || '') : ((item && item.dimensaoReferencia) || '');
+  if($('i-dim-ref')) obj.dimensaoReferencia = dim || null;
+  if($('i-cr-min')){
+    const crMin = getQtyValue($('i-cr-min')), crInd = getQtyValue($('i-cr-ind'));
+    const crUn = $('i-cr-un').value;
+    const temRegra = crMin>0 || crInd>0;
+    if(temRegra && !crUn) return 'Informe a unidade da regra de custo.';
+    obj.custoMinQtd = crMin>0 ? crMin : null;
+    obj.custoIndivQtd = crInd>0 ? crInd : null;
+    obj.regraUnidadeId = temRegra ? Number(crUn) : null;
+    obj.regraPrioridade = $('i-cr-prio').value || 'maior';
+  }
+  if($('i-cv-qtd')){
+    const cvQtd = getQtyValue($('i-cv-qtd'));
+    const cvUn = $('i-cv-un').value;
+    const cvAtiva = dim==='unidade' && cvQtd>0;
+    if(cvAtiva && !cvUn) return 'Informe a unidade da conversão (g ou ml).';
+    obj.convQtd = cvAtiva ? cvQtd : null;
+    obj.convUnidadeId = cvAtiva ? Number(cvUn) : null;
+  } else if($('i-dim-ref') && dim!=='unidade'){
+    obj.convQtd = null; obj.convUnidadeId = null;      // trocou a medida: "1 un = X g" só vale em contagem
+  }
+  if($('i-dn-vol')){
+    const dnV = getQtyValue($('i-dn-vol')), dnP = getQtyValue($('i-dn-peso'));
+    const emPesoVol = dim==='peso' || dim==='volume';
+    if(emPesoVol && ((dnV>0)!==(dnP>0))) return 'Informe o volume e o peso da densidade (ou deixe os dois em branco).';
+    const dnAtiva = emPesoVol && dnV>0 && dnP>0;
+    obj.densVolQtd = dnAtiva ? dnV : null;
+    obj.densVolUnId = dnAtiva ? Number($('i-dn-vol-un').value) : null;
+    obj.densPesoQtd = dnAtiva ? dnP : null;
+    obj.densPesoUnId = dnAtiva ? Number($('i-dn-peso-un').value) : null;
+  } else if($('i-dim-ref') && !(dim==='peso' || dim==='volume')){
+    obj.densVolQtd = null; obj.densVolUnId = null; obj.densPesoQtd = null; obj.densPesoUnId = null;   // densidade só vale em peso/volume
+  }
+  if($('i-obs')) obj.obs = $('i-obs').value.trim();
+  return '';
+}
+
+/* ============================================================
+   LEITURA DO ITEM (v1_79) — tela cheia. Toque no item da lista abre aqui; "Editar" leva ao formulário completo.
+   Topo: ‹ Itens / Editar; foto + nome + categoria; + Preço / + Lista / Gráfico; resumo ÚLTIMO · MÉDIA · MENOR (tocar abre a
+   aba Preços filtrada); abas Cadastro (padrão) · Preços · N · Receitas · N. Na aba Cadastro, tocar numa linha edita só aquela
+   informação (painel embaixo da linha, com Cancelar/Salvar).
+   opts: {tab:'cadastro'|'precos'|'receitas', filtro:'todos'|'ultimo'|'media'|'menor'}
+   ============================================================ */
+function openItemView(item, opts){
+  if(!item) return;
+  opts = opts || {};
+  const id = item.id;
+  let tab = opts.tab || 'cadastro', filtro = opts.filtro || 'todos', editando = null;
+  const $ = i => document.getElementById(i);
+  const nomeUn = uid => { const u = uid ? unidadeById(uid) : null; return u ? u.simbolo : ''; };
+
+  openSheet(`<div class="iv">
+    <div class="iv-top">
+      <button type="button" class="iv-link" id="iv-voltar">‹ Itens</button>
+      <button type="button" class="iv-link" id="iv-editar">Editar</button>
+    </div>
+    <div class="iv-body leitura" id="iv-dyn"></div>
+  </div>`, {full:true});
+
+  function linhasCadastro(it){
+    const cat = catById(it.categoriaId), sub = subcatById(it.subcategoriaId);
+    const dim = it.dimensaoReferencia || '';
+    const L = [];
+    L.push({k:'cat', rot:'Categoria', val: cat ? [cat.nome, sub&&sub.nome].filter(Boolean).join(' › ') : 'Sem categoria'});
+    L.push({k:'medida', rot:'Medida de referência', val: {peso:'Peso (g)', volume:'Volume (ml)', unidade:'Contagem (un)'}[dim] || 'Livre'});
+    if(dim==='peso' || dim==='volume'){
+      const ok = it.densVolQtd!=null && it.densPesoQtd!=null;
+      L.push({k:'dens', rot:'Densidade', val: ok ? `${fmtQtd(it.densVolQtd, unidadeById(it.densVolUnId))} ${nomeUn(it.densVolUnId)} = ${fmtQtd(it.densPesoQtd, unidadeById(it.densPesoUnId))} ${nomeUn(it.densPesoUnId)}` : '—'});
+    } else if(dim==='unidade'){
+      const ok = it.convQtd!=null && it.convUnidadeId;
+      L.push({k:'dens', rot:'1 un =', val: ok ? `${fmtQtd(it.convQtd, unidadeById(it.convUnidadeId))} ${nomeUn(it.convUnidadeId)}` : '—'});
+    }
+    let regra = '—';
+    if(it.custoMinQtd>0 || it.custoIndivQtd>0){
+      const un = nomeUn(it.regraUnidadeId), partes = [];
+      if(it.custoMinQtd>0) partes.push(`mínimo ${fmtQtd(it.custoMinQtd, unidadeById(it.regraUnidadeId))} ${un}`);
+      if(it.custoIndivQtd>0) partes.push(`indivisível ${fmtQtd(it.custoIndivQtd, unidadeById(it.regraUnidadeId))} ${un}`);
+      regra = partes.join(' · ');
+      if(it.custoMinQtd>0 && it.custoIndivQtd>0) regra += ' — ' + ({minimo:'vale só o mínimo', indivisivel:'vale só o indivisível'}[it.regraPrioridade] || 'cobra o maior');
+    }
+    L.push({k:'regra', rot:'Regra de custo', val: regra});
+    L.push({k:'obs', rot:'Observação', val: it.obs || '—', nota:true});
+    return L;
+  }
+  function painelCadastro(k, it){
+    let campos = '';
+    if(k==='cat') campos = ifCatHTML(it);
+    else if(k==='medida') campos = ifMedidaHTML(it, {tabs:true, dens:false});
+    else if(k==='dens') campos = ifMedidaHTML(it, {tabs:false, dens:true});
+    else if(k==='regra') campos = ifRegraHTML(it);
+    else if(k==='obs') campos = ifObsHTML(it);
+    return `<div class="iv-edp">${campos}<div class="iv-edacts"><button type="button" class="iv-edc" data-edc>Cancelar</button><button type="button" class="iv-eds" data-eds>Salvar</button></div></div>`;
+  }
+  function linhaPreco(p){
+    const qc = precoQtdECusto(p), loc = localNomeDoPreco(p);
+    const sub = [qc.qtd, loc].filter(Boolean).join(' · ');
+    return `<div class="iv-prow" data-pid="${p.id}">
+      <div class="m"><div class="l1">${fmtDateBR(p.data)} · ${fmtMoney(p.preco)}${qc.custo?` · <span class="c">${escapeHtml(qc.custo)}</span>`:''}</div>
+        ${(sub||p.comprou)?`<div class="l2">${escapeHtml(sub)}${p.comprou?`${sub?' · ':''}<span class="ok">comprei</span>`:''}</div>`:''}</div>
+      <button type="button" class="iv-rep" data-rep="${p.id}">Repetir</button>
+    </div>`;
+  }
+
+  function pintar(){
+    const it = itemById(id);
+    if(!it){ closeSheet(); return; }
+    const cat = catById(it.categoriaId), sub = subcatById(it.subcategoriaId);
+    const catLabel = [cat&&cat.nome, sub&&sub.nome].filter(Boolean).join(' › ') || 'Sem categoria';
+    const st = statsPrecosItem(id);
+    const usos = receitasQueUsamItem(id);
+    const nPrecos = st ? st.total : 0;
+
+    /* resumo ÚLTIMO · MÉDIA · MENOR (cada um com o R$/kg|L|un quando o preço tem quantidade) */
+    let resumo = '<p class="hint" style="margin:18px 0 0">Nenhum preço registrado.</p>';
+    if(st){
+      const on = k => (tab==='precos' && filtro===k) ? ' on' : '';
+      const cUlt = precoQtdECusto(st.ultimo).custo, cMen = precoQtdECusto(st.menor).custo;
+      const cMed = st.mediaBase!=null ? fmtCustoPorBase(st.mediaBase, st.dimBase) : '';
+      resumo = `<div class="iv-resumo">
+        <button type="button" class="iv-res big${on('ultimo')}" data-f="ultimo"><div class="l">ÚLTIMO</div><div class="v">${fmtMoney(st.ultimo.preco)}</div>${cUlt?`<div class="c">${escapeHtml(cUlt)}</div>`:''}</button>
+        ${st.total>1?`<button type="button" class="iv-res${on('media')}" data-f="media"><div class="l">MÉDIA</div><div class="v">${fmtMoney(st.mediaN)}</div>${cMed?`<div class="c">${escapeHtml(cMed)}</div>`:''}</button>
+        <button type="button" class="iv-res${on('menor')}" data-f="menor"><div class="l">MENOR</div><div class="v">${fmtMoney(st.menor.preco)}</div>${cMen?`<div class="c">${escapeHtml(cMen)}</div>`:''}</button>`:''}
+      </div>`;
+    }
+
+    let corpo = '';
+    if(tab==='cadastro'){
+      corpo = linhasCadastro(it).map(r=>`<button type="button" class="iv-lin${r.nota?' nota':''}" data-ed="${r.k}"><span class="k">${r.rot}</span><span class="v">${escapeHtml(r.val)} <span class="ch">${editando===r.k?'⌄':'›'}</span></span></button>${editando===r.k?painelCadastro(r.k, it):''}`).join('')
+        + '<div class="view-nota" style="padding:10px 0">Toque em uma linha para editar só aquela informação.</div>';
+    } else if(tab==='precos'){
+      let lista = PRICES.filter(p=>p.itemId===id), aviso = '';
+      if(st && filtro==='ultimo'){ lista = [st.ultimo]; aviso = 'Mostrando o último preço'; }
+      else if(st && filtro==='menor'){ lista = [st.menor]; aviso = 'Mostrando o menor preço visto'; }
+      else if(st && filtro==='media'){ lista = st.recentes; aviso = `Mostrando os ${st.recentes.length} últimos (base da média)`; }
+      corpo = (aviso ? `<div class="iv-aviso"><span class="view-nota">${aviso}</span><button type="button" class="iv-mostrar" data-f="todos">Mostrar todos os ${nPrecos} preços ›</button></div>` : '')
+        + (lista.length ? lista.map(linhaPreco).join('') : '<p class="hint">Nenhum preço registrado.</p>');
+    } else {
+      corpo = usos.length ? usos.map(u=>{
+        const r = u.receita;
+        let nota = '';
+        if(u.nivel===0) nota = u.linhas.join(' + ');
+        else if(u.nivel===1) nota = [u.linhas.join(' + '), 'via grupo '+u.via.join(', ')].filter(Boolean).join(' · ');
+        else nota = 'via receita '+u.via.join(', ');
+        if(r.arquivada) nota = (nota?nota+' · ':'') + 'arquivada';
+        return `<div class="iv-prow" data-rid="${r.id}" style="${r.arquivada?'opacity:.65':''}"><div class="m"><div class="l1">${r.favorita?'★ ':''}${escapeHtml(r.nome)}</div>${nota?`<div class="l2">${escapeHtml(nota)}</div>`:''}</div><span class="ch">›</span></div>`;
+      }).join('') : '<p class="hint">Nenhuma receita usa este item.</p>';
+    }
+
+    const abas = [['cadastro','Cadastro'], ['precos',`Preços · ${nPrecos}`], ['receitas',`Receitas · ${usos.length}`]];
+    $('iv-dyn').innerHTML = `
+      <div class="iv-head">
+        ${it.foto?`<img class="iv-foto" src="${it.foto}" alt="">`:`<div class="iv-foto">📦</div>`}
+        <div style="min-width:0"><div class="iv-nome">${escapeHtml(it.nome)}</div><div class="iv-cat">${escapeHtml(catLabel)}</div></div>
+      </div>
+      <div class="iv-pills">
+        <button type="button" class="iv-pill" data-a="preco">+ Preço</button>
+        <button type="button" class="iv-pill" data-a="lista">+ Lista</button>
+        <button type="button" class="iv-pill" data-a="grafico">Gráfico</button>
+      </div>
+      ${resumo}
+      <div class="iv-tabs">${abas.map(([k,l])=>`<button type="button" class="iv-tab${tab===k?' on':''}" data-tab="${k}">${l}</button>`).join('')}</div>
+      <div>${corpo}</div>`;
+    if(tab==='cadastro' && editando) ifBind(it, {});
+  }
+
+  /* um só ouvinte para a tela inteira (o conteúdo é refeito a cada toque) */
+  $('iv-dyn').addEventListener('click', async (e)=>{
+    const alvo = (sel)=> e.target.closest(sel);
+    let b;
+    if((b = alvo('[data-a]'))){
+      const voltar = {voltarItemId:id, voltarTab:tab};
+      if(b.dataset.a==='preco') openPriceForm(null, id, null, voltar);
+      else if(b.dataset.a==='lista') openAdicionarALista(id, voltar);
+      else { closeSheet(); goToChart(id); }
+      return;
+    }
+    if((b = alvo('[data-f]'))){ filtro = b.dataset.f; tab = 'precos'; editando = null; pintar(); return; }
+    if((b = alvo('[data-tab]'))){ tab = b.dataset.tab; filtro = 'todos'; editando = null; pintar(); return; }
+    if((b = alvo('[data-ed]'))){ editando = (editando===b.dataset.ed) ? null : b.dataset.ed; pintar(); return; }
+    if(alvo('[data-edc]')){ editando = null; pintar(); return; }
+    if(alvo('[data-eds]')){
+      const atual = itemById(id);
+      const obj = {...atual};
+      const erro = ifColetar(obj, atual);
+      if(erro){ avisar(erro); return; }
+      await putRecord('itens', obj);
+      await reloadAll();
+      editando = null;
+      pintar(); renderCurrent();
+      return;
+    }
+    if((b = alvo('[data-rep]'))){
+      const p = PRICES.find(x=>x.id===Number(b.dataset.rep));
+      if(p) openPriceForm(null, null, p, {voltarItemId:id, voltarTab:tab});
+      return;
+    }
+    if((b = alvo('[data-pid]'))){
+      const p = PRICES.find(x=>x.id===Number(b.dataset.pid));
+      if(p) openPriceForm(p, null, null, {voltarItemId:id, voltarTab:tab});
+      return;
+    }
+    if((b = alvo('[data-rid]'))){
+      const r = RECEITAS.find(x=>x.id===Number(b.dataset.rid));
+      if(r) openReceitaView(r, {voltarItemId:id});
+    }
+  });
+  $('iv-voltar').addEventListener('click', closeSheet);
+  $('iv-editar').addEventListener('click', ()=> openItemForm(itemById(id), {voltarLeitura:true, voltarTab:tab}));
+  pintar();
+}
+
+/* ============================================================
+   EDIÇÃO / CADASTRO DO ITEM (v1_79) — tela cheia: Cancelar · título · Salvar; foto + nome; categoria e subcategoria;
+   observação; "Medidas e conversões" (recolhível); "Regra de custo" sempre visível; "Excluir item" no fim.
+   opts (opcional): {sub:true} abre numa camada por cima da atual (sub-sheet);
    {onSalvar:fn(obj)} em vez de gravar no banco, entrega o cadastro preenchido a quem chamou (usado na conferência da
-   importação de receitas: o item só é criado ao importar); {titulo}. Sem id em `item` = cadastro novo já preenchido (rascunho). */
+   importação de receitas: o item só é criado ao importar); {titulo};
+   {voltarLeitura:true, voltarTab} ao salvar/cancelar reabre a leitura do item. Sem id em `item` = cadastro novo já preenchido (rascunho).
+   ============================================================ */
 function openItemForm(item, opts){
   opts = opts || {};
   const editing = !!item;
   const existente = editing && item.id!=null;     // item já gravado (pode excluir); rascunho não tem id
   const abrirCamada = opts.sub ? openSubSheet : openSheet;
   const fecharCamada = opts.sub ? closeSubSheet : closeSheet;
-  abrirCamada(`
-    <h3>${opts.titulo || (existente?'Editar item':(editing?'Cadastrar item':'Novo item'))}</h3>
-    <label>Nome</label>
-    <input type="text" id="i-nome" value="${editing?escapeHtml(item.nome):''}" placeholder="Ex: Arroz 5kg">
-    <label>Categoria</label>
-    <select id="i-cat"><option value="">Sem categoria</option>${catOptionsHTML(editing?item.categoriaId:null)}<option value="__novo__">+ Nova categoria...</option></select>
-    <label>Subcategoria</label>
-    <select id="i-subcat"><option value="">Sem subcategoria</option></select>
-    <label>Dimensão de referência do preço <span style="font-weight:400;text-transform:none">(opcional — só necessário se este item for usado em receitas)</span></label>
-    <select id="i-dim-ref">
-      <option value="">Sem restrição</option>
-      <option value="peso" ${editing&&item.dimensaoReferencia==='peso'?'selected':''}>Peso (g)</option>
-      <option value="volume" ${editing&&item.dimensaoReferencia==='volume'?'selected':''}>Volume (ml, xícara...)</option>
-      <option value="unidade" ${editing&&item.dimensaoReferencia==='unidade'?'selected':''}>Contagem (unidades)</option>
-    </select>
-    <p class="hint ajuda-p" style="margin-top:2px"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Define em que tipo de medida os preços deste item podem ser lançados (evita misturar peso com volume, por exemplo). A quantidade exata do pacote (ex: 200g) é informada em cada preço lançado, não aqui.</span></p>
-    <div id="i-cv-box" style="display:none">
-      <label>Conversão para peso/volume <span style="font-weight:400;text-transform:none">(opcional)</span></label>
-      <div style="display:flex;gap:8px;align-items:center">
-        <span style="white-space:nowrap">1 un =</span>
-        <input type="text" id="i-cv-qtd" placeholder="Ex: 300" style="flex:1">
-        <select id="i-cv-un" style="flex:1"></select>
+  const camada = opts.sub ? camadaSub : camadaMain;
+  const $ = i => document.getElementById(i);
+  const titulo = opts.titulo || (existente?'Editar item':(editing?'Cadastrar item':'Novo item'));
+  const foto0 = editing ? (item.foto||null) : null;
+  abrirCamada(`<div class="pf iform">
+    <div class="pf-top if-top">
+      <button type="button" class="if-cancel" id="i-cancel">Cancelar</button>
+      <h3>${titulo}</h3>
+      <button type="button" class="if-save" id="i-save">${opts.onSalvar?'Concluir':'Salvar'}</button>
+    </div>
+    <div class="if-body">
+      <div class="if-id">
+        <div class="if-fotobox">${foto0?`<img class="if-foto" id="i-foto-preview" src="${foto0}" alt="">`:`<div class="if-foto" id="i-foto-preview">📦</div>`}</div>
+        <div class="if-idcol">
+          <span class="pf-lbl">Nome</span>
+          <input type="text" id="i-nome" class="if-nome" aria-label="Nome do item" placeholder="Ex: Arroz 5kg" value="${editing?escapeHtml(item.nome):''}">
+          <label for="i-foto-input" class="if-trocar" id="i-foto-rot">${foto0?'Trocar foto':'Adicionar foto'}</label>
+          <input type="file" accept="image/*" id="i-foto-input" hidden>
+        </div>
       </div>
-      <p class="hint ajuda-p" style="margin-top:2px"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Peso (ou volume) médio de 1 unidade, bruto — com casca, cabinho etc. Permite usar este item em receitas em g ou ml; o rendimento % da receita cuida da parte aproveitável.</span></p>
-    </div>
-    <div id="i-dn-box" style="display:none">
-      <label>Densidade <span style="font-weight:400;text-transform:none">(opcional)</span></label>
-      <div style="display:flex;gap:6px;align-items:center">
-        <input type="text" id="i-dn-vol" placeholder="100" style="flex:1;min-width:0">
-        <select id="i-dn-vol-un" style="flex:1;min-width:0"></select>
-        <span>=</span>
-        <input type="text" id="i-dn-peso" placeholder="92" style="flex:1;min-width:0">
-        <select id="i-dn-peso-un" style="flex:1;min-width:0"></select>
+      <div class="if-topo">${ifCatHTML(item)}</div>
+      <div class="if-obsbox">${ifObsHTML(item)}</div>
+      <div class="if-sec">
+        <button type="button" class="if-sechead" id="i-med-toggle" aria-expanded="true">
+          <span class="t"><b>Medidas e conversões</b><span class="s" id="i-med-resumo"></span></span><span class="ch" id="i-med-ch">⌄</span>
+        </button>
+        <div id="i-med-corpo" class="if-medcorpo">${ifMedidaHTML(item, {tabs:true, dens:true})}</div>
       </div>
-      <p class="hint ajuda-p" style="margin-top:2px"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Quanto pesa um certo volume deste item (ex.: 100 ml de azeite = 92 g). Permite usar o item em receitas em g mesmo com o preço lançado em ml (ou o contrário) e calcular o custo.</span></p>
+      <div class="if-sec if-regra">${ifRegraHTML(item)}</div>
+      ${existente?`<button type="button" class="if-excluir" id="i-del">Excluir item</button>`:''}
     </div>
-    <label>Regra de custo <span style="font-weight:400;text-transform:none">(opcional — só afeta receitas e preparos)</span></label>
-    <div style="display:flex;gap:8px">
-      <div style="flex:1"><label>Mínimo</label><input type="text" id="i-cr-min" placeholder="Ex: 50"></div>
-      <div style="flex:1"><label>Indivisível</label><input type="text" id="i-cr-ind" placeholder="Ex: 50"></div>
-    </div>
-    <label>Unidade da regra</label>
-    <select id="i-cr-un"></select>
-    <label>Se houver os dois</label>
-    <select id="i-cr-prio">
-      <option value="maior" ${!editing||!item.regraPrioridade||item.regraPrioridade==='maior'?'selected':''}>Cobrar o maior custo (padrão)</option>
-      <option value="minimo" ${editing&&item.regraPrioridade==='minimo'?'selected':''}>Só o mínimo</option>
-      <option value="indivisivel" ${editing&&item.regraPrioridade==='indivisivel'?'selected':''}>Só o indivisível</option>
-    </select>
-    <p class="hint ajuda-p" style="margin-top:2px"><button type="button" class="ajuda-btn" aria-label="Ajuda" aria-expanded="false">?</button><span class="ajuda-txt" hidden>Mínimo: usar menos que isso custa como se fosse isso (ex: 50 g de um ovo). Indivisível: só se usa em múltiplos inteiros (ex: 1 ovo = 50 g). O custo é calculado sobre a quantidade bruta usada.</span></p>
-    <label>Foto</label>
-    <div class="photo-pick">
-      ${item && item.foto ? `<img id="i-foto-preview" src="${item.foto}">` : `<div class="ph" id="i-foto-preview">📦</div>`}
-      <input type="file" accept="image/*" id="i-foto-input" style="width:auto">
-    </div>
-    <label>Observação</label>
-    <textarea id="i-obs" placeholder="Observações sobre o item">${editing?escapeHtml(item.obs||''):''}</textarea>
-    <div class="sheet-actions">
-      ${existente?`<button class="btn btn-danger" id="i-del">Excluir</button>`:''}
-      <button class="btn btn-outline" id="i-cancel">Cancelar</button>
-      <button class="btn btn-accent btn-block" id="i-save">${opts.onSalvar?'Concluir cadastro':'Salvar'}</button>
-    </div>
-  `, opts.sub ? {topAnchored:true} : undefined);
-  function populateSubcatSelect(categoriaId, selectedId){
-    const sel = document.getElementById('i-subcat');
-    const opts = subcatsOf(categoriaId).map(s=>`<option value="${s.id}" ${s.id===selectedId?'selected':''}>${escapeHtml(s.nome)}</option>`).join('');
-    sel.innerHTML = '<option value="">Sem subcategoria</option>' + opts + '<option value="__novo__">+ Nova subcategoria...</option>';
-  }
-  populateSubcatSelect(editing?item.categoriaId:null, editing?item.subcategoriaId:null);
-  let catAtualId = editing && item.categoriaId ? String(item.categoriaId) : '';
-  document.getElementById('i-cat').addEventListener('change', async (e)=>{
-    if(e.target.value==='__novo__'){
-      const nome = (await perguntar('Nome da nova categoria:')||'').trim();
-      if(!nome){ e.target.value = catAtualId; return; } // cancelou: volta à categoria que estava
-      // se já existe categoria com esse nome (ignorando acento/caixa), usa a existente em vez de duplicar
-      let cat = CATS.find(c=>semAcento(c.nome)===semAcento(nome));
-      if(!cat){
-        const id = await putRecord('categorias', {nome, obs:'', foto:null});
-        cat = {id, nome, obs:'', foto:null};
-        CATS.push(cat);
-        CATS.sort((a,b)=>a.nome.localeCompare(b.nome));
-      }
-      e.target.innerHTML = '<option value="">Sem categoria</option>' + catOptionsHTML(cat.id) + '<option value="__novo__">+ Nova categoria...</option>';
-      e.target.value = String(cat.id);
-      catAtualId = String(cat.id);
-      populateSubcatSelect(cat.id, null);
-      return;
+  </div>`, {full:true});
+
+  ifBind(item, {marcar: ()=>{ camada.dirty = true; camada.salvando = false; }});
+
+  /* resumo do bloco "Medidas e conversões" (aparece junto do título, também com o bloco recolhido) */
+  function resumoMedidas(){
+    const dim = $('i-dim-ref').value;
+    const partes = [{peso:'Peso', volume:'Volume', unidade:'Contagem'}[dim] || 'Livre'];
+    const un = sel => { const u = unidadeById(Number($(sel).value)); return u ? u.simbolo : ''; };
+    if(dim==='peso' || dim==='volume'){
+      const v = getQtyValue($('i-dn-vol')), p = getQtyValue($('i-dn-peso'));
+      if(v>0 && p>0) partes.push(`${fmtQtd(v, unidadeById(Number($('i-dn-vol-un').value)))} ${un('i-dn-vol-un')} = ${fmtQtd(p, unidadeById(Number($('i-dn-peso-un').value)))} ${un('i-dn-peso-un')}`);
+    } else if(dim==='unidade'){
+      const q = getQtyValue($('i-cv-qtd'));
+      if(q>0 && $('i-cv-un').value) partes.push(`1 un = ${fmtQtd(q, unidadeById(Number($('i-cv-un').value)))} ${un('i-cv-un')}`);
     }
-    catAtualId = e.target.value;
-    populateSubcatSelect(e.target.value?Number(e.target.value):null, null);
+    $('i-med-resumo').textContent = partes.join(' · ');
+  }
+  resumoMedidas();
+  $('i-med-corpo').addEventListener('input', resumoMedidas);
+  $('i-med-corpo').addEventListener('change', resumoMedidas);
+  $('i-med-toggle').addEventListener('click', ()=>{
+    const corpo = $('i-med-corpo');
+    const aberto = corpo.style.display !== 'none';
+    corpo.style.display = aberto ? 'none' : '';
+    $('i-med-toggle').setAttribute('aria-expanded', aberto ? 'false' : 'true');
+    $('i-med-ch').textContent = aberto ? '›' : '⌄';
   });
-  document.getElementById('i-subcat').addEventListener('change', async (e)=>{
-    if(e.target.value!=='__novo__') return;
-    const catId = document.getElementById('i-cat').value ? Number(document.getElementById('i-cat').value) : null;
-    if(!catId){ avisar('Escolha uma categoria antes de criar a subcategoria.'); e.target.value=''; return; }
-    const nome = (await perguntar('Nome da nova subcategoria:')||'').trim();
-    if(!nome){ e.target.value=''; return; }
-    const jaExiste = SUBCATS.find(sc=>sc.categoriaId===catId && semAcento(sc.nome)===semAcento(nome));
-    if(jaExiste){ populateSubcatSelect(catId, jaExiste.id); return; }
-    const id = await putRecord('subcategorias', {categoriaId:catId, nome, obs:''});
-    SUBCATS.push({id, categoriaId:catId, nome, obs:''});
-    SUBCATS.sort((a,b)=>a.nome.localeCompare(b.nome));
-    populateSubcatSelect(catId, id);
-  });
-  attachQtyMask(document.getElementById('i-cr-min'), editing&&item.custoMinQtd!=null?item.custoMinQtd:null);
-  attachQtyMask(document.getElementById('i-cr-ind'), editing&&item.custoIndivQtd!=null?item.custoIndivQtd:null);
-  function refreshRegraUnidades(){
-    const dim = document.getElementById('i-dim-ref').value;
-    const sel = document.getElementById('i-cr-un');
-    let keep = sel.value || (editing&&item.regraUnidadeId?String(item.regraUnidadeId):'');
-    const lista = UNIDADES.filter(u=>!dim || u.dimensao===dim);
-    if(!keep && lista.length===1) keep = String(lista[0].id);
-    sel.innerHTML = '<option value="">Selecione...</option>' + lista.map(u=>`<option value="${u.id}" ${String(u.id)===keep?'selected':''}>${escapeHtml(u.nome)} (${escapeHtml(u.simbolo)})</option>`).join('');
-  }
-  refreshRegraUnidades();
-  document.getElementById('i-dim-ref').addEventListener('change', refreshRegraUnidades);
-  attachQtyMask(document.getElementById('i-cv-qtd'), editing&&item.convQtd!=null?item.convQtd:null);
-  function refreshConv(){
-    const dim = document.getElementById('i-dim-ref').value;
-    document.getElementById('i-cv-box').style.display = dim==='unidade' ? '' : 'none';
-    const sel = document.getElementById('i-cv-un');
-    let keep = sel.value || (editing&&item.convUnidadeId?String(item.convUnidadeId):'');
-    const lista = UNIDADES.filter(u=>u.dimensao==='peso' || u.dimensao==='volume');
-    if(!keep){ const g = unidadePadraoDaDimensao('peso'); if(g) keep = String(g.id); }
-    sel.innerHTML = '<option value="">Selecione...</option>' + lista.map(u=>`<option value="${u.id}" ${String(u.id)===keep?'selected':''}>${escapeHtml(u.nome)} (${escapeHtml(u.simbolo)})</option>`).join('');
-  }
-  refreshConv();
-  document.getElementById('i-dim-ref').addEventListener('change', refreshConv);
-  attachQtyMask(document.getElementById('i-dn-vol'), editing&&item.densVolQtd!=null?item.densVolQtd:null);
-  attachQtyMask(document.getElementById('i-dn-peso'), editing&&item.densPesoQtd!=null?item.densPesoQtd:null);
-  function refreshDens(){
-    const dim = document.getElementById('i-dim-ref').value;
-    document.getElementById('i-dn-box').style.display = (dim==='peso'||dim==='volume') ? '' : 'none';
-    const fill = (id, dimU, salvo, padrao)=>{
-      const sel = document.getElementById(id);
-      const keep = sel.value || (editing&&salvo?String(salvo):(padrao?String(padrao.id):''));
-      sel.innerHTML = UNIDADES.filter(u=>u.dimensao===dimU).map(u=>`<option value="${u.id}" ${String(u.id)===keep?'selected':''}>${escapeHtml(u.simbolo)}</option>`).join('');
-    };
-    fill('i-dn-vol-un','volume', item&&item.densVolUnId, unidadePadraoDaDimensao('volume'));
-    fill('i-dn-peso-un','peso', item&&item.densPesoUnId, unidadePadraoDaDimensao('peso'));
-  }
-  refreshDens();
-  document.getElementById('i-dim-ref').addEventListener('change', refreshDens);
-  let fotoData = editing ? (item.foto||null) : null;
-  document.getElementById('i-foto-input').addEventListener('change', async (e)=>{
+
+  let fotoData = foto0;
+  $('i-foto-input').addEventListener('change', async (e)=>{
     const f = e.target.files[0]; if(!f) return;
     fotoData = await resizeImage(f);
-    const prev = document.getElementById('i-foto-preview');
-    const img = document.createElement('img'); img.id='i-foto-preview'; img.src=fotoData;
+    const prev = $('i-foto-preview');
+    const img = document.createElement('img'); img.id='i-foto-preview'; img.className='if-foto'; img.src=fotoData; img.alt='';
     prev.replaceWith(img);
+    $('i-foto-rot').textContent = 'Trocar foto';
   });
-  document.getElementById('i-cancel').addEventListener('click', fecharCamada);
+
+  /* sair da edição: com leitura de origem, volta a ela (pedindo confirmação se houver alterações) */
+  const voltarLeitura = ()=>{ const it = existente ? itemById(item.id) : null; if(it) openItemView(it, {tab:opts.voltarTab}); else fecharCamada(); };
+  $('i-cancel').addEventListener('click', ()=>{
+    if(!opts.voltarLeitura){ fecharCamada(); return; }
+    if(camada.precisaConfirmar()){ camada.confirmarDescarte().then(ok=>{ if(ok) voltarLeitura(); }); return; }
+    voltarLeitura();
+  });
   if(existente){
-    document.getElementById('i-del').addEventListener('click', async ()=>{
+    $('i-del').addEventListener('click', async ()=>{
       const nPrecos = PRICES.filter(p=>p.itemId===item.id).length;
       // onde mais o item é usado (esses registros NÃO são apagados: ficam com "(item removido)" e custo indisponível)
       const usos = [];
@@ -2350,48 +2664,22 @@ function openItemForm(item, opts){
       await reloadAll(); closeSheet(); renderCurrent();
     });
   }
-  document.getElementById('i-save').addEventListener('click', async ()=>{
-    const nome = document.getElementById('i-nome').value.trim();
-    if(!nome){ avisar('Informe o nome do item.'); return; }
+  $('i-save').addEventListener('click', async ()=>{
     const obj = editing ? {...item} : {};
-    obj.nome = nome;
-    const catVal = document.getElementById('i-cat').value;
-    obj.categoriaId = (catVal && catVal!=='__novo__') ? Number(catVal) : null;
-    const subcatVal = document.getElementById('i-subcat').value;
-    obj.subcategoriaId = (subcatVal && subcatVal!=='__novo__') ? Number(subcatVal) : null;
-    obj.dimensaoReferencia = document.getElementById('i-dim-ref').value || null;
-    const crMin = getQtyValue(document.getElementById('i-cr-min'));
-    const crInd = getQtyValue(document.getElementById('i-cr-ind'));
-    const crUn = document.getElementById('i-cr-un').value;
-    const temRegra = crMin>0 || crInd>0;
-    if(temRegra && !crUn){ avisar('Informe a unidade da regra de custo.'); return; }
-    obj.custoMinQtd = crMin>0 ? crMin : null;
-    obj.custoIndivQtd = crInd>0 ? crInd : null;
-    obj.regraUnidadeId = temRegra ? Number(crUn) : null;
-    obj.regraPrioridade = document.getElementById('i-cr-prio').value || 'maior';
-    const cvQtd = getQtyValue(document.getElementById('i-cv-qtd'));
-    const cvUn = document.getElementById('i-cv-un').value;
-    const cvAtiva = document.getElementById('i-dim-ref').value==='unidade' && cvQtd>0;
-    if(cvAtiva && !cvUn){ avisar('Informe a unidade da conversão (g ou ml).'); return; }
-    obj.convQtd = cvAtiva ? cvQtd : null;
-    obj.convUnidadeId = cvAtiva ? Number(cvUn) : null;
-    const dnV = getQtyValue(document.getElementById('i-dn-vol')), dnP = getQtyValue(document.getElementById('i-dn-peso'));
-    const dnDim = document.getElementById('i-dim-ref').value;
-    const dnAtiva = (dnDim==='peso'||dnDim==='volume') && dnV>0 && dnP>0;
-    if((dnDim==='peso'||dnDim==='volume') && ((dnV>0)!==(dnP>0))){ avisar('Informe o volume e o peso da densidade (ou deixe os dois em branco).'); return; }
-    obj.densVolQtd = dnAtiva ? dnV : null;
-    obj.densVolUnId = dnAtiva ? Number(document.getElementById('i-dn-vol-un').value) : null;
-    obj.densPesoQtd = dnAtiva ? dnP : null;
-    obj.densPesoUnId = dnAtiva ? Number(document.getElementById('i-dn-peso-un').value) : null;
-    obj.obs = document.getElementById('i-obs').value.trim();
+    const erro = ifColetar(obj, item);
+    if(erro){ avisar(erro); return; }
     obj.foto = fotoData;
     if(opts.onSalvar){ opts.onSalvar(obj); fecharCamada(); return; }   // rascunho: quem chamou decide quando gravar
     await putRecord('itens', obj);
-    await reloadAll(); fecharCamada(); renderCurrent();
+    await reloadAll();
+    renderCurrent();
+    if(opts.voltarLeitura && existente) voltarLeitura(); else fecharCamada();
   });
 }
 
 function renderItens(){
+  syncFiltrosItens();
+  atualizarLimparItens();
   const q = semAcento(document.getElementById('if-texto').value.trim());
   const catFilter = document.getElementById('if-cat').value;
   const subcatFilter = document.getElementById('if-subcat').value;
@@ -2456,62 +2744,47 @@ function renderItens(){
 
   const el = document.getElementById('lista-itens');
   if(!list.length){ el.innerHTML = `<div class="empty">Nenhum item encontrado.<br>Toque em + para cadastrar.</div>`; return; }
-  if(itemSelecionadoId!=null && !list.some(i=>i.id===itemSelecionadoId)) itemSelecionadoId = null;
   const listasPendentesPorItem = new Map();
   LISTA_ITENS.forEach(li=>{ if(!li.comprado && li.itemId!=null){ const arr = listasPendentesPorItem.get(li.itemId) || []; arr.push(li.listaId); listasPendentesPorItem.set(li.itemId, arr); } });
+  const porPreco = sortMode==='preco_asc' || sortMode==='preco_desc';
+  /* linha sem cartão (mesmo visual da lista de Preços): foto 56 px, nome + categoria, último preço com R$/kg|L|un; tocar abre a leitura do item */
   el.innerHTML = list.map(i=>{
-    const cat = catById(i.categoriaId);
-    const subcat = subcatById(i.subcategoriaId);
+    const cat = catById(i.categoriaId), subcat = subcatById(i.subcategoriaId);
     const ultimo = (precosDoItem.get(i.id) || [])[0];
-    let metaExtra = ultimo? ` · último: ${fmtMoney(ultimo.preco)} (${fmtDateBR(ultimo.data)})` : '';
-    if(sortMode==='preco_asc' || sortMode==='preco_desc'){
+    const qc = precoQtdECusto(ultimo);
+    let preco = ultimo ? fmtMoney(ultimo.preco) : '', custo = qc.custo, qtd = qc.qtd, extra = '';
+    if(porPreco){
       const valor = metricaDoItem(i);
-      metaExtra = valor!==null ? ` · ${metricaLabel(metrica)} no período: ${fmtMoney(valor)}` : ' · sem preço no período';
+      preco = valor!==null ? fmtMoney(valor) : ''; custo = '';
+      qtd = valor!==null ? metricaLabel(metrica)+' no período' : 'sem preço no período';
     } else if(sortMode==='data_asc'){
-      metaExtra = ultimo ? ` · sem atualizar há ${diasDesde(ultimo.data)} dia(s) (${fmtDateBR(ultimo.data)})` : ' · nunca registrado';
+      extra = ultimo ? `sem atualizar há ${diasDesde(ultimo.data)} dia(s) (${fmtDateBR(ultimo.data)})` : 'nunca registrado';
     }
-    const sel = itemSelecionadoId===i.id;
-    return `<div class="card ${sel?'selecionado':''}" data-id="${i.id}" data-type="item">
-      <button type="button" class="select-toggle-zone ${sel?'on':''}" data-select><span class="select-dot"></span></button>
-      ${i.foto?`<img class="thumb" src="${i.foto}">`:`<div class="thumb-ph">📦</div>`}
-      <div class="body">
-        <div class="title">${escapeHtml(i.nome)}${badgeListaItem(listasPendentesPorItem.get(i.id))}</div>
-        <div class="meta">${cat?escapeHtml(cat.nome):'Sem categoria'}${subcat?' › '+escapeHtml(subcat.nome):''}${metaExtra}</div>
-        ${i.obs?`<div class="obs">${escapeHtml(i.obs)}</div>`:''}
+    return `<div class="card pr-row" data-id="${i.id}" data-type="item">
+      <div class="pr-ft">${i.foto?`<img class="pr-img" src="${i.foto}" alt="">`:`<div class="pr-img">📦</div>`}</div>
+      <div class="pr-main">
+        <div class="pr-top">
+          <div class="pr-l">
+            <span class="pr-nome">${escapeHtml(i.nome)}${badgeListaItem(listasPendentesPorItem.get(i.id))}</span>
+            <span class="pr-meta">${cat?escapeHtml(cat.nome):'Sem categoria'}${subcat?' › '+escapeHtml(subcat.nome):''}</span>
+            ${extra?`<span class="pr-meta">${escapeHtml(extra)}</span>`:''}
+          </div>
+          <div class="pr-r">
+            ${preco?`<span class="pr-preco mono">${preco}</span>`:(!porPreco?'<span class="pr-qtd">sem preço</span>':'')}
+            ${custo?`<span class="pr-custo">${escapeHtml(custo)}</span>`:''}
+            ${qtd?`<span class="pr-qtd">${escapeHtml(qtd)}</span>`:''}
+          </div>
+        </div>
+        ${i.obs?`<div class="pr-obs obs">${escapeHtml(i.obs)}</div>`:''}
       </div>
     </div>`;
   }).join('');
-  el.querySelectorAll('.card').forEach(card=>{
-    card.addEventListener('click', ()=>{
-      const id = Number(card.dataset.id);
-      openItemView(itemById(id));
-    });
-  });
-  el.querySelectorAll('[data-select]').forEach(btn=>{
-    btn.addEventListener('click', (e)=>{
-      e.stopPropagation();
-      const id = Number(e.target.closest('.card').dataset.id);
-      itemSelecionadoId = (itemSelecionadoId===id) ? null : id;
-      renderItens();
-    });
-  });
+  el.onclick = (e)=>{
+    const card = e.target.closest('.card');
+    if(!card) return;
+    openItemView(itemById(Number(card.dataset.id)));
+  };
 }
-document.getElementById('il-addpreco').addEventListener('click', ()=>{
-  if(itemSelecionadoId==null){ showToast('Selecione um item na lista primeiro.'); return; }
-  openPriceForm(null, itemSelecionadoId);
-});
-document.getElementById('il-precos').addEventListener('click', ()=>{
-  if(itemSelecionadoId==null){ showToast('Selecione um item na lista primeiro.'); return; }
-  goToPrecos(itemSelecionadoId);
-});
-document.getElementById('il-lista').addEventListener('click', ()=>{
-  if(itemSelecionadoId==null){ showToast('Selecione um item na lista primeiro.'); return; }
-  openAdicionarALista(itemSelecionadoId);
-});
-document.getElementById('il-grafico').addEventListener('click', ()=>{
-  if(itemSelecionadoId==null){ showToast('Selecione um item na lista primeiro.'); return; }
-  goToChart(itemSelecionadoId);
-});
 
 /* ============================================================
    POSSÍVEIS DUPLICATAS
@@ -2723,6 +2996,9 @@ function openPriceForm(price, presetItemId, repeatFrom, opts){
   const itemIdInicial = base ? base.itemId : (presetItemId || null);
   const localIdInicial = base ? base.localId : null;
   const titulo = editing ? 'Editar preço' : ((opts&&opts.titulo) || (repeatFrom ? 'Repetir preço' : 'Novo preço'));
+  /* opts.voltarItemId (v1_79): veio da leitura do item; ao salvar, cancelar ou excluir volta a ela (na aba voltarTab) em vez de fechar */
+  const voltarItem = (opts && opts.voltarItemId && itemById(opts.voltarItemId)) ? opts.voltarItemId : null;
+  const voltarParaItem = ()=> openItemView(itemById(voltarItem), {tab: opts.voltarTab});
   openSheet(`
     <div class="pf">
       <div class="pf-top">
@@ -2871,12 +3147,17 @@ function openPriceForm(price, presetItemId, repeatFrom, opts){
     if(!urlValida(u)){ avisar('Esse endereço não parece um link válido.'); return; }
     window.open(u, '_blank', 'noopener');
   });
-  $('p-cancel').addEventListener('click', closeSheet);
+  $('p-cancel').addEventListener('click', ()=>{
+    if(!voltarItem){ closeSheet(); return; }
+    if(camadaMain.precisaConfirmar()){ camadaMain.confirmarDescarte().then(ok=>{ if(ok) voltarParaItem(); }); return; }
+    voltarParaItem();
+  });
   if(editing){
     $('p-del').addEventListener('click', async ()=>{
       if(!await confirmar('Excluir este registro de preço?')) return;
       await deleteRecord('precos', price.id);
-      await reloadAll(); closeSheet(); renderCurrent();
+      await reloadAll(); renderCurrent();
+      if(voltarItem) voltarParaItem(); else closeSheet();
     });
   }
   $('p-save').addEventListener('click', async ()=>{
@@ -2903,7 +3184,7 @@ function openPriceForm(price, presetItemId, repeatFrom, opts){
     await reloadAll();
     if(opts && opts.onSaved) await opts.onSaved(obj);
     const bom = CONFIG.alertaBomPrecoAtivo ? isPrecoBom(itemId, preco, obj.id) : null;
-    closeSheet(); renderCurrent();
+    if(voltarItem){ renderCurrent(); voltarParaItem(); } else { closeSheet(); renderCurrent(); }
     if(bom){
       showToast(`🔥 Bom preço! Está entre os ${Math.max(1,bom.pct)}% mais baratos do histórico deste item (mediana ${fmtMoney(bom.mediana)}).`);
     }
@@ -3073,6 +3354,28 @@ function atualizarLimparPrecos(){
   const ativo = ['pf-texto','pf-de','pf-ate','pf-cat','pf-item','pf-local'].some(id=>document.getElementById(id).value);
   document.getElementById('pf-limpar-filtros').style.display = ativo ? '' : 'none';
 }
+/* ---- Filtros da tela Itens (v1_79): mesmo visual dos filtros de Preços (campos em linha + lista de opções em folha de baixo).
+   Os <select hidden> continuam sendo a fonte do valor; filtro "ativo" = diferente do padrão (ordenação/métrica/período comparam com a Configuração). ---- */
+function syncFiltrosItens(){
+  const padroes = {'if-sort':CONFIG.itensSortPadrao, 'if-metrica':CONFIG.itensMetricaPadrao, 'if-periodo':CONFIG.itensPeriodoPadrao};
+  document.querySelectorAll('#if-filtros-extra .pf-campo').forEach(b=>{
+    const s = document.getElementById(b.dataset.sel);
+    const o = s.options[s.selectedIndex] || s.options[0];
+    b.querySelector('.v').textContent = !s.value && (b.dataset.sel==='if-cat' || b.dataset.sel==='if-subcat') ? 'Todas' : (o ? o.textContent : '');
+    b.classList.toggle('ativo', s.value !== (padroes[b.dataset.sel] || ''));
+  });
+}
+function atualizarLimparItens(){
+  const sortPrecoAtivo = ['preco_asc','preco_desc'].includes(document.getElementById('if-sort').value);
+  const ativo = ['if-texto','if-cat','if-subcat','if-atualizacao'].some(id=>document.getElementById(id).value)
+    || document.getElementById('if-sort').value !== CONFIG.itensSortPadrao
+    || (sortPrecoAtivo && (document.getElementById('if-metrica').value !== CONFIG.itensMetricaPadrao || document.getElementById('if-periodo').value !== CONFIG.itensPeriodoPadrao));
+  document.getElementById('if-limpar-filtros').style.display = ativo ? '' : 'none';
+}
+document.getElementById('if-filtros-extra').addEventListener('click', (e)=>{
+  const b = e.target.closest('.pf-campo'); if(!b) return;
+  openListaOpcoes(b.dataset.sel, b.dataset.titulo, null);
+});
 
 /* ============================================================
    FILTROS (popular selects de categoria/item)
@@ -3113,6 +3416,7 @@ function refreshFilterSelects(){
   populateIfSubcatOptions();
   refreshGfSelects();
   syncFiltrosPrecos();
+  syncFiltrosItens();
 }
 function populateOpSubcatOptions(){
   const opCat = document.getElementById('op-cat');
@@ -4083,7 +4387,7 @@ function openReceitaView(receita, opts){
   document.getElementById('rv-preparos').addEventListener('click', ()=> openPreparosSheet(receita));
   document.getElementById('rv-fechar').addEventListener('click', closeSheet);
   if(opts.voltarItemId){
-    document.getElementById('rv-voltar-item').addEventListener('click', ()=> openItemView(itemById(opts.voltarItemId)));
+    document.getElementById('rv-voltar-item').addEventListener('click', ()=> openItemView(itemById(opts.voltarItemId), {tab:'receitas'}));
   }
 }
 function openReceitaForm(receita){
@@ -7598,9 +7902,11 @@ function openListaForm(lista){
 }
 
 /* ---- Adicionar item à lista (a partir da tela Itens, botão 🛒 Lista) ---- */
-function openAdicionarALista(itemId){
+function openAdicionarALista(itemId, opts){
   const item = itemById(itemId);
   if(!item) return;
+  /* opts.voltarItemId (v1_79): veio da leitura do item; cancelar/adicionar volta a ela em vez de fechar */
+  const sair = ()=>{ if(opts && opts.voltarItemId && itemById(opts.voltarItemId)) openItemView(itemById(opts.voltarItemId), {tab: opts.voltarTab}); else closeSheet(); };
   const padrao = (listaAbertaId && listaById(listaAbertaId)) ? listaAbertaId : (LISTAS[0] ? LISTAS[0].id : null);
   openSheet(`
     <h3>Adicionar à lista de compras</h3>
@@ -7630,7 +7936,7 @@ function openAdicionarALista(itemId){
   const sel = document.getElementById('al-lista');
   const refresh = ()=>{ document.getElementById('al-nova').style.display = sel.value==='__nova__' ? 'block' : 'none'; };
   sel.addEventListener('change', refresh); refresh();
-  document.getElementById('al-cancel').addEventListener('click', closeSheet);
+  document.getElementById('al-cancel').addEventListener('click', sair);
   document.getElementById('al-save').addEventListener('click', async ()=>{
     let listaId;
     if(sel.value==='__nova__'){
@@ -7642,10 +7948,10 @@ function openAdicionarALista(itemId){
     const un = document.getElementById('al-un').value;
     const qtdAl = getQtyValue(document.getElementById('al-qtd'));
     const r = await addItemNaLista(listaId, itemId, qtdAl, (qtdAl!=null && un) ? Number(un) : null);
-    closeSheet();
+    renderCurrent();
+    sair();
     const l = listaById(listaId);
     showToast(r.dup ? `"${item.nome}" já está na lista "${l?l.nome:''}".` : `🛒 "${item.nome}" adicionado à lista "${l?l.nome:''}".`);
-    renderCurrent();
   });
 }
 
@@ -8478,7 +8784,7 @@ applyDefaultsToUI();
 fillConfiguracoesForm();
 ativarTelaAcesa();
 /* ---- PWA: versão, armazenamento persistente e service worker ---- */
-const APP_VERSION = 'v1_78';
+const APP_VERSION = 'v1_79';
 document.getElementById('appVersaoTxt').textContent = APP_VERSION;
 if(navigator.storage && navigator.storage.persist){
   navigator.storage.persist().then(ok=>{
